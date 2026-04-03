@@ -752,17 +752,12 @@
                     let t = `[교과활동 - ${r.subject || ''}] 단원: ${r.unit || ''}`;
                     if (r.inquiry) t += `
 탐구활동: ${r.inquiry}`;
-                    if (r.learned) t += `
-배운점: ${r.learned}`;
-                    if (r.reflection) t += `
-느낀점: ${r.reflection}`;
+                    if (r.learned) t += `\n배운점: ${r.learned}`;
+                    if (r.reflection) t += `\n느낀점: ${r.reflection}`;
                     return t;
                 }
-                return `[${CATEGORIES[r.categoryId]?.title || r.categoryId}] ${r.title || r.subject || ''}
-내용: ${r.content || r.unit || ''}`;
-            }).join('
-
-');
+                return `[${CATEGORIES[r.categoryId]?.title || r.categoryId}] ${r.title || r.subject || ''}\n내용: ${r.content || r.unit || ''}`;
+            }).join('\n\n');
             const prompt = `다음은 어느 고등학생의 창의적 체험학습 실제 기록들입니다. 학교생활기록부(생기부) 양식에 맞게 아래 규칙을 반드시 따라 단일 문단으로 작성해 주세요.
 🚨 문체 규칙(가장 중요): 모든 문장은 반드시 개조식("~함", "~임", "~보임", "~나타냄" 등)으로 끝내야 합니다. "~했습니다", "~하였습니다", "~합니다" 등 서술식 종결어미는 절대 사용하지 마세요.
 이 학생의 리더십, 비판적 사고, 인성 및 발전 가능성을 은은하게 부각해 주세요.
