@@ -965,16 +965,27 @@ function ReportList({user,onBack}){
 function SubjectTeacherHome({user, onSelectSubject, onBack}) {
   const assigns = JSON.parse(user.assignments||'[]');
   const totalClasses = assigns.reduce((s,a)=>s+a.classes.length, 0);
-  const iconColors = [
-    {bg:'linear-gradient(135deg,#ede7f6,#d1c4e9)',badge:'#ede7f6',badgeText:'#5c2fa0'},
-    {bg:'linear-gradient(135deg,#fce4ec,#f8bbd0)',badge:'#fce4ec',badgeText:'#c2185b'},
-    {bg:'linear-gradient(135deg,#e3f2fd,#bbdefb)',badge:'#e3f2fd',badgeText:'#1565c0'},
-    {bg:'linear-gradient(135deg,#e8f5e9,#c8e6c9)',badge:'#e8f5e9',badgeText:'#2e7d32'},
-    {bg:'linear-gradient(135deg,#fff8e1,#ffecb3)',badge:'#fff8e1',badgeText:'#e65100'},
+  const iconGrads = [
+    {grad:'linear-gradient(135deg,#7c3aed,#5c2fa0)',cls:'#ede7f6',clsTxt:'#5c2fa0'},
+    {grad:'linear-gradient(135deg,#ec4899,#be185d)',cls:'#fce4ec',clsTxt:'#c2185b'},
+    {grad:'linear-gradient(135deg,#2563eb,#1d4ed8)',cls:'#e3f2fd',clsTxt:'#1565c0'},
+    {grad:'linear-gradient(135deg,#059669,#047857)',cls:'#e8f5e9',clsTxt:'#2e7d32'},
+    {grad:'linear-gradient(135deg,#d97706,#b45309)',cls:'#fff8e1',clsTxt:'#e65100'},
+    {grad:'linear-gradient(135deg,#0891b2,#0e7490)',cls:'#e0f7fa',clsTxt:'#006064'},
   ];
+  /* 과목명에서 2글자 이니셜 추출 */
+  const getInitial = (name) => {
+    if (!name) return '??';
+    // 영문+로마자 혼합 ex) 수학Ⅰ → 수Ⅰ
+    const clean = name.replace(/\s/g,'');
+    if (clean.length <= 2) return clean;
+    // 괄호·공백 제거 후 앞 2글자
+    return clean.slice(0,2);
+  };
   return (
-    <div style={{background:'#f3f0f9',minHeight:'100%'}}>
-      <div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'28px 20px 46px',position:'relative',overflow:'hidden'}}>
+    <div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:24}}>
+      {/* ── 헤더 ── */}
+      <div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'28px 20px 42px',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'repeating-linear-gradient(135deg,rgba(255,255,255,0) 0px,rgba(255,255,255,0) 20px,rgba(255,255,255,0.025) 20px,rgba(255,255,255,0.025) 22px)',pointerEvents:'none'}}/>
         <div style={{position:'absolute',top:-30,right:-30,width:100,height:100,background:'rgba(255,255,255,0.08)',borderRadius:'50%'}}/>
         <div style={{position:'absolute',bottom:-40,right:30,width:130,height:130,background:'rgba(255,255,255,0.05)',borderRadius:'50%'}}/>
@@ -995,55 +1006,81 @@ function SubjectTeacherHome({user, onSelectSubject, onBack}) {
             </button>
             <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600,letterSpacing:'0.08em'}}>HOME</span>
           </div>
-          <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:8}}>
-            <div style={{width:4,height:4,borderRadius:'50%',background:'rgba(255,255,255,0.45)'}}/>
-            <span style={{fontSize:9,color:'rgba(255,255,255,0.55)',fontWeight:600,letterSpacing:'0.1em'}}>교과목교사</span>
+          {/* 아바타 + 이름 가로 배치 */}
+          <div style={{display:'flex',alignItems:'center',gap:13}}>
+            <div style={{width:48,height:48,background:'rgba(255,255,255,0.2)',borderRadius:'50%',border:'2px solid rgba(255,255,255,0.35)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:19,fontWeight:900,color:'white',flexShrink:0}}>{user.name[0]}</div>
+            <div>
+              <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:3}}>
+                <div style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.45)'}}/>
+                <span style={{fontSize:9,color:'rgba(255,255,255,0.55)',fontWeight:600,letterSpacing:'0.1em'}}>교과목교사</span>
+              </div>
+              <p style={{fontSize:24,fontWeight:900,color:'white',letterSpacing:'-0.5px',margin:'0 0 1px',lineHeight:1.1}}>{user.name} <span style={{fontSize:14,fontWeight:600,opacity:0.8}}>선생님</span></p>
+              <p style={{fontSize:9,color:'rgba(255,255,255,0.4)',letterSpacing:'0.08em',margin:0}}>GWACHEON WOMANS HIGH SCHOOL</p>
+            </div>
           </div>
-          <p style={{fontSize:28,fontWeight:900,color:'white',letterSpacing:'-0.5px',margin:'0 0 2px',lineHeight:1.1}}>{user.name}</p>
-          <p style={{fontSize:14,color:'rgba(255,255,255,0.75)',fontWeight:600,margin:'0 0 4px'}}>선생님</p>
-          <p style={{fontSize:9,color:'rgba(255,255,255,0.4)',letterSpacing:'0.1em'}}>GWACHEON WOMANS HIGH SCHOOL</p>
         </div>
       </div>
 
-      <div style={{margin:'-20px 16px 0',background:'white',borderRadius:18,boxShadow:'0 6px 24px rgba(92,47,160,0.1)',padding:'14px',display:'flex',position:'relative',zIndex:1,marginBottom:16}}>
-        <div style={{flex:1,textAlign:'center'}}>
-          <p style={{fontSize:22,fontWeight:900,color:'#5c2fa0',margin:0}}>{assigns.length}</p>
-          <p style={{fontSize:10,color:'#bbb',marginTop:2,fontWeight:600}}>담당 과목</p>
-        </div>
-        <div style={{width:1,background:'#f0f0f0'}}/>
-        <div style={{flex:1,textAlign:'center'}}>
-          <p style={{fontSize:22,fontWeight:900,color:'#7c3aed',margin:0}}>{totalClasses}</p>
-          <p style={{fontSize:10,color:'#bbb',marginTop:2,fontWeight:600}}>담당 학급</p>
-        </div>
-        <div style={{width:1,background:'#f0f0f0'}}/>
-        <div style={{flex:1,textAlign:'center'}}>
-          <p style={{fontSize:22,fontWeight:900,color:'#a855f7',margin:0}}>📖</p>
-          <p style={{fontSize:10,color:'#bbb',marginTop:2,fontWeight:600}}>교과목교사</p>
+      {/* ── 스탯 카드 — 헤더 아래 정상 흐름 배치 (라운드 완성) ── */}
+      <div style={{padding:'14px 16px 0'}}>
+        <div style={{background:'white',borderRadius:16,boxShadow:'0 4px 16px rgba(92,47,160,0.1)',padding:'13px',display:'flex',border:'1px solid #ede8f7'}}>
+          <div style={{flex:1,textAlign:'center'}}>
+            <p style={{fontSize:22,fontWeight:900,color:'#5c2fa0',margin:0}}>{assigns.length}</p>
+            <p style={{fontSize:10,color:'#bbb',marginTop:2,fontWeight:600}}>담당 과목</p>
+          </div>
+          <div style={{width:1,background:'#f0f0f0'}}/>
+          <div style={{flex:1,textAlign:'center'}}>
+            <p style={{fontSize:22,fontWeight:900,color:'#7c3aed',margin:0}}>{totalClasses}</p>
+            <p style={{fontSize:10,color:'#bbb',marginTop:2,fontWeight:600}}>담당 학급</p>
+          </div>
+          <div style={{width:1,background:'#f0f0f0'}}/>
+          <div style={{flex:1,textAlign:'center'}}>
+            <p style={{fontSize:22,fontWeight:900,color:'#a855f7',margin:0}}>{assigns.reduce((s,a)=>s+a.classes.length,0)}</p>
+            <p style={{fontSize:10,color:'#bbb',marginTop:2,fontWeight:600}}>총 기록수</p>
+          </div>
         </div>
       </div>
 
-      <div style={{padding:'0 16px 20px'}}>
-        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
+      {/* ── 담당 과목 목록 ── */}
+      <div style={{padding:'14px 16px 0'}}>
+        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:11}}>
           <div style={{width:3,height:12,background:'#5c2fa0',borderRadius:2}}/>
-          <p style={{fontSize:12,fontWeight:800,color:'#5c2fa0',margin:0,letterSpacing:'0.04em'}}>담당 과목</p>
+          <p style={{fontSize:12,fontWeight:800,color:'#5c2fa0',margin:0,flex:1,letterSpacing:'0.04em'}}>담당 과목</p>
+          <span style={{fontSize:10,color:'#bbb',fontWeight:600}}>탭하여 학급 조회</span>
         </div>
         {assigns.map((a,i)=>{
-          const ic=iconColors[i%iconColors.length];
-          const grade=a.classes.length>0?a.classes[0][0]+'학년':'';
-          const clsNums=a.classes.map(c=>c.slice(1)+'반').join(', ');
+          const ig = iconGrads[i%iconGrads.length];
+          const grade = a.classes.length>0 ? a.classes[0][0]+'학년' : '';
+          const clsChips = a.classes.map(c=>c.slice(1)+'반');
           return(
             <div key={i} onClick={()=>onSelectSubject(a)} className="active-btn"
-              style={{background:'white',borderRadius:18,padding:'13px 15px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,boxShadow:'0 2px 12px rgba(92,47,160,0.08)',border:'1.5px solid #ede8f7'}}>
-              <div style={{width:40,height:40,background:ic.bg,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>📖</div>
-              <div style={{flex:1,minWidth:0}}>
-                <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 2px'}}>{a.subject}</p>
-                <p style={{fontSize:10,color:'#999',margin:0,fontWeight:600}}>{grade} · {clsNums}</p>
+              style={{background:'white',borderRadius:16,padding:'12px 14px',marginBottom:10,boxShadow:'0 2px 10px rgba(92,47,160,0.07)',border:'1.5px solid #ede8f7',cursor:'pointer'}}>
+              {/* 상단 행: 아이콘 + 과목명 + 화살표 */}
+              <div style={{display:'flex',alignItems:'center',gap:11,marginBottom:9}}>
+                <div style={{width:38,height:38,background:ig.grad,borderRadius:11,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:'white',flexShrink:0,letterSpacing:'-0.5px'}}>
+                  {getInitial(a.subject)}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <p style={{fontSize:14,fontWeight:900,color:'#1a1a2e',margin:'0 0 1px'}}>{a.subject}</p>
+                  <p style={{fontSize:10,color:'#999',margin:0,fontWeight:600}}>{grade} · {a.classes.length}개 학급</p>
+                </div>
+                <svg width="12" height="12" fill="none" stroke="#ce93d8" viewBox="0 0 24 24" style={{flexShrink:0}}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
               </div>
-              <span style={{background:ic.badge,color:ic.badgeText,fontSize:10,fontWeight:800,padding:'4px 10px',borderRadius:20,whiteSpace:'nowrap',flexShrink:0}}>{a.classes.length}개 학급</span>
-              <svg width="13" height="13" fill="none" stroke="#ddd" viewBox="0 0 24 24" style={{flexShrink:0}}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
+              {/* 하단 행: 학급 칩들 */}
+              <div style={{display:'flex',gap:5,flexWrap:'wrap',alignItems:'center'}}>
+                {clsChips.map(cls=>(
+                  <span key={cls} style={{background:ig.cls,color:ig.clsTxt,fontSize:10,fontWeight:800,padding:'3px 9px',borderRadius:20}}>{cls}</span>
+                ))}
+              </div>
             </div>
           );
         })}
+      </div>
+
+      {/* ── 푸터 ── */}
+      <div style={{margin:'4px 16px 0',background:'white',border:'1px solid #e8e0f5',borderRadius:12,padding:'9px 13px',display:'flex',alignItems:'flex-start',gap:7}}>
+        <div style={{width:4,height:4,borderRadius:'50%',background:'#5c2fa0',flexShrink:0,marginTop:4}}/>
+        <p style={{fontSize:10,color:'#999',margin:0,lineHeight:1.6}}>본 시스템은 과천여자고등학교 내부 서비스입니다.<br/>문의: 교무기획부</p>
       </div>
     </div>
   );
