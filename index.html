@@ -74,7 +74,6 @@ function adjustBytes(text, max=1500) {
 }
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwGWlTMoZh-3RUH4fPn_ibxuJht-bGcBww64XPOfrETc-0jD-GG91OJxLdgUjEE2p8Q/exec';
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+GEMINI_KEY;
 
 function callAPI(payload) {
   return fetch(GAS_URL, {
