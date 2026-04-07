@@ -631,7 +631,7 @@ function StudentHome({user, records, loading, onCat, onBack}) {
 }
 
 /* ── 기록 목록 (진로/창체) ── */
-function RecordList({catId,records,onBack,onWrite,onDelete}){
+function RecordList({catId,records,onBack,onWrite,onDelete,onEdit}){
   const cat=CATS[catId];
   const list=records.filter(r=>r.categoryId===catId).sort((a,b)=>new Date(b.date)-new Date(a.date));
   return(
@@ -640,13 +640,16 @@ function RecordList({catId,records,onBack,onWrite,onDelete}){
         <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 홈</button>
         <h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>{cat.label}</h2>
       </div>
-      <div style={{padding:'0 14px',marginTop:-12,display:'flex',flexDirection:'column',gap:10}}>
+      <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:10}}>
         {list.length===0&&<div className="card" style={{padding:'30px 16px',textAlign:'center',color:'#bbb',marginTop:4}}>아직 기록이 없습니다</div>}
         {list.map(r=>(
           <div key={r.id} className="card" style={{padding:'14px 16px'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
               <span style={{fontSize:11,color:'#bbb'}}>{r.date}</span>
-              <button onClick={()=>onDelete(r.id)} style={{background:'#fce4ec',color:'#e53935',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>삭제</button>
+              <div style={{display:'flex',gap:6}}>
+                <button onClick={()=>onEdit(r)} style={{background:'#e8eaf6',color:'#3949ab',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>수정</button>
+                <button onClick={()=>onDelete(r.id)} style={{background:'#fce4ec',color:'#e53935',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>삭제</button>
+              </div>
             </div>
             <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 4px'}}>{r.title}</p>
             <p style={{fontSize:12,color:'#888',margin:0,lineHeight:1.5}}>{r.content}</p>
@@ -658,22 +661,30 @@ function RecordList({catId,records,onBack,onWrite,onDelete}){
   );
 }
 
-/* ── 기록 작성 ── */
-function WriteForm({catId,onSave,onCancel}){
-  const [date,setDate]=useState(new Date().toISOString().split('T')[0]);
-  const [title,setTitle]=useState(''), [content,setContent]=useState(''), [loading,setLoading]=useState(false);
+/* ── 기록 작성/수정 ── */
+function WriteForm({catId,onSave,onCancel,editing}){
+  const [date,setDate]=useState(editing?.date||new Date().toISOString().split('T')[0]);
+  const [title,setTitle]=useState(editing?.title||'');
+  const [content,setContent]=useState(editing?.content||'');
+  const [loading,setLoading]=useState(false);
   const cat=CATS[catId];
-  const submit=async e=>{ e.preventDefault(); if(!title||!content) return alert('모두 입력하세요!'); setLoading(true); await onSave({categoryId:catId,date,title,content}); setLoading(false); };
+  const submit=async e=>{
+    e.preventDefault();
+    if(!title||!content) return alert('모두 입력하세요!');
+    setLoading(true);
+    await onSave(editing?{...editing,date,title,content}:{categoryId:catId,date,title,content});
+    setLoading(false);
+  };
   return(
     <div style={{padding:16}}>
       <button onClick={onCancel} style={{background:'none',border:'none',color:'#999',cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4,fontSize:13}}><Back/>목록으로</button>
       <div className="card" style={{padding:20}}>
-        <h3 style={{fontSize:16,fontWeight:900,color:'#1a1a2e',margin:'0 0 16px'}}>{cat.label} 기록</h3>
+        <h3 style={{fontSize:16,fontWeight:900,color:'#1a1a2e',margin:'0 0 16px'}}>{cat.label} {editing?'수정':'기록'}</h3>
         <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}>
           <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>날짜</p><input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
           <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>활동명</p><input className="input" type="text" placeholder={catId==='creative'?'예: 학교폭력예방교육, 환경보호교육, 진로체험':catId==='career'?'예: 직업인 특강, 진로 탐색 캠프, 모의면접':'활동명을 입력하세요'} value={title} onChange={e=>setTitle(e.target.value)}/></div>
           <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>내용</p><textarea className="input" rows="5" placeholder={catId==='creative'?'예: 학교폭력의 심각성을 인식하고 피해 학생을 돕는 방법을 배웠으며, 일상에서 실천할 수 있는 예방 방법을 생각해보는 계기가 됨.':catId==='career'?'예: 관심 직업군 종사자의 강연을 통해 실제 업무 환경을 이해하고, 진로 방향에 대해 구체적으로 고민하는 계기가 됨.':'자세히 기록할수록 좋은 생기부가 만들어져요'} value={content} onChange={e=>setContent(e.target.value)} style={{resize:'none',lineHeight:1.6}}/></div>
-          <button type="submit" className="btn-pink" disabled={loading} style={{background:cat.grad}}>{loading?<Spin/>:'저장하기'}</button>
+          <button type="submit" className="btn-pink" disabled={loading} style={{background:cat.grad}}>{loading?<Spin/>:(editing?'수정 완료':'저장하기')}</button>
         </form>
       </div>
     </div>
@@ -1481,8 +1492,8 @@ function App() {
       <div className="no-scrollbar" style={{flex:1,overflowY:'auto',minHeight:0,background:phoneBg}}>
         {/* 학생 */}
         {isStudent&&view==='home'&&!catId&&<StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}} onBack={goBackToRole}/>}
-        {isStudent&&view==='cat'&&catId!=='subject'&&!writing&&<RecordList catId={catId} records={records} onBack={()=>{setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRecord}/>}
-        {isStudent&&view==='cat'&&catId!=='subject'&&writing&&<WriteForm catId={catId} onSave={saveRecord} onCancel={()=>setWriting(false)}/>}
+        {isStudent&&view==='cat'&&catId!=='subject'&&!writing&&<RecordList catId={catId} records={records} onBack={()=>{setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRecord} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
+        {isStudent&&view==='cat'&&catId!=='subject'&&writing&&<WriteForm catId={catId} editing={editing} onSave={editing?updateRecord:saveRecord} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
         {isStudent&&view==='cat'&&catId==='subject'&&!subject&&<SubjectList user={user} records={records} onSelect={s=>{setSubject(s);}} onBack={()=>{setCatId(null);setView('home');}}/>}
         {isStudent&&view==='cat'&&catId==='subject'&&subject&&!writing&&<SubjectRecords subject={subject} records={records} onBack={()=>setSubject(null)} onWrite={()=>setWriting(true)} onDelete={deleteRecord} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
         {isStudent&&view==='cat'&&catId==='subject'&&subject&&writing&&<SubjectForm subject={subject} editing={editing} onSave={editing?updateRecord:saveRecord} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
