@@ -606,7 +606,7 @@ function StudentHome({user, records, loading, onCat, onBack}) {
           </div>
         </div>
       </div>
-      <div style={{padding:'0 14px',marginTop:-16,position:'relative',display:'flex',flexDirection:'column',gap:10}}>
+      <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:10}}>
         {Object.values(CATS).map(cat=>{
           const count=records.filter(r=>r.categoryId===cat.id).length;
           return (
@@ -879,7 +879,7 @@ function TeacherHome({user, records, onSelectStudent, onViewReports, onBack}) {
           <p style={{fontSize:9,color:'rgba(255,255,255,0.4)',letterSpacing:'0.1em'}}>GWACHEON WOMANS HIGH SCHOOL</p>
         </div>
       </div>
-      <div style={{padding:'0 14px',marginTop:-16,display:'flex',flexDirection:'column',gap:10}}>
+      <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:10}}>
         <div onClick={onSelectStudent} className="active-btn card" style={{padding:'16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer'}}>
           <div style={{width:44,height:44,background:isHomeroom?'linear-gradient(135deg,#4db6ac,#26a69a)':'linear-gradient(135deg,#ffb74d,#f57c00)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>🎓</div>
           <div>
