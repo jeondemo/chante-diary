@@ -681,10 +681,11 @@ function WriteForm({catId,onSave,onCancel}){
 }
 
 /* ── 교과활동 과목 목록 ── */
-function SubjectList({user,onSelect,onBack}){
+function SubjectList({user,onSelect,onBack,records}){
   const [subjects,setSubjects]=useState([]), [loading,setLoading]=useState(true);
   useEffect(()=>{ const cls=String(user.studentId||'').slice(0,2); callAPI({action:'getSubjectsByClass',classCode:cls}).then(r=>{setSubjects(r.subjects||[]);setLoading(false);}).catch(()=>setLoading(false)); },[]);
   const colors=['#f48fb1','#ce93d8','#90caf9','#80cbc4','#ffcc80','#a5d6a7'];
+  const getCount=(subjectName)=>(records||[]).filter(r=>r.categoryId==='subject'&&String(r.subject||r.title||'')===subjectName).length;
   return(
     <div style={{paddingBottom:20}}>
       <div style={{background:'linear-gradient(135deg,#7986cb,#5c6bc0)',padding:'20px 16px 30px'}}>
@@ -692,16 +693,27 @@ function SubjectList({user,onSelect,onBack}){
         <h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>교과활동</h2>
         <p style={{fontSize:12,color:'rgba(255,255,255,0.8)',margin:'4px 0 0'}}>과목을 선택하세요</p>
       </div>
-      <div style={{padding:'0 14px',marginTop:-12,display:'flex',flexDirection:'column',gap:8}}>
+      <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:8}}>
         {loading&&<div className="card" style={{padding:20,textAlign:'center',color:'#ccc'}}>불러오는 중...</div>}
         {!loading&&subjects.length===0&&<div className="card" style={{padding:20,textAlign:'center',color:'#ccc'}}>등록된 과목이 없습니다</div>}
-        {subjects.map((s,i)=>{ const bc=colors[i%colors.length]; return(
-          <button key={i} onClick={()=>onSelect(s)} className="active-btn card" style={{padding:'11px 14px',display:'flex',alignItems:'center',gap:12,border:`1.5px solid ${bc}`,textAlign:'left',cursor:'pointer',width:'100%'}}>
-            <div style={{width:34,height:34,background:bc,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,flexShrink:0}}>📖</div>
-            <p style={{flex:1,fontSize:14,fontWeight:800,color:'#1a1a2e',margin:0}}>{s.subject} <span style={{fontSize:12,fontWeight:500,color:'#bbb'}}>· {s.teacher} 선생님</span></p>
-            <svg width="13" height="13" fill="none" stroke={bc} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
-          </button>
-        );})}
+        {subjects.map((s,i)=>{
+          const bc=colors[i%colors.length];
+          const cnt=getCount(s.subject);
+          return(
+            <button key={i} onClick={()=>onSelect(s)} className="active-btn card" style={{padding:'12px 14px',display:'flex',alignItems:'center',gap:12,border:`1.5px solid ${bc}`,textAlign:'left',cursor:'pointer',width:'100%'}}>
+              <div style={{width:36,height:36,background:bc,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,flexShrink:0}}>📖</div>
+              <div style={{flex:1,minWidth:0}}>
+                <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 2px'}}>{s.subject}</p>
+                <p style={{fontSize:11,color:'#bbb',margin:0,fontWeight:500}}>{s.teacher} 선생님</p>
+              </div>
+              {cnt>0
+                ? <span style={{fontSize:11,fontWeight:700,background:bc+'33',color:bc.replace('#','').length===6?bc:'#666',padding:'3px 9px',borderRadius:20,flexShrink:0,whiteSpace:'nowrap'}}>{cnt}개 입력</span>
+                : <span style={{fontSize:11,fontWeight:600,color:'#ddd',padding:'3px 9px',borderRadius:20,flexShrink:0,whiteSpace:'nowrap',border:'1px solid #eee'}}>미입력</span>
+              }
+              <svg width="13" height="13" fill="none" stroke={bc} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -1471,7 +1483,7 @@ function App() {
         {isStudent&&view==='home'&&!catId&&<StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}} onBack={goBackToRole}/>}
         {isStudent&&view==='cat'&&catId!=='subject'&&!writing&&<RecordList catId={catId} records={records} onBack={()=>{setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRecord}/>}
         {isStudent&&view==='cat'&&catId!=='subject'&&writing&&<WriteForm catId={catId} onSave={saveRecord} onCancel={()=>setWriting(false)}/>}
-        {isStudent&&view==='cat'&&catId==='subject'&&!subject&&<SubjectList user={user} onSelect={s=>{setSubject(s);}} onBack={()=>{setCatId(null);setView('home');}}/>}
+        {isStudent&&view==='cat'&&catId==='subject'&&!subject&&<SubjectList user={user} records={records} onSelect={s=>{setSubject(s);}} onBack={()=>{setCatId(null);setView('home');}}/>}
         {isStudent&&view==='cat'&&catId==='subject'&&subject&&!writing&&<SubjectRecords subject={subject} records={records} onBack={()=>setSubject(null)} onWrite={()=>setWriting(true)} onDelete={deleteRecord} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
         {isStudent&&view==='cat'&&catId==='subject'&&subject&&writing&&<SubjectForm subject={subject} editing={editing} onSave={editing?updateRecord:saveRecord} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
 
