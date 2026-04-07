@@ -907,7 +907,12 @@ function App(){
   const isStudent=user.role==='student';
   const isSubjectTeacher=user.role==='subject';
 
-  const isDesktop = typeof window !== 'undefined' && window.innerWidth > 500;
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 500);
+  useEffect(()=>{
+    const handler=()=>setIsDesktop(window.innerWidth>500);
+    window.addEventListener('resize',handler);
+    return()=>window.removeEventListener('resize',handler);
+  },[]);
   return(
     <div style={{maxWidth:430,margin:isDesktop?'5vh auto':0,background:'white',minHeight:isDesktop?'90vh':'100dvh',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden',boxShadow:isDesktop?'0 30px 80px rgba(206,147,216,0.4)':'none',borderRadius:isDesktop?44:0}}>
       {/* 헤더 */}
