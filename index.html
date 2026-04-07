@@ -28,6 +28,16 @@ body{font-family:'Apple SD Gothic Neo',-apple-system,sans-serif;margin:0;padding
 .chip-blue{background:#e8eaf6;color:#3949ab;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px}
 .chip-teal{background:#e0f2f1;color:#00695c;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px}
 .active-btn:active{transform:scale(.97)}
+@keyframes cameleon{
+  0%{border-color:#f48fb1;box-shadow:0 4px 20px rgba(244,143,177,0.2)}
+  16%{border-color:#ce93d8;box-shadow:0 4px 20px rgba(206,147,216,0.2)}
+  33%{border-color:#90caf9;box-shadow:0 4px 20px rgba(144,202,249,0.2)}
+  50%{border-color:#80cbc4;box-shadow:0 4px 20px rgba(128,203,196,0.2)}
+  66%{border-color:#a5d6a7;box-shadow:0 4px 20px rgba(165,214,167,0.2)}
+  83%{border-color:#ffcc80;box-shadow:0 4px 20px rgba(255,204,128,0.2)}
+  100%{border-color:#f48fb1;box-shadow:0 4px 20px rgba(244,143,177,0.2)}
+}
+.cameleon-card{border:2px solid #f48fb1;animation:cameleon 6s ease-in-out infinite}
 </style>
 </head>
 <body style="background:linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%); min-height:100vh; display:flex; justify-content:center; align-items:flex-start;">
@@ -684,29 +694,59 @@ function ReportList({user,onBack}){
 /* ── 교과목교사 홈 ── */
 function SubjectTeacherHome({user,onSelectSubject}){
   const assigns=JSON.parse(user.assignments||'[]');
+  const totalClasses=assigns.reduce((s,a)=>s+a.classes.length,0);
+  const iconColors=[
+    {bg:'linear-gradient(135deg,#fce4ec,#f48fb1)',badge:'#fce4ec',badgeText:'#c2185b'},
+    {bg:'linear-gradient(135deg,#ede9fe,#a78bfa)',badge:'#ede9fe',badgeText:'#6d28d9'},
+    {bg:'linear-gradient(135deg,#e0f2fe,#7dd3fc)',badge:'#e0f2fe',badgeText:'#0369a1'},
+    {bg:'linear-gradient(135deg,#e8f5e9,#81c784)',badge:'#e8f5e9',badgeText:'#2e7d32'},
+    {bg:'linear-gradient(135deg,#fff8e1,#ffd54f)',badge:'#fff8e1',badgeText:'#e65100'},
+  ];
   return(
-    <div style={{paddingBottom:20}}>
-      <div style={{background:'linear-gradient(135deg,#7e57c2,#5c6bc0)',padding:'22px 20px 34px',position:'relative',overflow:'hidden'}}>
-        <div style={{position:'absolute',top:-30,right:-30,width:90,height:90,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
-        <p style={{fontSize:10,color:'rgba(255,255,255,0.8)',fontWeight:600,letterSpacing:'0.14em',margin:'0 0 6px'}}>GWACHEON WOMANS HIGH SCHOOL</p>
-        <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 8px'}}>{user.name} 선생님</p>
-        <div style={{display:'inline-flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.15)',borderRadius:20,padding:'4px 12px'}}>
-          <div style={{width:6,height:6,background:'#69f0ae',borderRadius:'50%'}}/>
-          <span style={{fontSize:10,color:'rgba(255,255,255,0.8)',fontWeight:700}}>교과목교사</span>
+    <div style={{background:'#f8f5ff',minHeight:'100%'}}>
+      {/* 퍼플 그라데이션 헤더 */}
+      <div style={{background:'linear-gradient(135deg,#7c3aed,#a855f7,#ec4899)',padding:'30px 20px 50px',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',top:-20,right:-20,width:100,height:100,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
+        <div style={{position:'absolute',bottom:-40,right:30,width:130,height:130,background:'rgba(255,255,255,0.07)',borderRadius:'50%'}}/>
+        <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',fontWeight:600,letterSpacing:'0.15em',margin:'0 0 8px'}}>교과목교사</p>
+        <p style={{fontSize:28,fontWeight:900,color:'white',letterSpacing:'-0.5px',margin:'0 0 4px'}}>{user.name} 선생님 ✨</p>
+        <p style={{fontSize:11,color:'rgba(255,255,255,0.75)',margin:0}}>GWACHEON WOMANS HIGH SCHOOL</p>
+      </div>
+      {/* 플로팅 스탯 카드 */}
+      <div style={{margin:'-22px 16px 0',background:'white',borderRadius:20,boxShadow:'0 8px 30px rgba(124,58,237,0.12)',padding:'16px',display:'flex',position:'relative',zIndex:1}}>
+        <div style={{flex:1,textAlign:'center'}}>
+          <p style={{fontSize:20,fontWeight:900,color:'#7c3aed',margin:0}}>{assigns.length}</p>
+          <p style={{fontSize:10,color:'#bbb',marginTop:2,fontWeight:600}}>담당 과목</p>
+        </div>
+        <div style={{width:1,background:'#f0f0f0'}}/>
+        <div style={{flex:1,textAlign:'center'}}>
+          <p style={{fontSize:20,fontWeight:900,color:'#ec4899',margin:0}}>{totalClasses}</p>
+          <p style={{fontSize:10,color:'#bbb',marginTop:2,fontWeight:600}}>담당 학급</p>
+        </div>
+        <div style={{width:1,background:'#f0f0f0'}}/>
+        <div style={{flex:1,textAlign:'center'}}>
+          <p style={{fontSize:20,fontWeight:900,color:'#06b6d4',margin:0}}>📖</p>
+          <p style={{fontSize:10,color:'#bbb',marginTop:2,fontWeight:600}}>교과목교사</p>
         </div>
       </div>
-      <div style={{padding:'0 14px',marginTop:-16,display:'flex',flexDirection:'column',gap:10}}>
-        <p style={{fontSize:11,color:'#bbb',fontWeight:700,margin:'4px 0 0',paddingLeft:2}}>담당 과목</p>
-        {assigns.map((a,i)=>(
-          <div key={i} onClick={()=>onSelectSubject(a)} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer',borderLeft:'3px solid #ce93d8'}}>
-            <div style={{width:42,height:42,background:'linear-gradient(135deg,#ba68c8,#9c27b0)',borderRadius:13,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>📖</div>
-            <div style={{flex:1}}>
-              <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 2px'}}>{a.subject}</p>
-              <p style={{fontSize:11,color:'#aaa',margin:0}}>{a.classes.length}개 학급</p>
+      {/* 과목 목록 */}
+      <div style={{padding:'20px 16px'}}>
+        <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 14px'}}>담당 과목</p>
+        {assigns.map((a,i)=>{
+          const ic=iconColors[i%iconColors.length];
+          return(
+            <div key={i} onClick={()=>onSelectSubject(a)}
+              className="cameleon-card active-btn"
+              style={{background:'white',borderRadius:20,padding:'11px 14px',display:'flex',alignItems:'center',gap:14,cursor:'pointer',marginBottom:10,animationDelay:`${i*1.5}s`}}>
+              <div style={{width:40,height:40,background:ic.bg,borderRadius:13,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>📖</div>
+              <div style={{flex:1}}>
+                <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 2px'}}>{a.subject}</p>
+                <p style={{fontSize:11,color:'#bbb',margin:0}}>{a.classes.length}개 학급</p>
+              </div>
+              <span style={{background:ic.badge,color:ic.badgeText,fontSize:10,fontWeight:800,padding:'3px 10px',borderRadius:20,whiteSpace:'nowrap'}}>{a.classes.length}개 학급</span>
             </div>
-            <Arr/>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
