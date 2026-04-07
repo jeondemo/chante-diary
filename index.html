@@ -35,7 +35,6 @@ body{font-family:'Apple SD Gothic Neo',-apple-system,sans-serif;margin:0;padding
 <script type="text/babel">
 const {useState,useEffect,useCallback} = React;
 
-const GEMINI_KEY = '';
 
 const CATS = {
   career:{id:'career',label:'진로활동',desc:'꿈과 진로 탐색 기록',grad:'linear-gradient(135deg,#ff8a65,#ef5350)',chip:'chip-pink',chipText:'#c2185b',chipBg:'#fce4ec'},
@@ -49,7 +48,6 @@ const ROLES = {
   subject:{id:'subject',label:'교과목교사',emoji:'📚',desc:'교과활동 조회'}
 };
 const CLASS_COUNT = {'1':5,'2':5,'3':6};
-const GEMINI_API_KEY = 'AIzaSyCWg980h4rgqPcxkxwBDgHb8sYb4ufoaIs';
     const AI_RULES = '당신은 고등학교 교사입니다. 학교생활기록부를 작성하세요. 규칙:1)1400~1500바이트 2)개조식(~함,~보임) 3)교사관찰 3인칭 4)순수한글 5)경시대회·지역명·학교명금지 6)자연스럽게 7)학생은으로시작금지\n[기록]\n';
 
 function adjustBytes(text, max=1500) {
