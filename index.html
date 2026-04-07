@@ -786,7 +786,7 @@ function SubjectClassList({assignment,records,onSelect,onBack}){
       <div style={{padding:'0 14px',marginTop:-20,position:'relative',zIndex:1,display:'flex',flexDirection:'column',gap:9}}>
         {assignment.classes.map((cls,i)=>{
           const g=cls[0], c=cls[1];
-          const cnt=records.filter(r=>r.categoryId==='subject'&&String(r.studentId).startsWith(cls)).length;
+          const cnt=records.filter(r=>r.categoryId==='subject'&&String(r.subject||r.title||'')===assignment.subject&&String(r.studentId).startsWith(cls)).length;
           const hasRec=cnt>0;
           const ci=i%clsColors.length;
           return hasRec?(
