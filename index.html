@@ -247,7 +247,7 @@ function SubjectRegister({onDone,onBack}){
   };
 
   return(
-    <div style={{minHeight:'100dvh',background:'linear-gradient(160deg,#fce4ec,#f3e5f5,#e8eaf6)',padding:'20px',overflowY:'auto'}}>
+    <div style={{flex:1,background:'linear-gradient(160deg,#fce4ec,#f3e5f5,#e8eaf6)',padding:'20px',overflowY:'auto'}}>
       <div className="card fade-up" style={{maxWidth:380,margin:'0 auto',padding:24}}>
         <button onClick={onBack} style={{background:'none',border:'none',color:'#999',cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4,fontSize:13}}><Back/>돌아가기</button>
         <h2 style={{fontSize:18,fontWeight:900,color:'#1a1a2e',margin:'0 0 20px'}}>📚 교과목교사 등록</h2>
@@ -947,7 +947,7 @@ function App(){
       </div>
 
       {/* 메인 콘텐츠 */}
-      <div className="no-scrollbar" style={{flex:1,overflowY:'auto'}}>
+      <div className="no-scrollbar" style={{flex:1,overflowY:'auto',minHeight:0}}>
         {/* 학생 화면 */}
         {isStudent&&view==='home'&&!catId&&<StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}}/>}
         {isStudent&&view==='cat'&&catId!=='subject'&&!writing&&<RecordList catId={catId} records={records} onBack={()=>{setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRecord}/>}
