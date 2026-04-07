@@ -857,6 +857,13 @@ function App(){
   const [selStudent,setSelStudent]=useState(null);
   const [selAssignment,setSelAssignment]=useState(null);
   const [selClass,setSelClass]=useState(null);
+  const [isDesktop,setIsDesktop]=useState(window.innerWidth>500);
+
+  useEffect(()=>{
+    const handler=()=>setIsDesktop(window.innerWidth>500);
+    window.addEventListener('resize',handler);
+    return()=>window.removeEventListener('resize',handler);
+  },[]);
 
   const fetchRecords=useCallback(async(u)=>{
     if(!u) return;
@@ -930,12 +937,7 @@ function App(){
   const isStudent=user.role==='student';
   const isSubjectTeacher=user.role==='subject';
 
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 500);
-  useEffect(()=>{
-    const handler=()=>setIsDesktop(window.innerWidth>500);
-    window.addEventListener('resize',handler);
-    return()=>window.removeEventListener('resize',handler);
-  },[]);
+
   return(
     <div style={containerStyle}>
       {/* 헤더 */}
