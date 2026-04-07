@@ -734,16 +734,22 @@ function SubjectTeacherHome({user,onSelectSubject}){
         <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 14px'}}>담당 과목</p>
         {assigns.map((a,i)=>{
           const ic=iconColors[i%iconColors.length];
+          const grade=a.classes.length>0?a.classes[0][0]+'학년':'';
+          const clsNums=a.classes.map(c=>c.slice(1)+'반').join(', ');
+          const clsLabel=grade+' '+clsNums;
           return(
             <div key={i} onClick={()=>onSelectSubject(a)}
               className="cameleon-card active-btn"
-              style={{background:'white',borderRadius:20,padding:'11px 14px',display:'flex',alignItems:'center',gap:14,cursor:'pointer',marginBottom:10,animationDelay:`${i*1.5}s`}}>
-              <div style={{width:40,height:40,background:ic.bg,borderRadius:13,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>📖</div>
-              <div style={{flex:1}}>
-                <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 2px'}}>{a.subject}</p>
-                <p style={{fontSize:11,color:'#bbb',margin:0}}>{a.classes.length}개 학급</p>
+              style={{background:'white',borderRadius:20,padding:'12px 14px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,animationDelay:`${i*1.5}s`}}>
+              <div style={{width:38,height:38,background:ic.bg,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',fontSize:17,flexShrink:0}}>📖</div>
+              <div style={{flex:1,minWidth:0,overflow:'hidden'}}>
+                <div style={{display:'flex',alignItems:'baseline',gap:7,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                  <p style={{fontSize:14,fontWeight:900,color:'#1a1a2e',margin:0,flexShrink:0}}>{a.subject}</p>
+                  <p style={{fontSize:11,color:'#888',margin:0,overflow:'hidden',textOverflow:'ellipsis',fontWeight:600}}>{clsLabel}</p>
+                </div>
               </div>
-              <span style={{background:ic.badge,color:ic.badgeText,fontSize:10,fontWeight:800,padding:'3px 10px',borderRadius:20,whiteSpace:'nowrap'}}>{a.classes.length}개 학급</span>
+              <span style={{background:ic.badge,color:ic.badgeText,fontSize:11,fontWeight:900,padding:'4px 10px',borderRadius:20,whiteSpace:'nowrap',flexShrink:0}}>{a.classes.length}개학급</span>
+              <svg width="13" height="13" fill="none" stroke="#ddd" viewBox="0 0 24 24" style={{flexShrink:0}}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
             </div>
           );
         })}
