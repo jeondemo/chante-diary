@@ -523,19 +523,19 @@ function SubjectForm({subject,editing,onSave,onCancel}){
 /* ── AI 생기부 (담임/진로) ── */
 function AIReport({student,onBack}){
   const [recs,setRecs]=useState([]), [loading,setLoading]=useState(true);
-  const [sel,setSel]=useState(new Set()), [result,setResult]=useState(''), [generating,setGenerating]=useState(false), [saving,setSaving]=useState(false);
+  const [sel,setSel]=useState(new Set()), [result,setResult]=useState(''), [generating,setGenerating]=useState(false), [saving,setSaving]=useState(false), [errMsg,setErrMsg]=useState('');
   useEffect(()=>{
     callAPI({action:'getRecords',studentId:student.id}).then(r=>{setRecs(r.records||[]);setLoading(false);}).catch(()=>setLoading(false));
   },[]);
   const generate=async()=>{
     if(!sel.size) return alert('기록을 선택하세요!');
-    setGenerating(true); setResult('');
+    setGenerating(true); setResult(''); setErrMsg('');
     const text=recs.filter(r=>sel.has(r.id)).map(r=>r.categoryId==='subject'?`[${r.subject}]${r.unit} 탐구:${r.inquiry} 배움:${r.learned} 느낌:${r.reflection}`:`[${r.categoryId==='career'?'진로':'창체'}]${r.title}: ${r.content}`).join('\n');
     try{
       const res=await callAPI({action:'generateAI',text:AI_RULES+text+'\n\n1400~1500바이트로 작성하세요.'});
       if(res.success) setResult(adjustBytes(res.content||''));
-      else alert('AI 오류: '+(res.message||'실패'));
-    }catch(e){alert('서버 오류: '+e.message);}
+      else setErrMsg(res.message||'AI 생성 실패');
+    }catch(e){setErrMsg('서버 오류: '+e.message);}
     setGenerating(false);
   };
   const save=async()=>{
@@ -574,6 +574,7 @@ function AIReport({student,onBack}){
             {generating?<Spin/>:'AI 생성'}
           </button>
         </div>
+        {errMsg&&<div style={{background:'#fce4ec',borderRadius:12,padding:'10px 14px',marginBottom:8,fontSize:12,color:'#c2185b',fontWeight:700}}>❌ {errMsg}</div>}
         {loading&&<p style={{color:'#ccc',textAlign:'center'}}>불러오는 중...</p>}
         {recs.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(r=>(
           <div key={r.id} onClick={()=>{const s=new Set(sel);s.has(r.id)?s.delete(r.id):s.add(r.id);setSel(s);}} className="card" style={{padding:'12px 14px',marginBottom:8,cursor:'pointer',border:sel.has(r.id)?'2px solid #f48fb1':'2px solid transparent',opacity:sel.has(r.id)?1:0.65}}>
@@ -853,7 +854,7 @@ function SubjectStudentDetail({student,records,onBack}){
     try{
       const res=await callAPI({action:'generateAI',text:AI_RULES+text+'\n\n1400~1500바이트로 작성하세요.'});
       if(res.success) setResult(adjustBytes(res.content||''));
-      else alert('AI 오류: '+(res.message||'실패'));
+      else {setResult(''); alert('❌ '+( res.message||'AI 생성 실패'));}
     }catch(e){alert('서버 오류: '+e.message);}
     setGenerating(false);
   };
