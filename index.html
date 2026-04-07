@@ -45,7 +45,6 @@ body{font-family:'Apple SD Gothic Neo',-apple-system,sans-serif;margin:0;padding
 <script type="text/babel">
 const {useState,useEffect,useCallback} = React;
 
-
 const CATS = {
   career:{id:'career',label:'진로활동',desc:'꿈과 진로 탐색 기록',grad:'linear-gradient(135deg,#ff8a65,#ef5350)',chip:'chip-pink',chipText:'#c2185b',chipBg:'#fce4ec'},
   subject:{id:'subject',label:'교과활동',desc:'수업 배움 세특 기록',grad:'linear-gradient(135deg,#7986cb,#5c6bc0)',chip:'chip-blue',chipText:'#3949ab',chipBg:'#e8eaf6'},
@@ -58,18 +57,58 @@ const ROLES = {
   subject:{id:'subject',label:'교과목교사',emoji:'📚',desc:'교과활동 조회'}
 };
 const CLASS_COUNT = {'1':5,'2':5,'3':6};
-    const AI_RULES = '당신은 고등학교 교사입니다. 학교생활기록부를 작성하세요. 규칙:1)1400~1500바이트 2)개조식(~함,~보임) 3)교사관찰 3인칭 4)순수한글 5)경시대회·지역명·학교명금지 6)자연스럽게 7)학생은으로시작금지\n[기록]\n';
 
-function adjustBytes(text, max=1500) {
+/* ── 안전한 바이트 조정 함수 (무한루프 방지) ── */
+function adjustToByteRange(text, min=1400, max=1500) {
   const enc = new TextEncoder();
-  let r = text.trim().replace(/^(이\s*)?학생은\s*/,'').replace(/^해당\s*학생은\s*/,'');
-  while(enc.encode(r).length > max) {
+  if (!text || typeof text !== 'string') return text || '';
+  
+  let r = text.trim()
+    .replace(/^(이\s*)?학생은\s*/, '')
+    .replace(/^해당\s*학생은\s*/, '');
+  
+  let bytes = enc.encode(r).length;
+  
+  // 이미 범위 안이면 바로 반환
+  if (bytes >= min && bytes <= max) return r;
+  
+  // 너무 길면 줄이기 (최대 200회 시도)
+  if (bytes > max) {
     const ends = ['함.','임.','음.','됨.','보임.','나타냄.'];
-    let last = -1;
-    for(const e of ends){const i=r.lastIndexOf(e);if(i>last)last=i;}
-    if(last>0) r=r.slice(0,last+2).trim();
-    else r=r.slice(0,-3).trim();
+    let attempts = 0;
+    const maxAttempts = 200;
+    
+    while (enc.encode(r).length > max && attempts < maxAttempts) {
+      attempts++;
+      
+      // 너무 짧아지면 강제 종료
+      if (r.length < 10) break;
+      
+      // 마지막 문장 종결 패턴 찾기
+      let lastPos = -1;
+      for (const e of ends) {
+        const idx = r.lastIndexOf(e);
+        if (idx > lastPos && idx < r.length - e.length) lastPos = idx;
+      }
+      
+      if (lastPos > 0) {
+        // 종결 패턴 뒤에서 자르기
+        const endPattern = ends.find(e => r.indexOf(e, lastPos) === lastPos);
+        r = r.slice(0, lastPos + (endPattern ? endPattern.length : 2)).trim();
+      } else {
+        // 종결 패턴이 없으면 마지막 마침표에서 자르기
+        const lastDot = r.lastIndexOf('.');
+        if (lastDot > r.length * 0.5) {
+          r = r.slice(0, lastDot + 1).trim();
+        } else {
+          // 최후의 수단: 뒤에서 20바이트씩 제거
+          const chars = Math.ceil(20 / 3); // 한글 ~3바이트
+          r = r.slice(0, -chars).trim();
+        }
+      }
+    }
   }
+  
   return r;
 }
 
@@ -81,7 +120,14 @@ function callAPI(payload) {
     redirect: 'follow',
     headers: {'Content-Type': 'text/plain;charset=utf-8'},
     body: JSON.stringify(payload)
-  }).then(r=>r.json());
+  }).then(r => {
+    if (!r.ok) {
+      return r.text().then(t => {
+        throw new Error('HTTP ' + r.status + ': ' + t.substring(0, 100));
+      });
+    }
+    return r.json();
+  });
 }
 
 const Spin = ()=><svg className="animate-spin h-5 w-5 text-white inline" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>;
@@ -98,7 +144,6 @@ function RoleScreen({onSelect}){
   ];
   return(
     <div style={{flex:1,display:'flex',flexDirection:'column',background:'linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%)',overflowY:'auto'}}>
-      {/* 헤더 */}
       <div style={{background:'linear-gradient(145deg,#f48fb1 0%,#ce93d8 55%,#b39ddb 100%)',padding:'28px 20px 44px',textAlign:'center',position:'relative',overflow:'hidden',flexShrink:0}}>
         <div style={{position:'absolute',top:-24,right:-24,width:90,height:90,background:'rgba(255,255,255,0.15)',borderRadius:'50%'}}/>
         <div style={{position:'absolute',bottom:-40,left:-16,width:110,height:110,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
@@ -112,7 +157,6 @@ function RoleScreen({onSelect}){
           <p style={{fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.95)',margin:0,letterSpacing:'0.18em'}}>TOGETHER</p>
         </div>
       </div>
-      {/* 카드 */}
       <div style={{flex:1,marginTop:-22,borderRadius:'24px 24px 0 0',padding:'22px 14px 16px',position:'relative',zIndex:1,background:'linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%)'}}>
         <p style={{fontSize:11,color:'rgba(150,100,170,0.7)',fontWeight:700,textAlign:'center',letterSpacing:'0.12em',margin:'0 0 12px'}}>역할을 선택해 주세요</p>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9}}>
@@ -532,9 +576,13 @@ function AIReport({student,onBack}){
     setGenerating(true); setResult(''); setErrMsg('');
     const text=recs.filter(r=>sel.has(r.id)).map(r=>r.categoryId==='subject'?`[${r.subject}]${r.unit} 탐구:${r.inquiry} 배움:${r.learned} 느낌:${r.reflection}`:`[${r.categoryId==='career'?'진로':'창체'}]${r.title}: ${r.content}`).join('\n');
     try{
-      const res=await callAPI({action:'generateAI',text:AI_RULES+text+'\n\n1400~1500바이트로 작성하세요.'});
-      if(res.success) setResult(adjustBytes(res.content||''));
-      else setErrMsg(res.message||'AI 생성 실패');
+      /* 규칙은 GAS에서 추가하므로, 기록 데이터만 전송 */
+      const res=await callAPI({action:'generateAI',text:text});
+      if(res.success) {
+        setResult(adjustToByteRange(res.content||''));
+      } else {
+        setErrMsg(res.message||'AI 생성 실패');
+      }
     }catch(e){setErrMsg('서버 오류: '+e.message);}
     setGenerating(false);
   };
@@ -574,7 +622,7 @@ function AIReport({student,onBack}){
             {generating?<Spin/>:'AI 생성'}
           </button>
         </div>
-        {errMsg&&<div style={{background:'#fce4ec',borderRadius:12,padding:'10px 14px',marginBottom:8,fontSize:12,color:'#c2185b',fontWeight:700}}>❌ {errMsg}</div>}
+        {errMsg&&<div style={{background:'#fce4ec',borderRadius:12,padding:'10px 14px',marginBottom:8,fontSize:12,color:'#c2185b',fontWeight:700,lineHeight:1.5}}>❌ {errMsg}</div>}
         {loading&&<p style={{color:'#ccc',textAlign:'center'}}>불러오는 중...</p>}
         {recs.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(r=>(
           <div key={r.id} onClick={()=>{const s=new Set(sel);s.has(r.id)?s.delete(r.id):s.add(r.id);setSel(s);}} className="card" style={{padding:'12px 14px',marginBottom:8,cursor:'pointer',border:sel.has(r.id)?'2px solid #f48fb1':'2px solid transparent',opacity:sel.has(r.id)?1:0.65}}>
@@ -706,7 +754,6 @@ function SubjectTeacherHome({user,onSelectSubject}){
   ];
   return(
     <div style={{background:'#f8f5ff',minHeight:'100%'}}>
-      {/* 퍼플 그라데이션 헤더 */}
       <div style={{background:'linear-gradient(135deg,#7c3aed,#a855f7,#ec4899)',padding:'30px 20px 50px',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:-20,right:-20,width:100,height:100,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
         <div style={{position:'absolute',bottom:-40,right:30,width:130,height:130,background:'rgba(255,255,255,0.07)',borderRadius:'50%'}}/>
@@ -714,7 +761,6 @@ function SubjectTeacherHome({user,onSelectSubject}){
         <p style={{fontSize:28,fontWeight:900,color:'white',letterSpacing:'-0.5px',margin:'0 0 4px'}}>{user.name} 선생님 ✨</p>
         <p style={{fontSize:11,color:'rgba(255,255,255,0.75)',margin:0}}>GWACHEON WOMANS HIGH SCHOOL</p>
       </div>
-      {/* 플로팅 스탯 카드 */}
       <div style={{margin:'-22px 16px 0',background:'white',borderRadius:20,boxShadow:'0 8px 30px rgba(124,58,237,0.12)',padding:'16px',display:'flex',position:'relative',zIndex:1}}>
         <div style={{flex:1,textAlign:'center'}}>
           <p style={{fontSize:20,fontWeight:900,color:'#7c3aed',margin:0}}>{assigns.length}</p>
@@ -731,7 +777,6 @@ function SubjectTeacherHome({user,onSelectSubject}){
           <p style={{fontSize:10,color:'#bbb',marginTop:2,fontWeight:600}}>교과목교사</p>
         </div>
       </div>
-      {/* 과목 목록 */}
       <div style={{padding:'20px 16px'}}>
         <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 14px'}}>담당 과목</p>
         {assigns.map((a,i)=>{
@@ -844,20 +889,29 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onBack}){
   );
 }
 
-/* ── 교과목교사 학생 상세 + AI ── */
+/* ── 교과목교사 학생 상세 + AI (핵심 수정) ── */
 function SubjectStudentDetail({student,records,onBack}){
   const recs=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===student.subject&&String(r.studentId)===String(student.id)).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const [showAI,setShowAI]=useState(false), [result,setResult]=useState(''), [generating,setGenerating]=useState(false), [copied,setCopied]=useState(false), [saving,setSaving]=useState(false);
+  const [errMsg,setErrMsg]=useState('');
+
   const generate=async()=>{
-    setGenerating(true); setResult('');
+    setGenerating(true); setResult(''); setErrMsg('');
+    /* 규칙은 GAS에서 추가하므로, 기록 데이터만 전송 */
     const text=recs.map(r=>`[${r.subject}]단원:${r.unit||''} 탐구:${r.inquiry||''} 배움:${r.learned||''} 느낌:${r.reflection||''}`).join('\n');
     try{
-      const res=await callAPI({action:'generateAI',text:AI_RULES+text+'\n\n1400~1500바이트로 작성하세요.'});
-      if(res.success) setResult(adjustBytes(res.content||''));
-      else {setResult(''); alert('❌ '+( res.message||'AI 생성 실패'));}
-    }catch(e){alert('서버 오류: '+e.message);}
+      const res=await callAPI({action:'generateAI',text:text});
+      if(res.success && res.content) {
+        setResult(adjustToByteRange(res.content));
+      } else {
+        setErrMsg(res.message || 'AI 생성 실패: 응답 내용 없음');
+      }
+    }catch(e){
+      setErrMsg('서버 통신 오류: ' + (e.message || String(e)));
+    }
     setGenerating(false);
   };
+
   const copy=()=>{navigator.clipboard.writeText(result);setCopied(true);setTimeout(()=>setCopied(false),2000);};
   const save=async()=>{
     if(!result) return;
@@ -883,10 +937,18 @@ function SubjectStudentDetail({student,records,onBack}){
           <div style={{background:'#e8f5e9',borderRadius:16,padding:16,border:'2px solid #4db6ac'}}>
             <div style={{display:'flex',justifyContent:'space-between',marginBottom:12}}>
               <p style={{fontSize:14,fontWeight:800,color:'#1b5e20',margin:0}}>✨ AI 생기부</p>
-              <button onClick={()=>{setShowAI(false);setResult('');}} style={{background:'none',border:'none',color:'#aaa',cursor:'pointer',fontSize:12}}>닫기</button>
+              <button onClick={()=>{setShowAI(false);setResult('');setErrMsg('');}} style={{background:'none',border:'none',color:'#aaa',cursor:'pointer',fontSize:12}}>닫기</button>
             </div>
+
+            {/* 에러 메시지 표시 영역 */}
+            {errMsg&&(
+              <div style={{background:'#fce4ec',borderRadius:12,padding:'10px 14px',marginBottom:12,fontSize:12,color:'#c2185b',fontWeight:700,lineHeight:1.5,wordBreak:'break-all'}}>
+                ❌ {errMsg}
+              </div>
+            )}
+
             <button onClick={generate} disabled={generating} style={{width:'100%',background:'linear-gradient(135deg,#4db6ac,#26a69a)',color:'white',border:'none',borderRadius:10,padding:'10px',fontSize:13,fontWeight:800,cursor:'pointer',marginBottom:result?12:0}}>
-              {generating?<Spin/>:`${recs.length}건으로 생기부 작성`}
+              {generating?<><Spin/> AI 생성 중...</>:`${recs.length}건으로 생기부 작성`}
             </button>
             {result&&(
               <>
@@ -1012,10 +1074,8 @@ function App(){
   const isStudent=user.role==='student';
   const isSubjectTeacher=user.role==='subject';
 
-
   return(
     <div style={containerStyle}>
-      {/* 헤더 */}
       <div style={{background:'white',borderBottom:'1px solid #f8e8f0',padding:'0 20px',height:52,display:'flex',alignItems:'center',position:'sticky',top:0,zIndex:30,boxShadow:'0 1px 10px rgba(206,147,216,0.1)'}}>
         <h1 style={{flex:1,textAlign:'center',fontSize:15,fontWeight:900,color:'#1a1a2e',margin:0,letterSpacing:'-0.3px'}}>
           {isSubjectTeacher?'과천여자고등학교':'창체 다이어리'}
@@ -1023,9 +1083,7 @@ function App(){
         <button onClick={logout} style={{position:'absolute',right:16,background:'#fce4ec',border:'none',color:'#c2185b',fontSize:11,fontWeight:700,padding:'5px 11px',borderRadius:18,cursor:'pointer'}}>로그아웃</button>
       </div>
 
-      {/* 메인 콘텐츠 */}
       <div className="no-scrollbar" style={{flex:1,overflowY:'auto',minHeight:0}}>
-        {/* 학생 화면 */}
         {isStudent&&view==='home'&&!catId&&<StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}}/>}
         {isStudent&&view==='cat'&&catId!=='subject'&&!writing&&<RecordList catId={catId} records={records} onBack={()=>{setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRecord}/>}
         {isStudent&&view==='cat'&&catId!=='subject'&&writing&&<WriteForm catId={catId} onSave={saveRecord} onCancel={()=>setWriting(false)}/>}
@@ -1033,13 +1091,11 @@ function App(){
         {isStudent&&view==='cat'&&catId==='subject'&&subject&&!writing&&<SubjectRecords subject={subject} records={records} onBack={()=>setSubject(null)} onWrite={()=>setWriting(true)} onDelete={deleteRecord} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
         {isStudent&&view==='cat'&&catId==='subject'&&subject&&writing&&<SubjectForm subject={subject} editing={editing} onSave={editing?updateRecord:saveRecord} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
 
-        {/* 담임/진로 교사 */}
         {!isStudent&&!isSubjectTeacher&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')}/>}
         {!isStudent&&!isSubjectTeacher&&view==='students'&&!selStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onBack={()=>setView('home')}/>}
         {!isStudent&&!isSubjectTeacher&&view==='ai'&&selStudent&&<AIReport student={selStudent} onBack={()=>{setSelStudent(null);setView('students');}}/>}
         {!isStudent&&!isSubjectTeacher&&view==='reports'&&<ReportList user={user} onBack={()=>setView('home')}/>}
 
-        {/* 교과목교사 */}
         {isSubjectTeacher&&view==='home'&&!selAssignment&&<SubjectTeacherHome user={user} onSelectSubject={a=>{setSelAssignment(a);setView('classes');}}/>}
         {isSubjectTeacher&&view==='classes'&&selAssignment&&!selClass&&<SubjectClassList assignment={selAssignment} records={records} onSelect={cls=>{setSelClass(cls);setView('students');}} onBack={()=>{setSelAssignment(null);setView('home');}}/>}
         {isSubjectTeacher&&view==='students'&&selClass&&!selStudent&&<SubjectStudentList assignment={selAssignment} classCode={selClass} records={records} onSelect={s=>{setSelStudent(s);setView('detail');}} onBack={()=>{setSelClass(null);setView('classes');}}/>}
