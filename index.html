@@ -74,8 +74,23 @@ function adjustBytes(text, max=1500) {
 }
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwGWlTMoZh-3RUH4fPn_ibxuJht-bGcBww64XPOfrETc-0jD-GG91OJxLdgUjEE2p8Q/exec';
+const GEMINI_KEY = 'AIzaSyA0eyn5YxV_jWKgDrmxU_Wrb1WBrX0MuYE';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+GEMINI_KEY;
 
 function callAPI(payload) {
+  // AI 생성은 직접 Gemini 호출 (빠름)
+  if(payload.action==='generateAI') {
+    const prompt = payload.text;
+    return fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+    }).then(r=>r.json()).then(d=>{
+      if(d.candidates?.[0]) return {success:true, content:d.candidates[0].content.parts[0].text.trim()};
+      return {success:false, message:'AI 오류: '+(d.error?.message||'실패')};
+    });
+  }
+  // 나머지는 GAS 경유
   return fetch(GAS_URL, {
     method: 'POST',
     redirect: 'follow',
