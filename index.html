@@ -671,8 +671,8 @@ function WriteForm({catId,onSave,onCancel}){
         <h3 style={{fontSize:16,fontWeight:900,color:'#1a1a2e',margin:'0 0 16px'}}>{cat.label} 기록</h3>
         <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}>
           <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>날짜</p><input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>활동명</p><input className="input" type="text" placeholder="활동명을 입력하세요" value={title} onChange={e=>setTitle(e.target.value)}/></div>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>내용</p><textarea className="input" rows="5" placeholder="자세히 기록할수록 좋은 생기부가 만들어져요" value={content} onChange={e=>setContent(e.target.value)} style={{resize:'none',lineHeight:1.6}}/></div>
+          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>활동명</p><input className="input" type="text" placeholder={catId==='creative'?'예: 학교폭력예방교육, 환경보호교육, 진로체험':catId==='career'?'예: 직업인 특강, 진로 탐색 캠프, 모의면접':'활동명을 입력하세요'} value={title} onChange={e=>setTitle(e.target.value)}/></div>
+          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>내용</p><textarea className="input" rows="5" placeholder={catId==='creative'?'예: 학교폭력의 심각성을 인식하고 피해 학생을 돕는 방법을 배웠으며, 일상에서 실천할 수 있는 예방 방법을 생각해보는 계기가 됨.':catId==='career'?'예: 관심 직업군 종사자의 강연을 통해 실제 업무 환경을 이해하고, 진로 방향에 대해 구체적으로 고민하는 계기가 됨.':'자세히 기록할수록 좋은 생기부가 만들어져요'} value={content} onChange={e=>setContent(e.target.value)} style={{resize:'none',lineHeight:1.6}}/></div>
           <button type="submit" className="btn-pink" disabled={loading} style={{background:cat.grad}}>{loading?<Spin/>:'저장하기'}</button>
         </form>
       </div>
