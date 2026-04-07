@@ -237,35 +237,25 @@
 
     // ── 생기부 바이트 강제 조정 ───────────────────────────────────
     function adjustToByteRange(text, maxBytes = 1500) {
-        if (!text) return "";
         const encoder = new TextEncoder();
         let result = text.trim();
-        // 학생은... 패턴 제거
         result = result.replace(/^(이\s*)?학생은\s*/g, '').replace(/^해당\s*학생은\s*/g, '');
-        
-        // 무한 루프 절대 방지용 카운터 (최대 100회)
-        let safetyCounter = 0;
-        
-        while (encoder.encode(result).length > maxBytes && safetyCounter < 100) {
-            safetyCounter++;
-            
-            // 1. 현재 문자열보다 짧은 위치에서 마지막 마침표를 찾습니다.
-            // (끝에 있는 마침표는 무시하고 그 앞의 마침표를 찾아야 실제 길이가 줄어듭니다.)
-            const lastPeriod = result.lastIndexOf('.', result.length - 2);
-            
-            if (lastPeriod > 0) {
-                // 마침표가 있으면 거기까지 자릅니다.
-                result = result.slice(0, lastPeriod + 1).trim();
+        while (encoder.encode(result).length > maxBytes) {
+            const endings = ['함.', '임.', '음.', '됨.', '보임.', '나타냄.', '드러냄.', '보여줌.', '있음.'];
+            let lastIdx = -1;
+            for (const e of endings) {
+                const idx = result.lastIndexOf(e);
+                if (idx > lastIdx) lastIdx = idx;
+            }
+            if (lastIdx > 0) {
+                result = result.slice(0, lastIdx).trim();
             } else {
-                // 마침표가 없거나 하나뿐이면 뒤에서 10자씩 강제로 자릅니다.
-                result = result.slice(0, -10).trim();
+                result = result.slice(0, -3).trim();
             }
         }
-        
-        // 마지막이 마침표로 끝나지 않으면 마침표를 붙여줍니다.
-        if (result && !result.endsWith('.')) result += '.';
         return result;
     }
+
 
 
     function callAPI(payload) {
