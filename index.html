@@ -743,30 +743,85 @@ function SubjectRecords({subject,records,onBack,onWrite,onDelete,onEdit}){
 /* ── 교과활동 입력 폼 ── */
 function SubjectForm({subject,editing,onSave,onCancel}){
   const [date,setDate]=useState(editing?.date||new Date().toISOString().split('T')[0]);
-  const [unit,setUnit]=useState(editing?.unit||''), [inquiry,setInquiry]=useState(editing?.inquiry||'');
-  const [learned,setLearned]=useState(editing?.learned||''), [reflection,setReflection]=useState(editing?.reflection||'');
+  const [unit,setUnit]=useState(editing?.unit||'');
+  const [content,setContent]=useState(editing?.learned||editing?.reflection||'');
   const [loading,setLoading]=useState(false);
   const submit=async e=>{
-    e.preventDefault(); if(!unit||!learned) return alert('단원과 배운점은 필수입니다!'); setLoading(true);
-    await onSave(editing?{...editing,date,unit,inquiry,learned,reflection}:{categoryId:'subject',date,subject:subject.subject,unit,inquiry,learned,reflection});
+    e.preventDefault();
+    if(!unit||!content) return alert('단원/주제와 내용을 입력해주세요!');
+    setLoading(true);
+    await onSave(editing
+      ?{...editing,date,unit,inquiry:'',learned:content,reflection:''}
+      :{categoryId:'subject',date,subject:subject.subject,unit,inquiry:'',learned:content,reflection:''});
     setLoading(false);
   };
   return(
-    <div style={{padding:16,paddingBottom:30}}>
-      <button onClick={onCancel} style={{background:'none',border:'none',color:'#999',cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4,fontSize:13}}><Back/>목록으로</button>
-      <div className="card" style={{padding:20}}>
-        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
-          <span style={{background:'#e8eaf6',color:'#3949ab',padding:'4px 10px',borderRadius:8,fontSize:12,fontWeight:800}}>{subject.subject}</span>
-          <h3 style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:0}}>{editing?'수정':'기록하기'}</h3>
+    <div style={{background:'#eae6f4',minHeight:'100%',paddingBottom:30}}>
+      {/* 헤더 */}
+      <div style={{background:'linear-gradient(135deg,#5c6bc0,#7986cb)',padding:'22px 20px 36px',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'repeating-linear-gradient(135deg,rgba(255,255,255,0) 0px,rgba(255,255,255,0) 20px,rgba(255,255,255,0.025) 20px,rgba(255,255,255,0.025) 22px)',pointerEvents:'none'}}/>
+        <div style={{position:'absolute',top:-25,right:-25,width:80,height:80,borderRadius:'50%',border:'1.5px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.04)'}}/>
+        <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}>
+          <svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}>
+            <path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#eae6f4"/>
+          </svg>
         </div>
+        <div style={{position:'relative',zIndex:3}}>
+          <button onClick={onCancel} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:16,fontFamily:'inherit'}}>
+            <svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            목록으로
+          </button>
+          <div style={{display:'flex',alignItems:'center',gap:9}}>
+            <div style={{width:38,height:38,background:'rgba(255,255,255,0.18)',borderRadius:11,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              <svg width="18" height="18" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </div>
+            <div>
+              <p style={{fontSize:11,color:'rgba(255,255,255,0.6)',margin:'0 0 2px',fontWeight:600,letterSpacing:'0.04em'}}>{subject.subject}</p>
+              <p style={{fontSize:18,fontWeight:900,color:'white',margin:0,letterSpacing:'-0.3px'}}>{editing?'기록 수정':'기록하기'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 폼 */}
+      <div style={{padding:'14px 16px'}}>
         <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>날짜</p><input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>단원/주제 *</p><input className="input" type="text" placeholder="예: 3단원 - 에너지와 환경" value={unit} onChange={e=>setUnit(e.target.value)}/></div>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>탐구활동</p><textarea className="input" rows="3" placeholder="탐구활동 내용" value={inquiry} onChange={e=>setInquiry(e.target.value)} style={{resize:'none'}}/></div>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>배운점 *</p><textarea className="input" rows="3" placeholder="배운점을 기록하세요" value={learned} onChange={e=>setLearned(e.target.value)} style={{resize:'none'}}/></div>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>느낀점</p><textarea className="input" rows="3" placeholder="느낀점을 기록하세요" value={reflection} onChange={e=>setReflection(e.target.value)} style={{resize:'none'}}/></div>
-          <button type="submit" className="btn-pink" disabled={loading} style={{background:'linear-gradient(135deg,#7986cb,#5c6bc0)'}}>{loading?<Spin/>:(editing?'수정 완료':'저장하기')}</button>
+
+          {/* 날짜 */}
+          <div style={{background:'white',borderRadius:14,padding:'13px 14px',border:'1.5px solid #ddd8f0'}}>
+            <p style={{fontSize:10,color:'#7986cb',fontWeight:700,margin:'0 0 6px',letterSpacing:'0.05em'}}>날짜</p>
+            <input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)}
+              style={{background:'transparent',border:'none',padding:0,fontSize:14,fontWeight:600,color:'#1a1a2e',width:'100%',outline:'none'}}/>
+          </div>
+
+          {/* 단원/주제 */}
+          <div style={{background:'white',borderRadius:14,padding:'13px 14px',border:'1.5px solid #ddd8f0'}}>
+            <p style={{fontSize:10,color:'#7986cb',fontWeight:700,margin:'0 0 6px',letterSpacing:'0.05em'}}>단원 / 주제 <span style={{color:'#e53935'}}>*</span></p>
+            <input className="input" type="text" placeholder="예: 3단원 — 함수의 극한과 연속" value={unit} onChange={e=>setUnit(e.target.value)}
+              style={{background:'transparent',border:'none',padding:0,fontSize:14,color:'#1a1a2e',width:'100%',outline:'none'}}/>
+          </div>
+
+          {/* 배운점·느낀점 통합 */}
+          <div style={{background:'white',borderRadius:14,padding:'13px 14px',border:'1.5px solid #ddd8f0'}}>
+            <p style={{fontSize:10,color:'#7986cb',fontWeight:700,margin:'0 0 6px',letterSpacing:'0.05em'}}>배운점 · 느낀점 <span style={{color:'#e53935'}}>*</span></p>
+            <textarea className="input" rows="6"
+              placeholder="수업에서 배운 내용, 느낀 점, 새롭게 알게 된 것들을 자유롭게 기록해 보세요. 자세히 적을수록 더 좋은 생기부가 만들어져요 ✏️"
+              value={content} onChange={e=>setContent(e.target.value)}
+              style={{background:'transparent',border:'none',padding:0,fontSize:13,color:'#1a1a2e',width:'100%',outline:'none',resize:'none',lineHeight:1.7}}/>
+          </div>
+
+          {/* 저장 버튼 */}
+          <button type="submit" disabled={loading}
+            style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#5c6bc0,#7986cb)',color:'white',fontSize:15,fontWeight:800,cursor:'pointer',fontFamily:'inherit',marginTop:2}}>
+            {loading?<Spin/>:(editing?'수정 완료':'저장하기')}
+          </button>
         </form>
+
+        {/* 안내 */}
+        <div style={{marginTop:12,background:'white',border:'1px solid #ddd8f0',borderRadius:12,padding:'10px 13px',display:'flex',alignItems:'flex-start',gap:7}}>
+          <div style={{width:4,height:4,borderRadius:'50%',background:'#7986cb',flexShrink:0,marginTop:4}}/>
+          <p style={{fontSize:10,color:'#999',margin:0,lineHeight:1.6}}>작성한 내용은 AI 세특 생기부 생성에 활용됩니다.<br/>최대한 구체적으로 기록할수록 좋아요!</p>
+        </div>
       </div>
     </div>
   );
