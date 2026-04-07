@@ -17,6 +17,8 @@ body{font-family:'Apple SD Gothic Neo',-apple-system,sans-serif;margin:0;padding
 .pb-safe{padding-bottom:env(safe-area-inset-bottom)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .fade-up{animation:fadeUp 0.45s cubic-bezier(0.16,1,0.3,1) forwards}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);box-shadow:0 0 0 0 rgba(74,222,128,0.6)}50%{opacity:0.6;transform:scale(0.85);box-shadow:0 0 0 4px rgba(74,222,128,0)}70%{opacity:0.9;transform:scale(1.1);box-shadow:0 0 0 2px rgba(74,222,128,0.2)}}
+.pulse-dot{animation:pulse 1.8s ease-in-out infinite}
 .card{background:white;border-radius:18px;box-shadow:0 4px 20px rgba(0,0,0,0.07)}
 .btn-pink{background:linear-gradient(135deg,#f06292,#ce93d8);color:white;border:none;border-radius:14px;font-weight:800;cursor:pointer;padding:14px;font-size:15px;width:100%;transition:opacity .2s}
 .btn-pink:active{opacity:.85;transform:scale(.98)}
@@ -47,6 +49,17 @@ const ROLES = {
   subject:{id:'subject',label:'교과목교사',emoji:'📚',desc:'교과활동 조회'}
 };
 const CLASS_COUNT = {'1':5,'2':5,'3':6};
+
+function getSemesterLabel() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // 1~12
+  const day = now.getDate();
+  // 8월 1일 이후면 2학기
+  const is2nd = month > 8 || (month === 8 && day >= 1);
+  const semester = is2nd ? '2' : '1';
+  return `${year}학년도 ${semester}학기`;
+}
 
 const ROLE_COLORS = {student:'#9b1c2e',homeroom:'#0a6e55',career:'#a05c00',subject:'#5c2fa0'};
 const ROLE_PHONE_BG = {student:'#f7f0f2',homeroom:'#f0f7f5',career:'#f7f3ec',subject:'#f3f0f9'};
@@ -199,10 +212,10 @@ function RoleScreen({onSelect}) {
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18,position:'relative',zIndex:1}}>
           <div style={{display:'flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 11px'}}>
             <div style={{width:6,height:6,borderRadius:'50%',background:'#ffd580',flexShrink:0}}/>
-            <span style={{fontSize:10,color:'rgba(255,255,255,0.9)',letterSpacing:'0.06em',fontWeight:500}}>2026학년도 1학기</span>
+            <span style={{fontSize:10,color:'rgba(255,255,255,0.9)',letterSpacing:'0.06em',fontWeight:500}}>{getSemesterLabel()}</span>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:5}}>
-            <div style={{width:6,height:6,borderRadius:'50%',background:'#4ade80',boxShadow:'0 0 0 2px rgba(74,222,128,0.3)'}}/>
+            <div className="pulse-dot" style={{width:6,height:6,borderRadius:'50%',background:'#4ade80',boxShadow:'0 0 0 2px rgba(74,222,128,0.3)'}}/>
             <span style={{fontSize:10,color:'rgba(255,255,255,0.6)'}}>운영중</span>
           </div>
         </div>
