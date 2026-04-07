@@ -30,7 +30,7 @@ body{font-family:'Apple SD Gothic Neo',-apple-system,sans-serif;margin:0;padding
 .active-btn:active{transform:scale(.97)}
 </style>
 </head>
-<body>
+<body style="background:linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%); min-height:100vh;">
 <div id="root"></div>
 <script type="text/babel">
 const {useState,useEffect,useCallback} = React;
@@ -86,7 +86,7 @@ function RoleScreen({onSelect}){
     {id:'subject',emoji:'📚',label:'교과목교사',descs:['교과활동 조회','교과 생기부 작성'],iconBg:'linear-gradient(135deg,#ba68c8,#9c27b0)',shadow:'rgba(156,39,176,0.3)'},
   ];
   return(
-    <div style={{minHeight:'100dvh',display:'flex',flexDirection:'column',background:'linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%)'}}>
+    <div style={{minHeight:'100dvh',display:'flex',flexDirection:'column',background:'linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%)',overflowY:'auto'}}>
       {/* 헤더 */}
       <div style={{background:'linear-gradient(145deg,#f48fb1 0%,#ce93d8 55%,#b39ddb 100%)',padding:'28px 20px 44px',textAlign:'center',position:'relative',overflow:'hidden',flexShrink:0}}>
         <div style={{position:'absolute',top:-24,right:-24,width:90,height:90,background:'rgba(255,255,255,0.15)',borderRadius:'50%'}}/>
@@ -102,7 +102,7 @@ function RoleScreen({onSelect}){
         </div>
       </div>
       {/* 카드 */}
-      <div style={{flex:1,marginTop:-22,borderRadius:'24px 24px 0 0',padding:'18px 14px 16px',position:'relative',zIndex:1}}>
+      <div style={{flex:1,marginTop:-22,borderRadius:'24px 24px 0 0',padding:'22px 14px 16px',position:'relative',zIndex:1,background:'linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%)'}}>
         <p style={{fontSize:11,color:'rgba(150,100,170,0.7)',fontWeight:700,textAlign:'center',letterSpacing:'0.12em',margin:'0 0 12px'}}>역할을 선택해 주세요</p>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9}}>
           {roles.map(r=>(
@@ -907,8 +907,9 @@ function App(){
   const isStudent=user.role==='student';
   const isSubjectTeacher=user.role==='subject';
 
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth > 500;
   return(
-    <div style={{maxWidth:430,margin:'0 auto',background:'white',minHeight:'100dvh',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden',boxShadow:'0 0 60px rgba(206,147,216,0.2)'}}>
+    <div style={{maxWidth:430,margin:isDesktop?'5vh auto':0,background:'white',minHeight:isDesktop?'90vh':'100dvh',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden',boxShadow:isDesktop?'0 30px 80px rgba(206,147,216,0.4)':'none',borderRadius:isDesktop?44:0}}>
       {/* 헤더 */}
       <div style={{background:'white',borderBottom:'1px solid #f8e8f0',padding:'0 20px',height:52,display:'flex',alignItems:'center',position:'sticky',top:0,zIndex:30,boxShadow:'0 1px 10px rgba(206,147,216,0.1)'}}>
         <h1 style={{flex:1,textAlign:'center',fontSize:15,fontWeight:900,color:'#1a1a2e',margin:0,letterSpacing:'-0.3px'}}>
