@@ -189,7 +189,6 @@ function RoleScreen({ onSelect }) {
       label: '학생',
       labelEn: 'Student',
       desc: '창체활동 기록\n교과 · 진로활동',
-      iconColor: '#9b1c2e',
       iconBg: '#f5eaec',
       tagBg: '#f5eaec',
       tagColor: '#9b1c2e',
@@ -205,7 +204,6 @@ function RoleScreen({ onSelect }) {
       label: '담임교사',
       labelEn: 'Homeroom',
       desc: '학생기록 조회\nAI 생기부 작성',
-      iconColor: '#0a6e55',
       iconBg: '#e6f4f0',
       tagBg: '#e6f4f0',
       tagColor: '#0a6e55',
@@ -220,7 +218,6 @@ function RoleScreen({ onSelect }) {
       label: '진로담당',
       labelEn: 'Career',
       desc: '진로활동 조회\n생기부 작성',
-      iconColor: '#a05c00',
       iconBg: '#fef3e2',
       tagBg: '#fef3e2',
       tagColor: '#a05c00',
@@ -235,7 +232,6 @@ function RoleScreen({ onSelect }) {
       label: '교과목교사',
       labelEn: 'Subject',
       desc: '교과활동 조회\n세특 생기부 작성',
-      iconColor: '#5c2fa0',
       iconBg: '#f0eafa',
       tagBg: '#f0eafa',
       tagColor: '#5c2fa0',
@@ -248,26 +244,27 @@ function RoleScreen({ onSelect }) {
   ];
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+    <div style={{ flex:1, display:'flex', flexDirection:'column', overflowY:'auto' }}>
 
       {/* ── 헤더 ── */}
-      <div style={{
-        background: '#9b1c2e',
-        padding: '30px 20px 26px',
-        position: 'relative',
-        overflow: 'hidden',
-        flexShrink: 0,
-      }}>
-        {/* 배경 장식 원 */}
-        <div style={{ position:'absolute', top:-40, right:-40, width:140, height:140, borderRadius:'50%', background:'rgba(255,255,255,0.06)' }}/>
-        <div style={{ position:'absolute', bottom:-50, right:30, width:100, height:100, borderRadius:'50%', background:'rgba(255,255,255,0.05)' }}/>
-        <div style={{ position:'absolute', top:20, right:80, width:50, height:50, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }}/>
+      <div style={{ background:'#9b1c2e', padding:'30px 20px 36px', position:'relative', overflow:'hidden', flexShrink:0 }}>
+
+        {/* 대각선 줄무늬 */}
+        <div style={{ position:'absolute', top:0, left:0, right:0, bottom:0, background:'repeating-linear-gradient(135deg,rgba(255,255,255,0) 0px,rgba(255,255,255,0) 20px,rgba(255,255,255,0.025) 20px,rgba(255,255,255,0.025) 22px)', pointerEvents:'none' }}/>
+
+        {/* 장식 원 */}
+        <div style={{ position:'absolute', top:-40, right:-40, width:160, height:160, borderRadius:'50%', border:'1.5px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.04)' }}/>
+        <div style={{ position:'absolute', bottom:20, right:20, width:90, height:90, borderRadius:'50%', border:'1px solid rgba(255,255,255,0.07)', background:'rgba(255,255,255,0.03)' }}/>
+        <div style={{ position:'absolute', top:20, right:90, width:44, height:44, borderRadius:'50%', border:'1px solid rgba(255,255,255,0.06)' }}/>
+
+        {/* 가로 구분선 */}
+        <div style={{ position:'absolute', top:88, left:0, right:0, height:1, background:'rgba(255,255,255,0.07)' }}/>
 
         {/* 상단 태그 행 */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18, position:'relative', zIndex:1 }}>
           <div style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.25)', borderRadius:20, padding:'5px 11px' }}>
             <div style={{ width:6, height:6, borderRadius:'50%', background:'#ffd580', flexShrink:0 }}/>
-            <span style={{ fontSize:10, color:'rgba(255,255,255,0.9)', letterSpacing:'0.06em', fontWeight:500 }}>2025학년도 1학기</span>
+            <span style={{ fontSize:10, color:'rgba(255,255,255,0.9)', letterSpacing:'0.06em', fontWeight:500 }}>2026학년도 1학기</span>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:5 }}>
             <div style={{ width:6, height:6, borderRadius:'50%', background:'#4ade80', boxShadow:'0 0 0 2px rgba(74,222,128,0.3)' }}/>
@@ -276,14 +273,14 @@ function RoleScreen({ onSelect }) {
         </div>
 
         {/* 학교명 */}
-        <p style={{ fontSize:26, fontWeight:600, color:'#fff', letterSpacing:'-0.5px', margin:'0 0 5px' }}>과천여자고등학교</p>
-        <p style={{ fontSize:13, color:'rgba(255,255,255,0.5)', letterSpacing:'0.14em', margin:'0 0 18px' }}>GWACHEON WOMANS HIGH SCHOOL</p>
+        <p style={{ fontSize:26, fontWeight:600, color:'#fff', letterSpacing:'-0.5px', margin:'0 0 5px', position:'relative', zIndex:1 }}>과천여자고등학교</p>
+        <p style={{ fontSize:13, color:'rgba(255,255,255,0.5)', letterSpacing:'0.14em', margin:'0 0 18px', position:'relative', zIndex:1 }}>GWACHEON WOMANS HIGH SCHOOL</p>
 
         {/* 구분선 */}
-        <div style={{ width:'100%', height:1, background:'rgba(255,255,255,0.12)', margin:'0 0 14px' }}/>
+        <div style={{ width:'100%', height:1, background:'rgba(255,255,255,0.12)', margin:'0 0 14px', position:'relative', zIndex:1 }}/>
 
         {/* 설명 목록 */}
-        <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:5, position:'relative', zIndex:1 }}>
           {[
             '창의적 체험활동 다이어리',
             '학교생활기록부 작성 지원 시스템',
@@ -294,6 +291,13 @@ function RoleScreen({ onSelect }) {
               <span style={{ fontSize:11, color:'rgba(255,255,255,0.65)', lineHeight:1.5, letterSpacing:'0.01em' }}>{text}</span>
             </div>
           ))}
+        </div>
+
+        {/* SVG 물결 하단 */}
+        <div style={{ position:'absolute', bottom:-1, left:0, right:0, lineHeight:0, zIndex:2 }}>
+          <svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display:'block', width:'100%' }}>
+            <path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f7f0f2"/>
+          </svg>
         </div>
       </div>
 
@@ -312,16 +316,7 @@ function RoleScreen({ onSelect }) {
             <button
               key={r.id}
               onClick={() => onSelect(r.id)}
-              style={{
-                background: '#fff',
-                border: '1px solid #e2d0d3',
-                borderRadius: 16,
-                padding: '20px 14px 18px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
+              style={{ background:'#fff', border:'1px solid #e2d0d3', borderRadius:16, padding:'20px 14px 18px', cursor:'pointer', textAlign:'left', position:'relative', overflow:'hidden' }}
             >
               {/* 광택 */}
               <div style={{ position:'absolute', top:0, left:0, right:0, height:'50%', background:'linear-gradient(180deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 100%)', borderRadius:'16px 16px 0 0', pointerEvents:'none' }}/>
