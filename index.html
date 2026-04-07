@@ -1,932 +1,451 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>과천여고 창체 다이어리</title>
-<base target="_top">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<style>
-*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
-body{font-family:'Apple SD Gothic Neo',-apple-system,sans-serif;margin:0;padding:0;background:linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%);min-height:100vh}
-.no-scrollbar::-webkit-scrollbar{display:none}
-.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
-.pb-safe{padding-bottom:env(safe-area-inset-bottom)}
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.fade-up{animation:fadeUp 0.45s cubic-bezier(0.16,1,0.3,1) forwards}
-.card{background:white;border-radius:18px;box-shadow:0 4px 20px rgba(0,0,0,0.07)}
-.btn-pink{background:linear-gradient(135deg,#f06292,#ce93d8);color:white;border:none;border-radius:14px;font-weight:800;cursor:pointer;padding:14px;font-size:15px;width:100%;transition:opacity .2s}
-.btn-pink:active{opacity:.85;transform:scale(.98)}
-.btn-pink:disabled{opacity:.4}
-.input{background:#fafafa;border:1.5px solid #f3e5f5;border-radius:12px;padding:12px 16px;width:100%;font-size:14px;color:#1a1a2e;outline:none;font-family:inherit}
-.input:focus{border-color:#ce93d8;background:white}
-.chip-pink{background:#fce4ec;color:#c2185b;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px}
-.chip-purple{background:#ede7f6;color:#512da8;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px}
-.chip-blue{background:#e8eaf6;color:#3949ab;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px}
-.chip-teal{background:#e0f2f1;color:#00695c;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px}
-.active-btn:active{transform:scale(.97)}
-</style>
-</head>
-<body>
-<div id="root"></div>
-<script type="text/babel">
-const {useState,useEffect,useCallback} = React;
+const SHEET_RECORDS  = '기록';
+const SHEET_USERS    = '회원명단';
+const SHEET_TEACHERS = '교사명단';
+const SHEET_STUDENTS = '학생명단';
+const SHEET_SUBJECTS = '과목목록';
+const SHEET_CONFIG   = '설정';
+const SHEET_REPORTS  = '생기부';
 
-
-const CATS = {
-  career:{id:'career',label:'진로활동',desc:'꿈과 진로 탐색 기록',grad:'linear-gradient(135deg,#ff8a65,#ef5350)',chip:'chip-pink',chipText:'#c2185b',chipBg:'#fce4ec'},
-  subject:{id:'subject',label:'교과활동',desc:'수업 배움 세특 기록',grad:'linear-gradient(135deg,#7986cb,#5c6bc0)',chip:'chip-blue',chipText:'#3949ab',chipBg:'#e8eaf6'},
-  creative:{id:'creative',label:'창의적 체험활동',desc:'동아리·봉사 기록',grad:'linear-gradient(135deg,#4db6ac,#26a69a)',chip:'chip-teal',chipText:'#00695c',chipBg:'#e0f2f1'}
-};
-const ROLES = {
-  student:{id:'student',label:'학생',emoji:'🎒',desc:'창체활동 기록'},
-  homeroom:{id:'homeroom',label:'담임교사',emoji:'🏫',desc:'학생 기록 + AI 생기부'},
-  career:{id:'career',label:'진로담당',emoji:'🧭',desc:'진로활동 조회'},
-  subject:{id:'subject',label:'교과목교사',emoji:'📚',desc:'교과활동 조회'}
-};
-const CLASS_COUNT = {'1':5,'2':5,'3':6};
-    const AI_RULES = '당신은 고등학교 교사입니다. 학교생활기록부를 작성하세요. 규칙:1)1400~1500바이트 2)개조식(~함,~보임) 3)교사관찰 3인칭 4)순수한글 5)경시대회·지역명·학교명금지 6)자연스럽게 7)학생은으로시작금지\n[기록]\n';
-
-function adjustBytes(text, max=1500) {
-  const enc = new TextEncoder();
-  let r = text.trim().replace(/^(이\s*)?학생은\s*/,'').replace(/^해당\s*학생은\s*/,'');
-  while(enc.encode(r).length > max) {
-    const ends = ['함.','임.','음.','됨.','보임.','나타냄.'];
-    let last = -1;
-    for(const e of ends){const i=r.lastIndexOf(e);if(i>last)last=i;}
-    if(last>0) r=r.slice(0,last+2).trim();
-    else r=r.slice(0,-3).trim();
+function doGet(e) {
+  // GitHub Pages에서 호출 시 API 응답
+  if (e && e.parameter && e.parameter.action) {
+    const result = handleRequest(e.parameter);
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
   }
-  return r;
+  // GAS 웹앱으로 직접 접속 시 HTML 서빙
+  return HtmlService.createTemplateFromFile('index')
+    .evaluate()
+    .setTitle('과천여고 창체 다이어리')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
 }
 
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwGWlTMoZh-3RUH4fPn_ibxuJht-bGcBww64XPOfrETc-0jD-GG91OJxLdgUjEE2p8Q/exec';
-
-function callAPI(payload) {
-  return fetch(GAS_URL, {
-    method: 'POST',
-    headers: {'Content-Type': 'text/plain'},
-    body: JSON.stringify(payload)
-  }).then(r=>r.json());
+function getGeminiApiKey() {
+  const key = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  if (!key) throw new Error('GEMINI_API_KEY가 속성 서비스에 설정되지 않았습니다.');
+  return key;
 }
 
-const Spin = ()=><svg className="animate-spin h-5 w-5 text-white inline" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>;
-const Back = ()=><svg className="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>;
-const Arr = ()=><svg width="14" height="14" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>;
-
-/* ── 역할 선택 ── */
-function RoleScreen({onSelect}){
-  return(
-    <div className="fade-up" style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'32px 20px'}}>
-      <div style={{textAlign:'center',marginBottom:28}}>
-        <div style={{width:60,height:60,background:'white',borderRadius:18,margin:'0 auto 14px',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 8px 28px rgba(233,30,99,0.18)'}}>
-          <svg width="28" height="28" fill="none" stroke="#e91e63" viewBox="0 0 24 24" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
-        </div>
-        <h1 style={{fontSize:26,fontWeight:900,color:'#1a1a2e',margin:'0 0 6px',letterSpacing:'-0.5px'}}>과천여고 창체 다이어리</h1>
-        <p style={{fontSize:11,color:'#ce93d8',fontWeight:700,letterSpacing:'0.12em',margin:'0 0 6px'}}>GWACHEON WOMANS HIGH SCHOOL</p>
-        <p style={{fontSize:13,color:'#999',margin:0}}>역할을 선택해 주세요</p>
-      </div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,width:'100%',maxWidth:340}}>
-        {Object.values(ROLES).map(r=>(
-          <button key={r.id} onClick={()=>onSelect(r.id)} className="active-btn card" style={{padding:'18px 12px',textAlign:'center',border:'none',cursor:'pointer'}}>
-            <div style={{fontSize:32,marginBottom:8}}>{r.emoji}</div>
-            <p style={{fontSize:14,fontWeight:900,color:'#1a1a2e',margin:'0 0 3px'}}>{r.label}</p>
-            <p style={{fontSize:10,color:'#bbb',margin:0,lineHeight:1.4}}>{r.desc}</p>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+function setGeminiApiKey(key) {
+  PropertiesService.getScriptProperties().setProperty('GEMINI_API_KEY', key);
+  return 'API 키가 성공적으로 저장되었습니다.';
 }
 
-/* ── 로그인 ── */
-function LoginScreen({role,onLogin,onBack}){
-  const isStudent=role==='student', isHomeroom=role==='homeroom', isSubject=role==='subject';
-  const [mode,setMode]=useState('login');
-  const [id,setId]=useState(''), [name,setName]=useState(''), [pw,setPw]=useState('');
-  const [match,setMatch]=useState(null), [loading,setLoading]=useState(false), [checking,setChecking]=useState(false);
-
-  if(isSubject && mode==='register') return <SubjectRegister onDone={onLogin} onBack={()=>setMode('login')}/>;
-
-  const checkName = async()=>{
-    if(mode!=='register'||!name.trim()) return;
-    setChecking(true); setMatch(null);
-    try{
-      if(isHomeroom){
-        const r=await callAPI({action:'lookupTeacher',name:name.trim()});
-        setMatch(r.success?r:false);
-      } else if(isStudent && id.trim().length===4){
-        const r=await callAPI({action:'lookupStudent',studentId:id.trim(),name:name.trim()});
-        setMatch(r.success?true:false);
-      }
-    }catch(e){setMatch(false);}
-    setChecking(false);
-  };
-
-  const submit = async(e)=>{
-    e.preventDefault();
-    if(!id.trim()||!pw.trim()) return alert('입력해주세요!');
-    if(mode==='register'&&!name.trim()) return alert('이름을 입력해주세요!');
-    if(mode==='register'&&isHomeroom&&!match) return alert('이름 확인이 필요합니다!');
-    if(mode==='register'&&isStudent&&!match) return alert('학번과 이름이 일치하지 않습니다!');
-    setLoading(true);
-    try{
-      const isTeacher=(role==='homeroom'||role==='subject'||role==='career');
-      const action=mode==='login'?'login':(isTeacher?'registerTeacher':'register');
-      const payload=mode==='login'
-        ?{action,studentId:id.trim(),password:pw,role}
-        :isTeacher
-          ?{action,teacherId:id.trim(),name:name.trim(),password:pw,role,grade:match?.grade||'',classNum:match?.classNum||'',assignments:''}
-          :{action,studentId:id.trim(),name:name.trim(),password:pw,role,homeroomClass:''};
-      const res=await callAPI(payload);
-      if(res.success){
-        const hc=isHomeroom&&match?match.homeroomClass:'';
-        onLogin({studentId:id.trim(),name:mode==='login'?res.name:name.trim(),role,homeroomClass:res.homeroomClass||hc,assignments:res.assignments||''});
-      } else alert(res.message||'오류가 발생했습니다.');
-    }catch(e){alert('서버 오류');}
-    setLoading(false);
-  };
-
-  const roleColors={student:'#e91e63',homeroom:'#10b981',career:'#f97316',subject:'#8b5cf6'};
-  const c=roleColors[role]||'#e91e63';
-
-  return(
-    <div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px',background:'linear-gradient(160deg,#fce4ec,#f3e5f5,#e8eaf6)'}}>
-      <div className="card fade-up" style={{width:'100%',maxWidth:340,padding:28,position:'relative'}}>
-        <button onClick={onBack} style={{position:'absolute',top:16,left:16,background:'none',border:'none',cursor:'pointer',color:'#999',padding:4}}><Back/></button>
-        <div style={{textAlign:'center',marginBottom:20}}>
-          <div style={{width:44,height:44,background:c,borderRadius:13,margin:'0 auto 10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>{ROLES[role].emoji}</div>
-          <h2 style={{fontSize:20,fontWeight:900,color:'#1a1a2e',margin:'0 0 2px'}}>{mode==='login'?'로그인':'계정 등록'}</h2>
-          <p style={{fontSize:11,color:'#999',margin:0}}>{ROLES[role].label}</p>
-        </div>
-        <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:10}}>
-          <input className="input" type={isStudent?'number':'text'} placeholder={isStudent?'학번 (예: 1101)':'아이디'} value={id} onChange={e=>{setId(e.target.value);setMatch(null);}}/>
-          {mode==='register'&&(
-            <input className="input" type="text" placeholder="이름" value={name} onChange={e=>{setName(e.target.value);setMatch(null);}} onBlur={checkName}/>
-          )}
-          <input className="input" type="password" placeholder="비밀번호" value={pw} onChange={e=>setPw(e.target.value)}/>
-          {mode==='register'&&checking&&<p style={{fontSize:11,color:'#ce93d8',margin:0}}>확인 중...</p>}
-          {mode==='register'&&match===false&&<p style={{fontSize:11,color:'#e53935',margin:0}}>❌ 일치하지 않습니다</p>}
-          {mode==='register'&&match===true&&<p style={{fontSize:11,color:'#43a047',margin:0}}>✅ 확인됨</p>}
-          {mode==='register'&&match&&match.homeroomClass&&<p style={{fontSize:11,color:'#43a047',margin:0}}>✅ {match.homeroomClass[0]}학년 {match.homeroomClass.slice(1)}반 담임</p>}
-          <button type="submit" className="btn-pink" disabled={loading||(mode==='register'&&(isStudent||isHomeroom)&&!match)} style={{marginTop:4,background:`linear-gradient(135deg,${c},${c}cc)`}}>
-            {loading?<Spin/>:(mode==='login'?'시작하기':'등록 후 시작')}
-          </button>
-        </form>
-        <div style={{textAlign:'center',marginTop:14,paddingTop:14,borderTop:'1px solid #f5f5f5'}}>
-          <button onClick={()=>{
-            if(isSubject&&mode==='login'){setMode('register');return;}
-            setMode(mode==='login'?'register':'login');setPw('');setName('');setMatch(null);
-          }} style={{background:'none',border:'none',color:'#ce93d8',fontSize:12,fontWeight:700,cursor:'pointer'}}>
-            {mode==='login'?'📍 계정 등록하기':'📍 로그인하기'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+function doPost(e) {
+  const cors = ContentService.createTextOutput('');
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    const result = handleRequest(payload);
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
-/* ── 교과목교사 등록 ── */
-function SubjectRegister({onDone,onBack}){
-  const [code,setCode]=useState(''), [verified,setVerified]=useState(false), [checking,setChecking]=useState(false), [codeErr,setCodeErr]=useState('');
-  const [id,setId]=useState(''), [name,setName]=useState(''), [pw,setPw]=useState(''), [loading,setLoading]=useState(false);
-  const [subjects,setSubjects]=useState({});
-  const [assigns,setAssigns]=useState([{grade:'1',subject:'',classes:new Set()}]);
-
-  useEffect(()=>{
-    callAPI({action:'getSubjectList'}).then(r=>{if(r.success)setSubjects(r.subjects||{});}).catch(()=>{});
-  },[]);
-
-  const checkCode=async()=>{
-    if(!code.trim()) return setCodeErr('코드를 입력하세요.');
-    setChecking(true); setCodeErr('');
-    try{const r=await callAPI({action:'checkTeacherCode',code:code.trim()});
-      if(r.success) setVerified(true);
-      else setCodeErr(r.message||'코드가 틀렸습니다.');
-    }catch(e){setCodeErr('서버 오류');}
-    setChecking(false);
-  };
-
-  const toggle=(idx,cls)=>setAssigns(prev=>prev.map((a,i)=>{
-    if(i!==idx) return a;
-    const s=new Set(a.classes); s.has(cls)?s.delete(cls):s.add(cls); return {...a,classes:s};
-  }));
-
-  const submit=async(e)=>{
-    e.preventDefault();
-    if(!id||!name||!pw) return alert('모든 항목을 입력하세요!');
-    if(!assigns.every(a=>a.subject&&a.classes.size>0)) return alert('담당 학급을 선택하세요!');
-    setLoading(true);
-    try{
-      const data=assigns.map(a=>({subject:a.subject,classes:[...a.classes].sort()}));
-      const r=await callAPI({action:'registerTeacher',teacherId:id.trim(),name:name.trim(),password:pw,role:'subject',grade:'',classNum:'',assignments:JSON.stringify(data)});
-      if(r.success){alert('등록 완료!'); onDone({studentId:id.trim(),name:name.trim(),role:'subject',homeroomClass:'',assignments:JSON.stringify(data)});}
-      else alert(r.message||'오류');
-    }catch(e){alert('서버 오류');}
-    setLoading(false);
-  };
-
-  return(
-    <div style={{minHeight:'100dvh',background:'linear-gradient(160deg,#fce4ec,#f3e5f5,#e8eaf6)',padding:'20px',overflowY:'auto'}}>
-      <div className="card fade-up" style={{maxWidth:380,margin:'0 auto',padding:24}}>
-        <button onClick={onBack} style={{background:'none',border:'none',color:'#999',cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4,fontSize:13}}><Back/>돌아가기</button>
-        <h2 style={{fontSize:18,fontWeight:900,color:'#1a1a2e',margin:'0 0 20px'}}>📚 교과목교사 등록</h2>
-        {!verified?(
-          <div style={{display:'flex',flexDirection:'column',gap:10}}>
-            <input className="input" type="password" placeholder="교사 인증코드" value={code} onChange={e=>setCode(e.target.value)} onKeyDown={e=>e.key==='Enter'&&checkCode()}/>
-            {codeErr&&<p style={{fontSize:11,color:'#e53935',margin:0}}>❌ {codeErr}</p>}
-            <button onClick={checkCode} className="btn-pink" disabled={checking}>{checking?<Spin/>:'인증 확인'}</button>
-          </div>
-        ):(
-          <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}>
-            <div style={{background:'#e8f5e9',borderRadius:10,padding:'8px 12px',fontSize:12,color:'#2e7d32',fontWeight:700}}>✅ 인증 완료</div>
-            <input className="input" type="text" placeholder="아이디" value={id} onChange={e=>setId(e.target.value)}/>
-            <input className="input" type="text" placeholder="이름" value={name} onChange={e=>setName(e.target.value)}/>
-            <input className="input" type="password" placeholder="비밀번호" value={pw} onChange={e=>setPw(e.target.value)}/>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <p style={{fontSize:13,fontWeight:800,color:'#1a1a2e',margin:0}}>담당 과목</p>
-              <button type="button" onClick={()=>setAssigns(p=>[...p,{grade:'1',subject:'',classes:new Set()}])} style={{background:'#ede7f6',color:'#7c3aed',border:'none',borderRadius:12,padding:'4px 10px',fontSize:12,fontWeight:700,cursor:'pointer'}}>+ 추가</button>
-            </div>
-            {assigns.map((a,idx)=>(
-              <div key={idx} style={{background:'#fafafa',borderRadius:14,padding:14,border:'1px solid #f3e5f5'}}>
-                {assigns.length>1&&<button type="button" onClick={()=>setAssigns(p=>p.filter((_,i)=>i!==idx))} style={{float:'right',background:'none',border:'none',color:'#ccc',cursor:'pointer',fontSize:16}}>✕</button>}
-                <p style={{fontSize:11,color:'#999',margin:'0 0 6px',fontWeight:700}}>학년</p>
-                <div style={{display:'flex',gap:6,marginBottom:10}}>
-                  {['1','2','3'].map(g=>(
-                    <button type="button" key={g} onClick={()=>setAssigns(p=>p.map((x,i)=>i===idx?{...x,grade:g,subject:'',classes:new Set()}:x))}
-                      style={{flex:1,padding:'7px 0',borderRadius:10,border:'none',fontWeight:800,fontSize:13,cursor:'pointer',background:a.grade===g?'#8b5cf6':'#eee',color:a.grade===g?'white':'#666'}}>{g}학년</button>
-                  ))}
-                </div>
-                <p style={{fontSize:11,color:'#999',margin:'0 0 6px',fontWeight:700}}>과목</p>
-                <select value={a.subject} onChange={e=>setAssigns(p=>p.map((x,i)=>i===idx?{...x,subject:e.target.value}:x))}
-                  style={{width:'100%',padding:'8px 12px',borderRadius:10,border:'1.5px solid #e9d5ff',background:'white',fontSize:13,fontWeight:700,marginBottom:10,outline:'none'}}>
-                  <option value="">과목 선택</option>
-                  {(subjects[a.grade]||[]).map(s=><option key={s} value={s}>{s}</option>)}
-                </select>
-                <p style={{fontSize:11,color:'#999',margin:'0 0 6px',fontWeight:700}}>담당 학급</p>
-                <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                  {Array.from({length:CLASS_COUNT[a.grade]||5},(_,i)=>{
-                    const cls=a.grade+String(i+1);
-                    const sel=a.classes.has(cls);
-                    return<button type="button" key={cls} onClick={()=>toggle(idx,cls)} style={{padding:'5px 12px',borderRadius:20,border:'none',fontSize:12,fontWeight:800,cursor:'pointer',background:sel?'#8b5cf6':'#eee',color:sel?'white':'#666'}}>{i+1}반</button>;
-                  })}
-                </div>
-              </div>
-            ))}
-            <button type="submit" className="btn-pink" disabled={loading}>{loading?<Spin/>:'등록하고 시작'}</button>
-          </form>
-        )}
-      </div>
-    </div>
-  );
+function findSheet(ss, name) {
+  let s = ss.getSheetByName(name);
+  if (s) return s;
+  const all = ss.getSheets();
+  for (let i = 0; i < all.length; i++) {
+    if (all[i].getName().indexOf(name) !== -1) return all[i];
+  }
+  return null;
 }
 
-/* ── 학생 홈 ── */
-function StudentHome({user,records,loading,onCat}){
-  const sid=String(user.studentId||'');
-  const g=sid[0]||'', c=sid[1]||'', n=sid.slice(2)||'';
-  const info=g&&c&&n?`${g}학년 ${c}반 ${parseInt(n)}번`:'';
-  return(
-    <div style={{paddingBottom:20}}>
-      <div style={{background:'linear-gradient(135deg,#f48fb1,#ce93d8)',padding:'22px 20px 34px',position:'relative',overflow:'hidden'}}>
-        <div style={{position:'absolute',top:-30,right:-30,width:90,height:90,background:'rgba(255,255,255,0.12)',borderRadius:'50%'}}/>
-        <p style={{fontSize:10,color:'rgba(255,255,255,0.8)',fontWeight:600,letterSpacing:'0.14em',margin:'0 0 4px'}}>GWACHEON WOMANS HIGH SCHOOL</p>
-        <p style={{fontSize:17,fontWeight:900,color:'white',margin:'0 0 12px',letterSpacing:'-0.3px'}}>창체 다이어리</p>
-        <div style={{display:'inline-flex',alignItems:'center',gap:10,background:'rgba(255,255,255,0.22)',borderRadius:26,padding:'8px 16px'}}>
-          <div style={{width:32,height:32,background:'white',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:'#ce93d8',flexShrink:0}}>{user.name[0]}</div>
-          <div>
-            <p style={{fontSize:14,fontWeight:900,color:'white',margin:0,lineHeight:1}}>{user.name}</p>
-            <p style={{fontSize:11,color:'rgba(255,255,255,0.85)',margin:'3px 0 0',fontWeight:600}}>{info}</p>
-          </div>
-        </div>
-      </div>
-      <div style={{padding:'0 14px',marginTop:-16,position:'relative',display:'flex',flexDirection:'column',gap:10}}>
-        {Object.values(CATS).map(cat=>{
-          const count=records.filter(r=>r.categoryId===cat.id).length;
-          return(
-            <div key={cat.id} onClick={()=>onCat(cat.id)} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer'}}>
-              <div style={{width:44,height:44,background:cat.grad,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
-                  <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:0}}>{cat.label}</p>
-                  <span className={cat.chip} style={{background:cat.chipBg,color:cat.chipText}}>{loading?'...':count+'건'}</span>
-                </div>
-                <p style={{fontSize:11,color:'#aaa',margin:0}}>{cat.desc}</p>
-              </div>
-              <Arr/>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+function handleRequest(payload) {
+  if (typeof payload === 'string') {
+    try { payload = JSON.parse(payload); } catch (e) { return { success: false, message: '요청 파싱 오류: ' + e.toString() }; }
+  }
+  const { action } = payload;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  try {
+    if (action === 'generateAI') return generateAIResponse(payload.text);
+    if (action === 'login') return loginUser(ss, payload);
+    if (action === 'register') return registerStudent(ss, payload);
+    if (action === 'registerTeacher') return registerTeacher(ss, payload);
+    if (action === 'lookupTeacher') return lookupTeacher(ss, payload.name);
+    if (action === 'lookupSubjectTeacher') return lookupSubjectTeacher(ss, payload.name);
+    if (action === 'lookupStudent') return lookupStudent(ss, payload.studentId, payload.name);
+    if (action === 'saveRecord') return saveRecord(ss, payload.record);
+    if (action === 'getRecords') return getRecords(ss, payload.studentId);
+    if (action === 'getAllRecords') return getAllRecords(ss, payload.payload || payload);
+    if (action === 'deleteRecord') return deleteRecord(ss, payload.recordId, payload.studentId);
+    if (action === 'updateRecord') return updateRecord(ss, payload.record);
+    if (action === 'getSubjectsByClass') return getSubjectsByClass(ss, payload.classCode);
+    if (action === 'getSubjectList') return getSubjectList(ss);
+    if (action === 'checkTeacherCode') return checkTeacherCode(ss, payload.code);
+    if (action === 'saveReport') return saveReport(ss, payload);
+    if (action === 'getReports') return getReports(ss, payload.homeroomClass);
+    if (action === 'getStudentsByClass') return getStudentsByClass(ss, payload.classCode);
+    return { success: false, message: '알 수 없는 요청: ' + action };
+  } catch (err) {
+    return { success: false, message: '서버 실행 오류: ' + err.toString() };
+  }
 }
 
-/* ── 기록 목록 (진로/창체) ── */
-function RecordList({catId,records,onBack,onWrite,onDelete}){
-  const cat=CATS[catId];
-  const list=records.filter(r=>r.categoryId===catId).sort((a,b)=>new Date(b.date)-new Date(a.date));
-  return(
-    <div style={{paddingBottom:100}}>
-      <div style={{background:cat.grad,padding:'20px 16px 30px',position:'relative',overflow:'hidden'}}>
-        <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 홈</button>
-        <h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>{cat.label}</h2>
-      </div>
-      <div style={{padding:'0 14px',marginTop:-12,display:'flex',flexDirection:'column',gap:10}}>
-        {list.length===0&&<div className="card" style={{padding:'30px 16px',textAlign:'center',color:'#bbb',marginTop:4}}>아직 기록이 없습니다</div>}
-        {list.map(r=>(
-          <div key={r.id} className="card" style={{padding:'14px 16px'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-              <span style={{fontSize:11,color:'#bbb'}}>{r.date}</span>
-              <button onClick={()=>onDelete(r.id)} style={{background:'#fce4ec',color:'#e53935',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>삭제</button>
-            </div>
-            <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 4px'}}>{r.title}</p>
-            <p style={{fontSize:12,color:'#888',margin:0,lineHeight:1.5}}>{r.content}</p>
-          </div>
-        ))}
-      </div>
-      <button onClick={onWrite} style={{position:'fixed',bottom:90,right:20,width:52,height:52,borderRadius:'50%',background:cat.grad,border:'none',color:'white',fontSize:26,cursor:'pointer',boxShadow:'0 4px 20px rgba(0,0,0,0.2)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:40}}>+</button>
-    </div>
-  );
-}
-
-/* ── 기록 작성 ── */
-function WriteForm({catId,onSave,onCancel}){
-  const [date,setDate]=useState(new Date().toISOString().split('T')[0]);
-  const [title,setTitle]=useState(''), [content,setContent]=useState(''), [loading,setLoading]=useState(false);
-  const cat=CATS[catId];
-  const submit=async e=>{
-    e.preventDefault();
-    if(!title||!content) return alert('모두 입력하세요!');
-    setLoading(true);
-    await onSave({categoryId:catId,date,title,content});
-    setLoading(false);
-  };
-  return(
-    <div style={{padding:16}}>
-      <button onClick={onCancel} style={{background:'none',border:'none',color:'#999',cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4,fontSize:13}}><Back/>목록으로</button>
-      <div className="card" style={{padding:20}}>
-        <h3 style={{fontSize:16,fontWeight:900,color:'#1a1a2e',margin:'0 0 16px'}}>{cat.label} 기록</h3>
-        <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}>
-          <div>
-            <p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>날짜</p>
-            <input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)}/>
-          </div>
-          <div>
-            <p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>활동명</p>
-            <input className="input" type="text" placeholder="활동명을 입력하세요" value={title} onChange={e=>setTitle(e.target.value)}/>
-          </div>
-          <div>
-            <p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>내용</p>
-            <textarea className="input" rows="5" placeholder="자세히 기록할수록 좋은 생기부가 만들어져요" value={content} onChange={e=>setContent(e.target.value)} style={{resize:'none',lineHeight:1.6}}/>
-          </div>
-          <button type="submit" className="btn-pink" disabled={loading} style={{background:cat.grad}}>{loading?<Spin/>:'저장하기'}</button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-/* ── 교과활동 과목 목록 ── */
-function SubjectList({user,onSelect,onBack}){
-  const [subjects,setSubjects]=useState([]), [loading,setLoading]=useState(true);
-  useEffect(()=>{
-    const cls=String(user.studentId||'').slice(0,2);
-    callAPI({action:'getSubjectsByClass',classCode:cls}).then(r=>{setSubjects(r.subjects||[]);setLoading(false);}).catch(()=>setLoading(false));
-  },[]);
-  const colors=['#f48fb1','#ce93d8','#90caf9','#80cbc4','#ffcc80','#a5d6a7'];
-  return(
-    <div style={{paddingBottom:20}}>
-      <div style={{background:'linear-gradient(135deg,#7986cb,#5c6bc0)',padding:'20px 16px 30px'}}>
-        <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 홈</button>
-        <h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>교과활동</h2>
-        <p style={{fontSize:12,color:'rgba(255,255,255,0.8)',margin:'4px 0 0'}}>과목을 선택하세요</p>
-      </div>
-      <div style={{padding:'0 14px',marginTop:-12,display:'flex',flexDirection:'column',gap:8}}>
-        {loading&&<div className="card" style={{padding:20,textAlign:'center',color:'#ccc'}}>불러오는 중...</div>}
-        {!loading&&subjects.length===0&&<div className="card" style={{padding:20,textAlign:'center',color:'#ccc'}}>등록된 과목이 없습니다</div>}
-        {subjects.map((s,i)=>{
-          const bc=colors[i%colors.length];
-          return(
-            <button key={i} onClick={()=>onSelect(s)} className="active-btn card" style={{padding:'11px 14px',display:'flex',alignItems:'center',gap:12,border:`1.5px solid ${bc}`,textAlign:'left',cursor:'pointer',width:'100%'}}>
-              <div style={{width:34,height:34,background:bc,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,flexShrink:0}}>📖</div>
-              <p style={{flex:1,fontSize:14,fontWeight:800,color:'#1a1a2e',margin:0}}>{s.subject} <span style={{fontSize:12,fontWeight:500,color:'#bbb'}}>· {s.teacher} 선생님</span></p>
-              <svg width="13" height="13" fill="none" stroke={bc} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ── 교과활동 기록 목록 ── */
-function SubjectRecords({subject,records,onBack,onWrite,onDelete,onEdit}){
-  const list=records.filter(r=>r.categoryId==='subject'&&String(r.subject||r.title||'')===subject.subject).sort((a,b)=>new Date(b.date)-new Date(a.date));
-  return(
-    <div style={{paddingBottom:100}}>
-      <div style={{background:'linear-gradient(135deg,#7986cb,#5c6bc0)',padding:'20px 16px 30px'}}>
-        <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 과목 목록</button>
-        <h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>{subject.subject}</h2>
-        <p style={{fontSize:12,color:'rgba(255,255,255,0.8)',margin:'4px 0 0'}}>{subject.teacher} 선생님</p>
-      </div>
-      <div style={{padding:'0 14px',marginTop:-12,display:'flex',flexDirection:'column',gap:10}}>
-        {list.length===0&&<div className="card" style={{padding:30,textAlign:'center',color:'#ccc',marginTop:4}}>아직 기록이 없습니다</div>}
-        {list.map(r=>(
-          <div key={r.id} className="card" style={{padding:'14px 16px',borderLeft:'3px solid #7986cb'}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
-              <span style={{fontSize:11,color:'#bbb'}}>{r.date}</span>
-              <div style={{display:'flex',gap:6}}>
-                <button onClick={()=>onEdit(r)} style={{background:'#e8eaf6',color:'#3949ab',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>수정</button>
-                <button onClick={()=>onDelete(r.id)} style={{background:'#fce4ec',color:'#e53935',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>삭제</button>
-              </div>
-            </div>
-            <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 8px'}}>{r.unit||'(단원없음)'}</p>
-            {r.inquiry&&<p style={{fontSize:12,color:'#666',margin:'0 0 4px'}}><span style={{fontWeight:700,color:'#5c6bc0'}}>탐구 </span>{r.inquiry}</p>}
-            {r.learned&&<p style={{fontSize:12,color:'#666',margin:'0 0 4px'}}><span style={{fontWeight:700,color:'#43a047'}}>배운점 </span>{r.learned}</p>}
-            {r.reflection&&<p style={{fontSize:12,color:'#666',margin:0}}><span style={{fontWeight:700,color:'#f57c00'}}>느낀점 </span>{r.reflection}</p>}
-          </div>
-        ))}
-      </div>
-      <button onClick={onWrite} style={{position:'fixed',bottom:90,right:20,width:52,height:52,borderRadius:'50%',background:'linear-gradient(135deg,#7986cb,#5c6bc0)',border:'none',color:'white',fontSize:26,cursor:'pointer',boxShadow:'0 4px 20px rgba(0,0,0,0.2)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:40}}>+</button>
-    </div>
-  );
-}
-
-/* ── 교과활동 입력 폼 ── */
-function SubjectForm({subject,editing,onSave,onCancel}){
-  const [date,setDate]=useState(editing?.date||new Date().toISOString().split('T')[0]);
-  const [unit,setUnit]=useState(editing?.unit||''), [inquiry,setInquiry]=useState(editing?.inquiry||'');
-  const [learned,setLearned]=useState(editing?.learned||''), [reflection,setReflection]=useState(editing?.reflection||'');
-  const [loading,setLoading]=useState(false);
-  const submit=async e=>{
-    e.preventDefault();
-    if(!unit||!learned) return alert('단원과 배운점은 필수입니다!');
-    setLoading(true);
-    await onSave(editing?{...editing,date,unit,inquiry,learned,reflection}:{categoryId:'subject',date,subject:subject.subject,unit,inquiry,learned,reflection});
-    setLoading(false);
-  };
-  return(
-    <div style={{padding:16,paddingBottom:30}}>
-      <button onClick={onCancel} style={{background:'none',border:'none',color:'#999',cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4,fontSize:13}}><Back/>목록으로</button>
-      <div className="card" style={{padding:20}}>
-        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
-          <span style={{background:'#e8eaf6',color:'#3949ab',padding:'4px 10px',borderRadius:8,fontSize:12,fontWeight:800}}>{subject.subject}</span>
-          <h3 style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:0}}>{editing?'수정':'기록하기'}</h3>
-        </div>
-        <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>날짜</p><input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>단원/주제 *</p><input className="input" type="text" placeholder="예: 3단원 - 에너지와 환경" value={unit} onChange={e=>setUnit(e.target.value)}/></div>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>탐구활동</p><textarea className="input" rows="3" placeholder="탐구활동 내용" value={inquiry} onChange={e=>setInquiry(e.target.value)} style={{resize:'none'}}/></div>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>배운점 *</p><textarea className="input" rows="3" placeholder="배운점을 기록하세요" value={learned} onChange={e=>setLearned(e.target.value)} style={{resize:'none'}}/></div>
-          <div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>느낀점</p><textarea className="input" rows="3" placeholder="느낀점을 기록하세요" value={reflection} onChange={e=>setReflection(e.target.value)} style={{resize:'none'}}/></div>
-          <button type="submit" className="btn-pink" disabled={loading} style={{background:'linear-gradient(135deg,#7986cb,#5c6bc0)'}}>{loading?<Spin/>:(editing?'수정 완료':'저장하기')}</button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-/* ── AI 생기부 (담임/진로) ── */
-function AIReport({student,onBack}){
-  const [recs,setRecs]=useState([]), [loading,setLoading]=useState(true);
-  const [sel,setSel]=useState(new Set()), [result,setResult]=useState(''), [generating,setGenerating]=useState(false), [saving,setSaving]=useState(false);
-  useEffect(()=>{
-    callAPI({action:'getRecords',studentId:student.id}).then(r=>{setRecs(r.records||[]);setLoading(false);}).catch(()=>setLoading(false));
-  },[]);
-  const generate=async()=>{
-    if(!sel.size) return alert('기록을 선택하세요!');
-    setGenerating(true); setResult('');
-    const text=recs.filter(r=>sel.has(r.id)).map(r=>r.categoryId==='subject'?`[${r.subject}]${r.unit} 탐구:${r.inquiry} 배움:${r.learned} 느낌:${r.reflection}`:`[${r.categoryId==='career'?'진로':'창체'}]${r.title}: ${r.content}`).join('\n');
-    try{
-      const res=await callAPI({action:'generateAI',text:AI_RULES+text+'\n\n1400~1500바이트로 작성하세요.'});
-      if(res.success) setResult(adjustBytes(res.content||''));
-      else alert('AI 오류: '+(res.message||'실패'));
-    }catch(e){alert('서버 오류: '+e.message);}
-    setGenerating(false);
-  };
-  const save=async()=>{
-    if(!result) return;
-    setSaving(true);
-    try{
-      await callAPI({action:'saveReport',studentId:student.id,name:student.name,content:result,savedAt:new Date().toLocaleString()});
-      alert('저장됐습니다!');
-    }catch(e){alert('저장 실패');}
-    setSaving(false);
-  };
-  return(
-    <div style={{paddingBottom:20}}>
-      <div style={{background:'linear-gradient(135deg,#f48fb1,#ce93d8)',padding:'20px 16px 28px'}}>
-        <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 학생 목록</button>
-        <h2 style={{fontSize:18,fontWeight:900,color:'white',margin:0}}>{student.name}</h2>
-        <p style={{fontSize:12,color:'rgba(255,255,255,0.8)',margin:'4px 0 0'}}>{student.id}</p>
-      </div>
-      <div style={{padding:'12px 14px'}}>
-        {result&&(
-          <div style={{background:'#e8f5e9',borderRadius:14,padding:16,marginBottom:12}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
-              <span style={{fontSize:12,fontWeight:800,color:'#2e7d32'}}>✨ AI 생기부</span>
-              <span style={{fontSize:11,color:'#999'}}>{new TextEncoder().encode(result).length} bytes</span>
-            </div>
-            <p style={{fontSize:13,color:'#333',lineHeight:1.7,margin:'0 0 10px'}}>{result}</p>
-            <div style={{display:'flex',gap:8}}>
-              <button onClick={()=>navigator.clipboard.writeText(result)} style={{flex:1,background:'#f5f5f5',border:'none',borderRadius:10,padding:'8px 0',fontSize:12,fontWeight:700,cursor:'pointer'}}>복사</button>
-              <button onClick={save} disabled={saving} className="btn-pink" style={{flex:2,padding:'8px 0',fontSize:12}}>{saving?<Spin/>:'저장하기'}</button>
-            </div>
-          </div>
-        )}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-          <p style={{fontSize:13,fontWeight:800,color:'#1a1a2e',margin:0}}>기록 선택 ({sel.size}개)</p>
-          <button onClick={generate} disabled={generating||!sel.size} className="btn-pink" style={{padding:'7px 14px',width:'auto',fontSize:12}}>
-            {generating?<Spin/>:'AI 생성'}
-          </button>
-        </div>
-        {loading&&<p style={{color:'#ccc',textAlign:'center'}}>불러오는 중...</p>}
-        {recs.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(r=>(
-          <div key={r.id} onClick={()=>{const s=new Set(sel);s.has(r.id)?s.delete(r.id):s.add(r.id);setSel(s);}} className="card" style={{padding:'12px 14px',marginBottom:8,cursor:'pointer',border:sel.has(r.id)?'2px solid #f48fb1':'2px solid transparent',opacity:sel.has(r.id)?1:0.65}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-              <span style={{fontSize:10,background:'#fce4ec',color:'#c2185b',padding:'2px 7px',borderRadius:8,fontWeight:700}}>{r.categoryId==='subject'?r.subject:r.categoryId==='career'?'진로':'창체'}</span>
-              <span style={{fontSize:10,color:'#ccc'}}>{r.date}</span>
-            </div>
-            <p style={{fontSize:13,fontWeight:700,color:'#1a1a2e',margin:0}}>{r.categoryId==='subject'?r.unit:r.title}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ── 담임/진로 교사 홈 ── */
-function TeacherHome({user,records,onSelectStudent,onViewReports}){
-  const isHomeroom=user.role==='homeroom';
-  const hc=user.homeroomClass||'';
-  const g=hc[0]||'', c=hc.slice(1)||'';
-  return(
-    <div style={{paddingBottom:20}}>
-      <div style={{background:isHomeroom?'linear-gradient(135deg,#4db6ac,#26a69a)':'linear-gradient(135deg,#ff8a65,#ef5350)',padding:'22px 20px 34px',position:'relative',overflow:'hidden'}}>
-        <div style={{position:'absolute',top:-30,right:-30,width:90,height:90,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
-        <p style={{fontSize:10,color:'rgba(255,255,255,0.8)',fontWeight:600,letterSpacing:'0.14em',margin:'0 0 6px'}}>GWACHEON WOMANS HIGH SCHOOL</p>
-        <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 4px'}}>{user.name} 선생님</p>
-        {isHomeroom&&hc&&<p style={{fontSize:13,color:'rgba(255,255,255,0.85)',margin:'0 0 4px'}}>{g}학년 {c}반 담임</p>}
-        <p style={{fontSize:12,color:'rgba(255,255,255,0.7)',margin:0}}>{records.length}건 기록</p>
-      </div>
-      <div style={{padding:'0 14px',marginTop:-16,display:'flex',flexDirection:'column',gap:10}}>
-        <div onClick={onSelectStudent} className="active-btn card" style={{padding:'16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer'}}>
-          <div style={{width:44,height:44,background:'linear-gradient(135deg,#4db6ac,#26a69a)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>🎓</div>
-          <div>
-            <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 2px'}}>학생별 기록 조회</p>
-            <p style={{fontSize:11,color:'#aaa',margin:0}}>기록을 선택해 AI 생기부 생성</p>
-          </div>
-        </div>
-        {isHomeroom&&(
-          <div onClick={onViewReports} className="active-btn card" style={{padding:'16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer'}}>
-            <div style={{width:44,height:44,background:'linear-gradient(135deg,#f48fb1,#ce93d8)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>📝</div>
-            <div>
-              <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 2px'}}>생기부 결과 조회</p>
-              <p style={{fontSize:11,color:'#aaa',margin:0}}>저장된 AI 생기부 목록</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ── 학생 목록 (담임/진로) ── */
-function StudentList({user,records,onSelect,onBack}){
-  const [students,setStudents]=useState(null), [loading,setLoading]=useState(true);
-  const hc=user.homeroomClass||'';
-  useEffect(()=>{
-    if(hc){
-      callAPI({action:'getStudentsByClass',classCode:hc}).then(r=>{setStudents(r.students||[]);setLoading(false);}).catch(()=>setLoading(false));
+function generateAIResponse(text) {
+  try {
+    const apiKey = getGeminiApiKey();
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey;
+    const prompt = '당신은 고등학교 교사입니다. 학교생활기록부를 작성하세요.\n규칙:1)1400~1500바이트 2)개조식(~함,~보임) 3)교사관찰 3인칭 4)순수한글 5)경시대회·지역명·학교명금지 6)자연스럽게 7)학생은으로시작금지\n[기록]\n' + text + '\n\n반드시 1400~1500바이트로 작성하세요.';
+    const options = {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      muteHttpExceptions: true
+    };
+    const response = UrlFetchApp.fetch(url, options);
+    const data = JSON.parse(response.getContentText());
+    if (data.candidates && data.candidates[0]) {
+      return { success: true, content: data.candidates[0].content.parts[0].text.trim() };
     } else {
-      const map={};
-      records.forEach(r=>{if(!map[r.studentId])map[r.studentId]={id:r.studentId,name:r.name};});
-      setStudents(Object.values(map).sort((a,b)=>a.id.localeCompare(b.id)));
-      setLoading(false);
+      return { success: false, message: 'AI 응답 생성 실패: ' + JSON.stringify(data.error || {}) };
     }
-  },[]);
-  const getCount=id=>records.filter(r=>String(r.studentId)===String(id)).length;
-  return(
-    <div style={{paddingBottom:20}}>
-      <div style={{background:'linear-gradient(135deg,#4db6ac,#26a69a)',padding:'20px 16px 28px'}}>
-        <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 홈</button>
-        <h2 style={{fontSize:18,fontWeight:900,color:'white',margin:0}}>학생 목록</h2>
-      </div>
-      <div style={{padding:'0 14px',marginTop:-12,display:'flex',flexDirection:'column',gap:6}}>
-        {loading&&<p style={{textAlign:'center',color:'#ccc',padding:20}}>불러오는 중...</p>}
-        {(students||[]).map(s=>{
-          const cnt=getCount(s.studentId||s.id);
-          return(
-            <button key={s.studentId||s.id} onClick={()=>onSelect({id:s.studentId||s.id,name:s.name})} className="active-btn card" style={{padding:'11px 14px',display:'flex',alignItems:'center',gap:12,textAlign:'left',width:'100%',border:'none',cursor:'pointer'}}>
-              <span style={{fontSize:12,color:'#bbb',fontWeight:700,width:40,flexShrink:0}}>{s.number?s.number+'번':String(s.studentId||s.id).slice(2)}</span>
-              <span style={{flex:1,fontSize:14,fontWeight:800,color:'#1a1a2e'}}>{s.name}</span>
-              <span style={{fontSize:11,background:cnt>0?'#fce4ec':'#f5f5f5',color:cnt>0?'#c2185b':'#ccc',padding:'2px 8px',borderRadius:8,fontWeight:700}}>{cnt}건</span>
-              <Arr/>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+  } catch (e) {
+    return { success: false, message: 'AI 서버 오류: ' + e.toString() };
+  }
 }
 
-/* ── 생기부 목록 ── */
-function ReportList({user,onBack}){
-  const [reports,setReports]=useState([]), [loading,setLoading]=useState(true);
-  useEffect(()=>{
-    callAPI({action:'getReports',homeroomClass:user.homeroomClass||''}).then(r=>{setReports(r.reports||[]);setLoading(false);}).catch(()=>setLoading(false));
-  },[]);
-  return(
-    <div style={{paddingBottom:20}}>
-      <div style={{background:'linear-gradient(135deg,#f48fb1,#ce93d8)',padding:'20px 16px 28px'}}>
-        <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 홈</button>
-        <h2 style={{fontSize:18,fontWeight:900,color:'white',margin:0}}>생기부 결과</h2>
-      </div>
-      <div style={{padding:'0 14px',marginTop:-12,display:'flex',flexDirection:'column',gap:10}}>
-        {loading&&<p style={{textAlign:'center',color:'#ccc',padding:20}}>불러오는 중...</p>}
-        {reports.map(r=>(
-          <div key={r.studentId} className="card" style={{padding:'14px 16px'}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
-              <span style={{fontSize:12,fontWeight:800,color:'#1a1a2e'}}>{r.name}</span>
-              <button onClick={()=>navigator.clipboard.writeText(r.content)} style={{background:'#fce4ec',color:'#c2185b',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>복사</button>
-            </div>
-            <p style={{fontSize:12,color:'#666',margin:0,lineHeight:1.6}}>{r.content}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function normalizeId(id) {
+  if (!id) return '';
+  return String(id).replace(/\D/g, '').trim();
 }
 
-/* ── 교과목교사 홈 ── */
-function SubjectTeacherHome({user,onSelectSubject}){
-  const assigns=JSON.parse(user.assignments||'[]');
-  return(
-    <div style={{paddingBottom:20}}>
-      <div style={{background:'linear-gradient(135deg,#7e57c2,#5c6bc0)',padding:'22px 20px 34px',position:'relative',overflow:'hidden'}}>
-        <div style={{position:'absolute',top:-30,right:-30,width:90,height:90,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
-        <p style={{fontSize:10,color:'rgba(255,255,255,0.8)',fontWeight:600,letterSpacing:'0.14em',margin:'0 0 6px'}}>GWACHEON WOMANS HIGH SCHOOL</p>
-        <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 8px'}}>{user.name} 선생님</p>
-        <div style={{display:'inline-flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.15)',borderRadius:20,padding:'4px 12px'}}>
-          <div style={{width:6,height:6,background:'#69f0ae',borderRadius:'50%'}}/>
-          <span style={{fontSize:10,color:'rgba(255,255,255,0.8)',fontWeight:700}}>교과목교사</span>
-        </div>
-      </div>
-      <div style={{padding:'0 14px',marginTop:-16,display:'flex',flexDirection:'column',gap:10}}>
-        <p style={{fontSize:11,color:'#bbb',fontWeight:700,margin:'4px 0 0',paddingLeft:2}}>담당 과목</p>
-        {assigns.map((a,i)=>(
-          <div key={i} onClick={()=>onSelectSubject(a)} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer',borderLeft:'3px solid #ce93d8'}}>
-            <div style={{width:42,height:42,background:'linear-gradient(135deg,#ba68c8,#9c27b0)',borderRadius:13,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>📖</div>
-            <div style={{flex:1}}>
-              <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 2px'}}>{a.subject}</p>
-              <p style={{fontSize:11,color:'#aaa',margin:0}}>{a.classes.length}개 학급</p>
-            </div>
-            <Arr/>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function isStudentInClass(studentId, targetGrade, targetClass) {
+  const s = normalizeId(studentId);
+  const tg = normalizeId(targetGrade);
+  const tc = normalizeId(targetClass);
+  if (!s || !tg || !tc) return false;
+  if (s.substring(0, tg.length) !== tg) return false;
+  const classCode = tg + tc;
+  return s.startsWith(classCode);
 }
 
-/* ── 교과목교사 반 목록 ── */
-function SubjectClassList({assignment,records,onSelect,onBack}){
-  return(
-    <div style={{paddingBottom:20}}>
-      <div style={{background:'linear-gradient(135deg,#f48fb1,#ce93d8)',padding:'20px 16px 28px'}}>
-        <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 과목 목록</button>
-        <h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>{assignment.subject}</h2>
-      </div>
-      <div style={{padding:'0 14px',marginTop:-12,display:'flex',flexDirection:'column',gap:8}}>
-        {assignment.classes.map(cls=>{
-          const g=cls[0], c=cls[1];
-          const cnt=records.filter(r=>r.categoryId==='subject'&&String(r.studentId).startsWith(cls)).length;
-          const hasRec=cnt>0;
-          return(
-            <button key={cls} onClick={()=>onSelect(cls)} className="active-btn card" style={{padding:'12px 14px',display:'flex',alignItems:'center',gap:12,textAlign:'left',width:'100%',border:hasRec?'1.5px solid #f48fb1':'1px solid #eee',cursor:'pointer',background:hasRec?'white':'#fafafa'}}>
-              <div style={{width:32,height:32,background:hasRec?'#fce4ec':'#f5f5f5',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:900,color:hasRec?'#e91e63':'#bbb',flexShrink:0}}>{g}-{c}</div>
-              <div style={{flex:1}}>
-                <p style={{fontSize:13,fontWeight:800,color:hasRec?'#1a1a2e':'#bbb',margin:0}}>{g}학년 {c}반</p>
-                <p style={{fontSize:11,margin:0,color:'#bbb'}}>{hasRec?<><span>{records.filter(r=>r.categoryId==='subject'&&String(r.studentId).startsWith(cls)&&new Set(records.filter(r2=>r2.categoryId==='subject'&&String(r2.studentId).startsWith(cls)).map(r2=>r2.studentId)).has(r.studentId)).length>0?'':''}</span><span style={{color:'#e53935',fontWeight:700}}>총 {cnt}건</span></>:'기록 없음'}</p>
-              </div>
-              <svg width="12" height="12" fill="none" stroke={hasRec?'#f48fb1':'#ddd'} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ── 교과목교사 학생 목록 ── */
-function SubjectStudentList({assignment,classCode,records,onSelect,onBack}){
-  const g=classCode[0], c=classCode[1];
-  const filtered=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===assignment.subject&&String(r.studentId).startsWith(classCode));
-  const grouped={};
-  filtered.forEach(r=>{if(!grouped[r.studentId])grouped[r.studentId]={name:r.name,recs:[]};grouped[r.studentId].recs.push(r);});
-  const list=Object.entries(grouped).sort(([a],[b])=>Number(a)-Number(b));
-  return(
-    <div style={{paddingBottom:20}}>
-      <div style={{background:'linear-gradient(135deg,#7e57c2,#5c6bc0)',padding:'20px 16px 28px'}}>
-        <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 반 목록</button>
-        <h2 style={{fontSize:18,fontWeight:900,color:'white',margin:0}}>{g}학년 {c}반 {assignment.subject}</h2>
-      </div>
-      <div style={{padding:'0 14px',marginTop:-12,display:'flex',flexDirection:'column',gap:6}}>
-        {list.length===0&&<div className="card" style={{padding:24,textAlign:'center',color:'#ccc',marginTop:4}}>기록이 없습니다</div>}
-        {list.map(([sid,{name,recs}])=>(
-          <button key={sid} onClick={()=>onSelect({id:sid,name,subject:assignment.subject})} className="active-btn card" style={{padding:'10px 14px',display:'flex',alignItems:'center',gap:12,textAlign:'left',width:'100%',border:'none',cursor:'pointer'}}>
-            <span style={{fontSize:12,color:'#bbb',fontWeight:700,width:36,flexShrink:0}}>{String(sid).slice(2)}번</span>
-            <span style={{flex:1,fontSize:14,fontWeight:800,color:'#1a1a2e'}}>{name}</span>
-            <span style={{fontSize:11,background:'#fce4ec',color:'#c2185b',padding:'2px 8px',borderRadius:8,fontWeight:700}}>{recs.length}건</span>
-            <Arr/>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ── 교과목교사 학생 상세 + AI ── */
-function SubjectStudentDetail({student,records,onBack}){
-  const recs=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===student.subject&&String(r.studentId)===String(student.id)).sort((a,b)=>new Date(b.date)-new Date(a.date));
-  const [showAI,setShowAI]=useState(false), [result,setResult]=useState(''), [generating,setGenerating]=useState(false), [copied,setCopied]=useState(false), [saving,setSaving]=useState(false);
-  const generate=async()=>{
-    setGenerating(true); setResult('');
-    const text=recs.map(r=>`[${r.subject}]단원:${r.unit||''} 탐구:${r.inquiry||''} 배움:${r.learned||''} 느낌:${r.reflection||''}`).join('\n');
-    try{
-      const res=await callAPI({action:'generateAI',text:AI_RULES+text+'\n\n1400~1500바이트로 작성하세요.'});
-      if(res.success) setResult(adjustBytes(res.content||''));
-      else alert('AI 오류: '+(res.message||'실패'));
-    }catch(e){alert('서버 오류: '+e.message);}
-    setGenerating(false);
-  };
-  const copy=()=>{navigator.clipboard.writeText(result);setCopied(true);setTimeout(()=>setCopied(false),2000);};
-  const save=async()=>{
-    if(!result) return;
-    setSaving(true);
-    try{
-      const r=await callAPI({action:'saveReport',studentId:student.id,name:student.name,content:result,savedAt:new Date().toLocaleString()});
-      if(r.success) alert('저장됐습니다! ✅');
-      else alert('저장 실패: '+(r.message||'오류'));
-    }catch(e){alert('저장 실패');}
-    setSaving(false);
-  };
-  return(
-    <div style={{paddingBottom:20}}>
-      <div style={{background:'linear-gradient(135deg,#7e57c2,#5c6bc0)',padding:'20px 16px 28px'}}>
-        <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 학생 목록</button>
-        <h2 style={{fontSize:18,fontWeight:900,color:'white',margin:0}}>{student.name}</h2>
-        <p style={{fontSize:12,color:'rgba(255,255,255,0.8)',margin:'4px 0 0'}}>{student.subject} · {recs.length}건</p>
-      </div>
-      <div style={{padding:'12px 14px',display:'flex',flexDirection:'column',gap:10}}>
-        {!showAI?(
-          <button onClick={()=>setShowAI(true)} style={{background:'linear-gradient(135deg,#4db6ac,#26a69a)',color:'white',border:'none',borderRadius:14,padding:'13px',fontSize:14,fontWeight:800,cursor:'pointer'}}>✨ AI 생기부 생성</button>
-        ):(
-          <div style={{background:'#e8f5e9',borderRadius:16,padding:16,border:'2px solid #4db6ac'}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:12}}>
-              <p style={{fontSize:14,fontWeight:800,color:'#1b5e20',margin:0}}>✨ AI 생기부</p>
-              <button onClick={()=>{setShowAI(false);setResult('');}} style={{background:'none',border:'none',color:'#aaa',cursor:'pointer',fontSize:12}}>닫기</button>
-            </div>
-            <button onClick={generate} disabled={generating} style={{width:'100%',background:'linear-gradient(135deg,#4db6ac,#26a69a)',color:'white',border:'none',borderRadius:10,padding:'10px',fontSize:13,fontWeight:800,cursor:'pointer',marginBottom:result?12:0}}>
-              {generating?<Spin/>:`${recs.length}건으로 생기부 작성`}
-            </button>
-            {result&&(
-              <>
-                <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
-                  <span style={{fontSize:11,color:'#388e3c',fontWeight:700}}>{new TextEncoder().encode(result).length} bytes</span>
-                </div>
-                <p style={{fontSize:13,color:'#333',lineHeight:1.7,margin:'0 0 12px'}}>{result}</p>
-                <div style={{display:'flex',gap:8}}>
-                  <button onClick={copy} style={{flex:1,background:copied?'#43a047':'#f5f5f5',color:copied?'white':'#555',border:'none',borderRadius:10,padding:'9px 0',fontSize:12,fontWeight:700,cursor:'pointer'}}>{copied?'✅ 복사됨':'복사'}</button>
-                  <button onClick={generate} disabled={generating} style={{flex:1,background:'linear-gradient(135deg,#7986cb,#5c6bc0)',color:'white',border:'none',borderRadius:10,padding:'9px 0',fontSize:12,fontWeight:800,cursor:'pointer'}}>{generating?<Spin/>:'🔄 재작성'}</button>
-                  <button onClick={save} disabled={saving} style={{flex:1,background:'linear-gradient(135deg,#f48fb1,#ce93d8)',color:'white',border:'none',borderRadius:10,padding:'9px 0',fontSize:12,fontWeight:800,cursor:'pointer'}}>{saving?<Spin/>:'💾 저장'}</button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-        {recs.map(r=>(
-          <div key={r.id} className="card" style={{padding:'14px 16px',borderLeft:'3px solid #7e57c2'}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
-              <span style={{fontSize:11,background:'#ede7f6',color:'#512da8',padding:'2px 8px',borderRadius:8,fontWeight:700}}>{r.subject}</span>
-              <span style={{fontSize:11,color:'#ccc'}}>{r.date}</span>
-            </div>
-            <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 6px'}}>{r.unit||'(단원없음)'}</p>
-            {r.learned&&<p style={{fontSize:12,color:'#666',margin:0,lineHeight:1.5}}>{r.learned}</p>}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ── 메인 앱 ── */
-function App(){
-  const [role,setRole]=useState(null);
-  const [user,setUser]=useState(null);
-  const [records,setRecords]=useState([]);
-  const [loading,setLoading]=useState(false);
-  const [view,setView]=useState('home');
-  const [catId,setCatId]=useState(null);
-  const [subject,setSubject]=useState(null);
-  const [writing,setWriting]=useState(false);
-  const [editing,setEditing]=useState(null);
-  const [selStudent,setSelStudent]=useState(null);
-  const [selAssignment,setSelAssignment]=useState(null);
-  const [selClass,setSelClass]=useState(null);
-
-  const fetchRecords=useCallback(async(u)=>{
-    if(!u) return;
-    setLoading(true);
-    try{
-      const isStudent=u.role==='student';
-      let payload;
-      if(isStudent) payload={action:'getRecords',studentId:u.studentId};
-      else {
-        let sc=[];
-        if(u.assignments){try{sc=JSON.parse(u.assignments).flatMap(a=>a.classes);}catch(e){}}
-        payload={action:'getAllRecords',role:u.role,grade:u.grade,classNum:u.classNum,homeroomClass:u.homeroomClass||'',subjectClasses:sc,studentId:u.studentId};
+function loginUser(ss, payload) {
+  const isTeacher = (payload.role !== 'student');
+  const sheet = findSheet(ss, isTeacher ? SHEET_TEACHERS : SHEET_USERS);
+  if (!sheet) return { success: false, message: '시트를 찾을 수 없습니다.' };
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === String(payload.studentId).trim()) {
+      if (String(data[i][2]) === String(payload.password)) {
+        const role = data[i][3] || payload.role;
+        const grade = data[i][4] || '';
+        const classNum = data[i][5] || '';
+        return {
+          success: true,
+          name: data[i][1],
+          role: role,
+          grade: grade,
+          classNum: classNum,
+          homeroomClass: grade && classNum ? String(grade) + String(classNum) : (data[i][4] || ''),
+          assignments: data[i][6] || ''
+        };
+      } else {
+        return { success: false, message: '비밀번호가 일치하지 않습니다.' };
       }
-      const res=await callAPI(payload);
-      if(res.success) setRecords(res.records||[]);
-    }catch(e){}
-    setLoading(false);
-  },[]);
-
-  const login=u=>{setUser(u);fetchRecords(u);};
-  const logout=()=>{setUser(null);setRole(null);setRecords([]);setView('home');};
-
-  const saveRecord=async(data)=>{
-    try{
-      const r=await callAPI({action:'saveRecord',record:{...data,studentId:user.studentId,name:user.name}});
-      if(r.success){await fetchRecords(user);setWriting(false);setEditing(null);}
-      else alert(r.message);
-    }catch(e){alert('저장 실패');}
-  };
-  const updateRecord=async(data)=>{
-    try{
-      const r=await callAPI({action:'updateRecord',record:{...data,studentId:user.studentId,name:user.name}});
-      if(r.success){await fetchRecords(user);setWriting(false);setEditing(null);}
-      else alert(r.message);
-    }catch(e){alert('수정 실패');}
-  };
-  const deleteRecord=async(id)=>{
-    if(!confirm('삭제할까요?')) return;
-    try{
-      await callAPI({action:'deleteRecord',recordId:id,studentId:user.studentId});
-      fetchRecords(user);
-    }catch(e){alert('삭제 실패');}
-  };
-
-  if(!role) return<RoleScreen onSelect={setRole}/>;
-  if(!user) return<LoginScreen role={role} onLogin={login} onBack={()=>setRole(null)}/>;
-
-  const isStudent=user.role==='student';
-  const isSubjectTeacher=user.role==='subject';
-
-  return(
-    <div style={{maxWidth:430,margin:'0 auto',background:'white',minHeight:'100dvh',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden',boxShadow:'0 0 60px rgba(206,147,216,0.2)'}}>
-      {/* 헤더 */}
-      <div style={{background:'white',borderBottom:'1px solid #f8e8f0',padding:'0 20px',height:52,display:'flex',alignItems:'center',position:'sticky',top:0,zIndex:30,boxShadow:'0 1px 10px rgba(206,147,216,0.1)'}}>
-        <h1 style={{flex:1,textAlign:'center',fontSize:15,fontWeight:900,color:'#1a1a2e',margin:0,letterSpacing:'-0.3px'}}>
-          {isSubjectTeacher?'과천여자고등학교':'창체 다이어리'}
-        </h1>
-        <button onClick={logout} style={{position:'absolute',right:16,background:'#fce4ec',border:'none',color:'#c2185b',fontSize:11,fontWeight:700,padding:'5px 11px',borderRadius:18,cursor:'pointer'}}>로그아웃</button>
-      </div>
-
-      {/* 메인 콘텐츠 */}
-      <div className="no-scrollbar" style={{flex:1,overflowY:'auto'}}>
-        {/* 학생 화면 */}
-        {isStudent&&view==='home'&&!catId&&<StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}}/>}
-        {isStudent&&view==='cat'&&catId!=='subject'&&!writing&&<RecordList catId={catId} records={records} onBack={()=>{setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRecord}/>}
-        {isStudent&&view==='cat'&&catId!=='subject'&&writing&&<WriteForm catId={catId} onSave={saveRecord} onCancel={()=>setWriting(false)}/>}
-        {isStudent&&view==='cat'&&catId==='subject'&&!subject&&<SubjectList user={user} onSelect={s=>{setSubject(s);}} onBack={()=>{setCatId(null);setView('home');}}/>}
-        {isStudent&&view==='cat'&&catId==='subject'&&subject&&!writing&&<SubjectRecords subject={subject} records={records} onBack={()=>setSubject(null)} onWrite={()=>setWriting(true)} onDelete={deleteRecord} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
-        {isStudent&&view==='cat'&&catId==='subject'&&subject&&writing&&<SubjectForm subject={subject} editing={editing} onSave={editing?updateRecord:saveRecord} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
-
-        {/* 담임/진로 교사 */}
-        {!isStudent&&!isSubjectTeacher&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')}/>}
-        {!isStudent&&!isSubjectTeacher&&view==='students'&&!selStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onBack={()=>setView('home')}/>}
-        {!isStudent&&!isSubjectTeacher&&view==='ai'&&selStudent&&<AIReport student={selStudent} onBack={()=>{setSelStudent(null);setView('students');}}/>}
-        {!isStudent&&!isSubjectTeacher&&view==='reports'&&<ReportList user={user} onBack={()=>setView('home')}/>}
-
-        {/* 교과목교사 */}
-        {isSubjectTeacher&&view==='home'&&!selAssignment&&<SubjectTeacherHome user={user} onSelectSubject={a=>{setSelAssignment(a);setView('classes');}}/>}
-        {isSubjectTeacher&&view==='classes'&&selAssignment&&!selClass&&<SubjectClassList assignment={selAssignment} records={records} onSelect={cls=>{setSelClass(cls);setView('students');}} onBack={()=>{setSelAssignment(null);setView('home');}}/>}
-        {isSubjectTeacher&&view==='students'&&selClass&&!selStudent&&<SubjectStudentList assignment={selAssignment} classCode={selClass} records={records} onSelect={s=>{setSelStudent(s);setView('detail');}} onBack={()=>{setSelClass(null);setView('classes');}}/>}
-        {isSubjectTeacher&&view==='detail'&&selStudent&&<SubjectStudentDetail student={selStudent} records={records} onBack={()=>{setSelStudent(null);setView('students');}}/>}
-      </div>
-    </div>
-  );
+    }
+  }
+  return { success: false, message: '등록되지 않은 사용자입니다.' };
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-</script>
-</body>
-</html>
+function registerStudent(ss, payload) {
+  const sheet = findSheet(ss, SHEET_USERS);
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === String(payload.studentId).trim()) return { success: false, message: '이미 등록된 학번입니다.' };
+  }
+  sheet.appendRow([payload.studentId, payload.name, payload.password, payload.role || 'student', payload.homeroomClass || '']);
+  return { success: true };
+}
+
+function registerTeacher(ss, payload) {
+  const sheet = findSheet(ss, SHEET_TEACHERS);
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === String(payload.teacherId).trim()) return { success: false, message: '이미 등록된 교사 아이디입니다.' };
+  }
+  sheet.appendRow([payload.teacherId, payload.name, payload.password, payload.role, payload.grade || '', payload.classNum || '', payload.assignments || '']);
+  return { success: true };
+}
+
+function lookupTeacher(ss, name) {
+  const sheet = findSheet(ss, SHEET_TEACHERS);
+  if (!sheet) return { success: false, message: '교사명단 시트를 찾을 수 없습니다.' };
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).trim() === name && data[i][3] === 'homeroom') {
+      return { success: true, homeroomClass: String(data[i][4]) + String(data[i][5]), grade: data[i][4], classNum: data[i][5] };
+    }
+  }
+  return { success: false, message: '교사 명단에 없는 이름입니다.' };
+}
+
+function lookupSubjectTeacher(ss, name) {
+  const sheet = findSheet(ss, SHEET_TEACHERS);
+  if (!sheet) return { success: false };
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).trim() === name && data[i][3] === 'subject') {
+      try {
+        return { success: true, assignments: JSON.parse(data[i][6] || '[]') };
+      } catch(e) { return { success: false }; }
+    }
+  }
+  return { success: false };
+}
+
+function lookupStudent(ss, studentId, name) {
+  const sheet = findSheet(ss, SHEET_STUDENTS);
+  if (!sheet) return { success: false, message: '학생명단 시트를 찾을 수 없습니다.' };
+  const data = sheet.getDataRange().getValues();
+  const sid = String(studentId).trim();
+  const grade = sid.substring(0, 1);
+  const classNum = String(parseInt(sid.substring(1, 2)));
+  const num = String(parseInt(sid.substring(2, 4)));
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === grade && String(data[i][1]) === classNum && String(data[i][2]) === num && String(data[i][3]).trim() === String(name).trim()) {
+      return { success: true };
+    }
+  }
+  return { success: false, message: '학번과 이름이 일치하지 않습니다.' };
+}
+
+function saveRecord(ss, record) {
+  const sheet = findSheet(ss, SHEET_RECORDS);
+  const id = new Date().getTime().toString();
+  sheet.appendRow([
+    id,
+    record.studentId, record.name, record.categoryId, record.date,
+    record.subject || record.title || '',
+    record.unit || record.content || '',
+    record.inquiry || '', record.learned || '', record.reflection || ''
+  ]);
+  return { success: true, id: id };
+}
+
+function getRecords(ss, studentId) {
+  const sheet = findSheet(ss, SHEET_RECORDS);
+  if (!sheet) return { success: true, records: [] };
+  const data = sheet.getDataRange().getValues();
+  const records = [];
+  const sid = normalizeId(studentId);
+  for (let i = 1; i < data.length; i++) {
+    if (normalizeId(data[i][1]) === sid) {
+      records.push({
+        id: String(data[i][0]), studentId: data[i][1], name: data[i][2],
+        categoryId: data[i][3], date: data[i][4],
+        subject: data[i][5], unit: data[i][6],
+        inquiry: data[i][7], learned: data[i][8], reflection: data[i][9],
+        title: data[i][5], content: data[i][6]
+      });
+    }
+  }
+  return { success: true, records: records };
+}
+
+function getAllRecords(ss, payload) {
+  const sheet = findSheet(ss, SHEET_RECORDS);
+  if (!sheet) return { success: true, records: [] };
+  const data = sheet.getDataRange().getValues();
+  const records = [];
+  let { role, grade, classNum, subjectClasses, homeroomClass, studentId } = payload;
+
+  // Identity Recovery
+  if (!role || (!grade && !homeroomClass && (!subjectClasses || subjectClasses.length === 0))) {
+    const tSheet = findSheet(ss, SHEET_TEACHERS);
+    if (tSheet) {
+      const tData = tSheet.getDataRange().getValues();
+      for (let i = 1; i < tData.length; i++) {
+        if (normalizeId(tData[i][0]) === normalizeId(studentId)) {
+          role = tData[i][3];
+          grade = tData[i][4];
+          classNum = tData[i][5];
+          const raw = tData[i][6] || '';
+          try {
+            subjectClasses = raw.startsWith('[') ? JSON.parse(raw).flatMap(a => a.classes) : raw.split(',').map(c => c.trim());
+          } catch(e) { subjectClasses = []; }
+          break;
+        }
+      }
+    }
+  }
+
+  const currentRole = role || (homeroomClass ? 'homeroom' : 'subject');
+  const currentGrade = normalizeId(grade || (homeroomClass ? String(homeroomClass).substring(0, 1) : ''));
+  const currentClassNum = normalizeId(classNum || (homeroomClass ? String(homeroomClass).substring(1) : ''));
+  const currentSubjectClasses = (subjectClasses || []).map(c => normalizeId(c));
+
+  for (let i = 1; i < data.length; i++) {
+    if (!data[i][1]) continue;
+    const sId = normalizeId(data[i][1]); // B열: studentId
+    const categoryId = String(data[i][3] || '');
+    let match = false;
+    if (currentRole === 'homeroom') {
+      match = isStudentInClass(sId, currentGrade, currentClassNum);
+    } else if (currentRole === 'career') {
+      match = categoryId === 'career';
+    } else if (currentRole === 'subject') {
+      if (categoryId !== 'subject') continue;
+      match = currentSubjectClasses.length > 0 && currentSubjectClasses.some(c => sId.startsWith(c));
+    }
+    if (match) {
+      records.push({
+        id: String(data[i][0]), studentId: data[i][1], name: data[i][2],
+        categoryId: data[i][3], date: data[i][4],
+        subject: data[i][5], unit: data[i][6],
+        inquiry: data[i][7], learned: data[i][8], reflection: data[i][9],
+        title: data[i][5], content: data[i][6]
+      });
+    }
+  }
+  return { success: true, records: records };
+}
+
+function deleteRecord(ss, recordId, studentId) {
+  const sheet = findSheet(ss, SHEET_RECORDS);
+  if (!sheet) return { success: false, message: '기록 시트 없음' };
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(recordId) && normalizeId(data[i][1]) === normalizeId(studentId)) {
+      sheet.deleteRow(i + 1);
+      return { success: true };
+    }
+  }
+  return { success: false, message: '기록을 찾을 수 없습니다.' };
+}
+
+function updateRecord(ss, record) {
+  const sheet = findSheet(ss, SHEET_RECORDS);
+  if (!sheet) return { success: false, message: '기록 시트 없음' };
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(record.id) && normalizeId(data[i][1]) === normalizeId(record.studentId)) {
+      sheet.getRange(i + 1, 1, 1, 10).setValues([[
+        record.id, record.studentId, record.name, record.categoryId, record.date,
+        record.subject || record.title || '',
+        record.unit || record.content || '',
+        record.inquiry || '', record.learned || '', record.reflection || ''
+      ]]);
+      return { success: true };
+    }
+  }
+  return { success: false, message: '기록을 찾을 수 없습니다.' };
+}
+
+function getSubjectsByClass(ss, classCode) {
+  const subjectSheet = findSheet(ss, SHEET_SUBJECTS);
+  if (!subjectSheet) return { success: true, subjects: [] };
+  const subData = subjectSheet.getDataRange().getValues();
+  const grade = classCode.substring(0, 1);
+  const teacherSheet = findSheet(ss, SHEET_TEACHERS);
+  const teacherData = teacherSheet ? teacherSheet.getDataRange().getValues() : [];
+  const subjects = [];
+  const seen = new Set();
+  for (let i = 1; i < subData.length; i++) {
+    if (String(subData[i][0]) !== grade) continue;
+    const subject = subData[i][1];
+    if (seen.has(subject)) continue;
+    let teacherName = '미상';
+    for (let j = 1; j < teacherData.length; j++) {
+      if (teacherData[j][3] === 'subject' && teacherData[j][6]) {
+        try {
+          const assigns = JSON.parse(teacherData[j][6]);
+          const isTeaching = assigns.some(a => a.subject === subject && a.classes.some(c => String(c) === classCode));
+          if (isTeaching) { teacherName = teacherData[j][1]; break; }
+        } catch(e) {}
+      }
+    }
+    seen.add(subject);
+    subjects.push({ subject: subject, teacher: teacherName });
+  }
+  return { success: true, subjects: subjects };
+}
+
+function getSubjectList(ss) {
+  const sheet = findSheet(ss, SHEET_SUBJECTS);
+  if (!sheet) return { success: true, subjects: {} };
+  const data = sheet.getDataRange().getValues();
+  const subjects = { '1': [], '2': [], '3': [] };
+  for (let i = 1; i < data.length; i++) {
+    const g = String(data[i][0]);
+    if (subjects[g]) subjects[g].push(data[i][1]);
+  }
+  return { success: true, subjects: subjects };
+}
+
+function checkTeacherCode(ss, code) {
+  const sheet = findSheet(ss, SHEET_CONFIG);
+  if (!sheet) return { success: false, message: '설정 시트를 찾을 수 없습니다.' };
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === 'teacher_code' && String(data[i][1]) === String(code)) return { success: true };
+  }
+  return { success: false, message: '잘못된 코드입니다.' };
+}
+
+function saveReport(ss, payload) {
+  const sheet = findSheet(ss, SHEET_REPORTS);
+  if (!sheet) return { success: false, message: '생기부 시트 없음' };
+  const data = sheet.getDataRange().getValues();
+  const row = [payload.studentId, payload.name, payload.content, payload.savedAt];
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === String(payload.studentId).trim()) {
+      sheet.getRange(i + 1, 1, 1, 4).setValues([row]);
+      return { success: true, message: '업데이트 완료' };
+    }
+  }
+  sheet.appendRow(row);
+  return { success: true, message: '저장 완료' };
+}
+
+function getReports(ss, homeroomClass) {
+  const sheet = findSheet(ss, SHEET_REPORTS);
+  if (!sheet || sheet.getLastRow() < 2) return { success: true, reports: [] };
+  const data = sheet.getDataRange().getValues();
+  const reports = [];
+  for (let i = 1; i < data.length; i++) {
+    if (!data[i][0]) continue;
+    if (homeroomClass && !String(data[i][0]).startsWith(homeroomClass)) continue;
+    reports.push({ studentId: data[i][0], name: data[i][1], content: data[i][2], savedAt: data[i][3] });
+  }
+  return { success: true, reports: reports };
+}
+
+function getStudentsByClass(ss, classCode) {
+  const sheet = findSheet(ss, SHEET_STUDENTS);
+  if (!sheet) return { success: false, message: '학생명단 시트를 찾을 수 없습니다.' };
+  const data = sheet.getDataRange().getValues();
+  const grade = classCode.substring(0, 1);
+  const classNum = String(parseInt(classCode.substring(1)));
+  const students = [];
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === grade && String(data[i][1]) === classNum) {
+      students.push({
+        grade: data[i][0], classNum: data[i][1], number: data[i][2], name: data[i][3],
+        studentId: grade + classNum + String(data[i][2]).padStart(2, '0')
+      });
+    }
+  }
+  students.sort((a, b) => parseInt(a.number) - parseInt(b.number));
+  return { success: true, students: students };
+}
+
+function handleRequestWrapper(payloadStr) {
+  try {
+    const payload = typeof payloadStr === 'string' ? JSON.parse(payloadStr) : payloadStr;
+    return JSON.stringify(handleRequest(payload));
+  } catch(err) {
+    return JSON.stringify({ success: false, error: err.toString() });
+  }
+}
+
+function checkApiKey() {
+  PropertiesService.getScriptProperties().deleteProperty('GEMINI_API_KEY');
+  PropertiesService.getScriptProperties().setProperty('GEMINI_API_KEY', 'AIzaSyA0eyn5YxV_jWKgDrmxU_Wrb1WBrX0MuYE');
+  const key = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  Logger.log('저장된 키: ' + key);
+}
