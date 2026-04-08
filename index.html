@@ -132,7 +132,6 @@ const Spin = ()=><svg className="animate-spin h-5 w-5 text-white inline" fill="n
 const Back = ()=><svg className="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>;
 const Arr = ()=><svg width="14" height="14" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>;
 
-/* ── 역할 아이콘 ── */
 function RoleIcon({role, size=22, color="rgba(255,255,255,0.9)"}) {
   const s = {width:size,height:size};
   if (role==='student') return <svg style={s} fill="none" stroke={color} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>;
@@ -141,7 +140,6 @@ function RoleIcon({role, size=22, color="rgba(255,255,255,0.9)"}) {
   return <svg style={s} fill="none" stroke={color} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>;
 }
 
-/* ── 역할 선택 ── */
 function RoleScreen({onSelect}) {
   const roles = [
     {id:'student',label:'학생',labelEn:'Student',desc:'창체활동 기록\n교과 · 진로활동',iconBg:'#f5eaec',tagBg:'#f5eaec',tagColor:'#9b1c2e',
@@ -254,21 +252,21 @@ function LoginScreen({role, onLogin, onBack}) {
 
   if (isSubject && mode==='register') return <SubjectRegister onDone={onLogin} onBack={()=>setMode('login')}/>;
 
-  /* ── 이름 + 전화번호 검증 ── */
+  /* ── 수동 확인 버튼 클릭 ── */
   const checkName = async () => {
-    if (mode !== 'register' || !name.trim()) return;
-    // 학생은 전화번호까지 입력됐을 때만 검증
+    if (mode !== 'register') return;
     if (isStudent) {
+      if (!id.trim() || !name.trim() || !phone.trim()) {
+        alert('학번, 이름, 전화번호를 모두 입력해주세요!');
+        return;
+      }
       const cleanPhone = phone.replace(/\D/g, '');
-      if (cleanPhone.length < 10) return;
-    }
-    setChecking(true); setMatch(null);
-    try {
-      if (isHomeroom) {
-        const r = await callAPI({action:'lookupTeacher', name:name.trim()});
-        setMatch(r.success ? r : false);
-      } else if (isStudent && id.trim().length === 4) {
-        const cleanPhone = phone.replace(/\D/g, '');
+      if (cleanPhone.length < 10) {
+        alert('전화번호를 올바르게 입력해주세요!');
+        return;
+      }
+      setChecking(true); setMatch(null);
+      try {
         const r = await callAPI({
           action: 'lookupStudent',
           studentId: id.trim(),
@@ -281,9 +279,17 @@ function LoginScreen({role, onLogin, onBack}) {
           setMatch(false);
           alert(r.message || '일치하지 않습니다.');
         }
-      }
-    } catch(e) { setMatch(false); }
-    setChecking(false);
+      } catch(e) { setMatch(false); }
+      setChecking(false);
+    } else if (isHomeroom) {
+      if (!name.trim()) return;
+      setChecking(true); setMatch(null);
+      try {
+        const r = await callAPI({action:'lookupTeacher', name:name.trim()});
+        setMatch(r.success ? r : false);
+      } catch(e) { setMatch(false); }
+      setChecking(false);
+    }
   };
 
   const submit = async(e)=>{
@@ -323,7 +329,6 @@ function LoginScreen({role, onLogin, onBack}) {
     setLoading(false);
   };
 
-  // 자동로그인 시도 중 화면
   if (loading && autoLogin) {
     return (
       <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',background:phoneBg}}>
@@ -417,7 +422,7 @@ function LoginScreen({role, onLogin, onBack}) {
             </div>
           )}
 
-          {/* 전화번호 (학생 등록 시만) */}
+          {/* 전화번호 + 확인 버튼 (학생 등록 시만) */}
           {mode==='register' && isStudent && (
             <>
               <div style={{position:'relative'}}>
@@ -430,33 +435,62 @@ function LoginScreen({role, onLogin, onBack}) {
                   placeholder="전화번호 (예: 01012345678)"
                   value={phone}
                   onChange={e=>{setPhone(e.target.value);setMatch(null);}}
-                  onBlur={checkName}
                   style={{paddingLeft:36}}
                 />
               </div>
-              {/* 전화번호 안내 */}
-              <div style={{background:'#fff5f5',border:'1px solid #f5c6c6',borderRadius:10,padding:'8px 12px',display:'flex',alignItems:'flex-start',gap:7,marginTop:-4}}>
-                <div style={{width:4,height:4,borderRadius:'50%',background:c,flexShrink:0,marginTop:4}}/>
+
+              {/* 확인 버튼 */}
+              <button
+                type="button"
+                onClick={checkName}
+                disabled={checking}
+                style={{
+                  width:'100%',
+                  padding:'13px',
+                  borderRadius:14,
+                  border:'none',
+                  background: match===true ? '#2e7d32' : match===false ? '#6a1515' : c,
+                  color:'#fff',
+                  fontSize:13,
+                  fontWeight:800,
+                  cursor:'pointer',
+                  fontFamily:'inherit',
+                  transition:'background .2s',
+                  opacity: checking ? 0.7 : 1,
+                }}
+              >
+                {checking
+                  ? <Spin/>
+                  : match===true
+                    ? '✅ 확인됐습니다'
+                    : match===false
+                      ? '❌ 일치하지 않습니다 — 다시 확인하기'
+                      : '학번 · 이름 · 전화번호 확인하기'
+                }
+              </button>
+
+              {/* 안내 박스 */}
+              <div style={{background:'#fff5f5',border:'1px solid #f5c6c6',borderRadius:10,padding:'8px 12px',display:'flex',alignItems:'flex-start',gap:7}}>
+                <div style={{width:4,height:4,borderRadius:'50%',background:c,flexShrink:0,marginTop:5}}/>
                 <p style={{fontSize:10,color:c,margin:0,lineHeight:1.65,fontWeight:500}}>
-                  하이픈(-) 없이 숫자만 입력하세요<br/>학생명단에 등록된 번호와 일치해야 합니다
+                  하이픈(-) 없이 숫자만 입력하세요<br/>
+                  학생명단에 등록된 번호와 일치해야 합니다<br/>
+                  전화번호가 변동되었거나 오류가 나는 학생은 교감선생님께 문의하세요
                 </p>
               </div>
             </>
           )}
 
-          {/* 검증 상태 메시지 */}
-          {mode==='register'&&checking&&(
+          {/* 담임교사 확인 상태 메시지 */}
+          {mode==='register'&&!isStudent&&checking&&(
             <p style={{fontSize:11,color:c,margin:0,display:'flex',alignItems:'center',gap:5}}>
               <Spin/> 확인 중...
             </p>
           )}
-          {mode==='register'&&match===false&&(
+          {mode==='register'&&!isStudent&&match===false&&(
             <p style={{fontSize:11,color:'#e53935',margin:0}}>❌ 일치하지 않습니다</p>
           )}
-          {mode==='register'&&match===true&&(
-            <p style={{fontSize:11,color:'#43a047',margin:0}}>✅ 확인됐습니다</p>
-          )}
-          {mode==='register'&&match&&match.homeroomClass&&(
+          {mode==='register'&&!isStudent&&match&&match.homeroomClass&&(
             <p style={{fontSize:11,color:'#43a047',margin:0}}>✅ {match.homeroomClass[0]}학년 {match.homeroomClass.slice(1)}반 담임</p>
           )}
 
@@ -465,7 +499,8 @@ function LoginScreen({role, onLogin, onBack}) {
             <span style={{position:'absolute',left:13,top:'50%',transform:'translateY(-50%)',opacity:0.35}}>
               <svg width="15" height="15" fill="none" stroke={c} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             </span>
-            <input className="input" type="password" placeholder="비밀번호" value={pw} onChange={e=>setPw(e.target.value)} style={{paddingLeft:36,opacity:(mode==='register'&&isStudent&&!match)?0.4:1}}
+            <input className="input" type="password" placeholder="비밀번호" value={pw} onChange={e=>setPw(e.target.value)}
+              style={{paddingLeft:36,opacity:(mode==='register'&&isStudent&&!match)?0.4:1}}
               disabled={mode==='register'&&isStudent&&!match}/>
           </div>
 
@@ -664,7 +699,6 @@ function StudentHome({user, records, loading, onCat, onBack}) {
   );
 }
 
-/* ── 기록 목록 (진로/창체) ── */
 function RecordList({catId,records,onBack,onWrite,onDelete,onEdit}){
   const cat=CATS[catId];
   const list=records.filter(r=>r.categoryId===catId).sort((a,b)=>new Date(b.date)-new Date(a.date));
@@ -695,7 +729,6 @@ function RecordList({catId,records,onBack,onWrite,onDelete,onEdit}){
   );
 }
 
-/* ── 기록 작성/수정 ── */
 function WriteForm({catId,onSave,onCancel,editing}){
   const [date,setDate]=useState(editing?.date||new Date().toISOString().split('T')[0]);
   const [title,setTitle]=useState(editing?.title||'');
@@ -725,7 +758,6 @@ function WriteForm({catId,onSave,onCancel,editing}){
   );
 }
 
-/* ── 교과활동 과목 목록 ── */
 function SubjectList({user,onSelect,onBack,records}){
   const [subjects,setSubjects]=useState([]), [loading,setLoading]=useState(true);
   useEffect(()=>{ const cls=String(user.studentId||'').slice(0,2); callAPI({action:'getSubjectsByClass',classCode:cls}).then(r=>{setSubjects(r.subjects||[]);setLoading(false);}).catch(()=>setLoading(false)); },[]);
@@ -764,7 +796,6 @@ function SubjectList({user,onSelect,onBack,records}){
   );
 }
 
-/* ── 교과활동 기록 목록 ── */
 function SubjectRecords({subject,records,onBack,onWrite,onDelete,onEdit}){
   const list=records.filter(r=>r.categoryId==='subject'&&String(r.subject||r.title||'')===subject.subject).sort((a,b)=>new Date(b.date)-new Date(a.date));
   return(
@@ -797,7 +828,6 @@ function SubjectRecords({subject,records,onBack,onWrite,onDelete,onEdit}){
   );
 }
 
-/* ── 교과활동 입력 폼 ── */
 function SubjectForm({subject,editing,onSave,onCancel}){
   const [date,setDate]=useState(editing?.date||new Date().toISOString().split('T')[0]);
   const [unit,setUnit]=useState(editing?.unit||'');
@@ -865,7 +895,6 @@ function SubjectForm({subject,editing,onSave,onCancel}){
   );
 }
 
-/* ── AI 생기부 (담임/진로) ── */
 function AIReport({student,onBack}){
   const [recs,setRecs]=useState([]), [loading,setLoading]=useState(true);
   const [sel,setSel]=useState(new Set()), [result,setResult]=useState(''), [generating,setGenerating]=useState(false), [saving,setSaving]=useState(false), [errMsg,setErrMsg]=useState('');
@@ -934,7 +963,6 @@ function AIReport({student,onBack}){
   );
 }
 
-/* ── 담임/진로 교사 홈 ── */
 function TeacherHome({user, records, onSelectStudent, onViewReports, onBack}) {
   const isHomeroom=user.role==='homeroom';
   const hc=user.homeroomClass||'';
@@ -994,7 +1022,6 @@ function TeacherHome({user, records, onSelectStudent, onViewReports, onBack}) {
   );
 }
 
-/* ── 학생 목록 (담임/진로) ── */
 function StudentList({user,records,onSelect,onBack}){
   const [students,setStudents]=useState(null), [loading,setLoading]=useState(true);
   const hc=user.homeroomClass||'';
@@ -1028,7 +1055,6 @@ function StudentList({user,records,onSelect,onBack}){
   );
 }
 
-/* ── 생기부 목록 ── */
 function ReportList({user,onBack}){
   const [reports,setReports]=useState([]), [loading,setLoading]=useState(true);
   useEffect(()=>{ callAPI({action:'getReports',homeroomClass:user.homeroomClass||''}).then(r=>{setReports(r.reports||[]);setLoading(false);}).catch(()=>setLoading(false)); },[]);
@@ -1054,7 +1080,6 @@ function ReportList({user,onBack}){
   );
 }
 
-/* ── 교과목교사 홈 ── */
 function SubjectTeacherHome({user, onSelectSubject, onBack}) {
   const assigns = JSON.parse(user.assignments||'[]');
   const totalClasses = assigns.reduce((s,a)=>s+a.classes.length, 0);
@@ -1166,7 +1191,6 @@ function SubjectTeacherHome({user, onSelectSubject, onBack}) {
   );
 }
 
-/* ── 교과목교사 반 목록 ── */
 function SubjectClassList({assignment, records, onSelect, onBack}) {
   const chipColors = [
     {bg:'linear-gradient(135deg,#7c3aed,#5c2fa0)',shadow:'rgba(92,47,160,0.3)'},
@@ -1230,7 +1254,6 @@ function SubjectClassList({assignment, records, onSelect, onBack}) {
   );
 }
 
-/* ── 교과목교사 학생 목록 ── */
 function SubjectStudentList({assignment, classCode, records, onSelect, onBack}) {
   const g=classCode[0], c=classCode[1];
   const filtered=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===assignment.subject&&String(r.studentId).startsWith(classCode));
@@ -1278,7 +1301,6 @@ function SubjectStudentList({assignment, classCode, records, onSelect, onBack}) 
   );
 }
 
-/* ── 교과목교사 학생 상세 + AI ── */
 function SubjectStudentDetail({student, records, onBack}) {
   const recs=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===student.subject&&String(r.studentId)===String(student.id)).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const [showAI,setShowAI]=useState(false), [result,setResult]=useState(''), [generating,setGenerating]=useState(false), [copied,setCopied]=useState(false), [saving,setSaving]=useState(false);
