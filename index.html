@@ -301,8 +301,7 @@ function LoginScreen({role, onLogin, onBack}) {
     if (!id.trim()||!pw.trim()) return alert('입력해주세요!');
     if (mode==='register'&&!name.trim()) return alert('이름을 입력해주세요!');
     if (mode==='register'&&isStudent&&!phone.trim()) return alert('전화번호를 입력해주세요!');
-    if (mode==='register'&&isHomeroom&&!codeVerified) return alert('인증코드 확인이 필요합니다!');
-    if (mode==='register'&&isHomeroom&&!match) return alert('이름 확인이 필요합니다!');
+    if (mode==='register'&&isHomeroom&&!match) return alert('이름과 인증코드 확인이 필요합니다!');
     if (mode==='register'&&isStudent&&!match) return alert('학번, 이름, 전화번호 확인이 필요합니다!');
     setLoading(true);
     try {
@@ -400,23 +399,28 @@ function LoginScreen({role, onLogin, onBack}) {
           <span style={{fontSize:10,fontWeight:600,color:c,letterSpacing:'0.05em'}}>
             {isStudent
               ? (mode==='login' ? '학번과 비밀번호 입력' : '학번 · 이름 · 전화번호 · 비밀번호 입력')
-              : (mode==='login' ? '아이디와 비밀번호 입력' : '아이디 · 이름 · 비밀번호 입력')
+              : isHomeroom
+                ? (mode==='login' ? '아이디와 비밀번호 입력' : (!match ? '이름 · 인증코드 입력' : '아이디 · 비밀번호 입력'))
+                : (mode==='login' ? '아이디와 비밀번호 입력' : '아이디 · 이름 · 비밀번호 입력')
             }
           </span>
         </div>
 
         <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:10}}>
-          {/* 학번/아이디 */}
-          <div style={{position:'relative'}}>
-            <span style={{position:'absolute',left:13,top:'50%',transform:'translateY(-50%)',opacity:0.35}}>
-              <svg width="15" height="15" fill="none" stroke={c} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-            </span>
-            <input className="input" type={isStudent?'number':'text'} placeholder={isStudent?'학번 (예: 1101)':'아이디'} value={id} onChange={e=>{setId(e.target.value);setMatch(null);}} style={{paddingLeft:36}}/>
-          </div>
 
-          {/* 담임교사 등록 — STEP1: 인증코드 */}
-          {mode==='register' && isHomeroom && !codeVerified && (
+          {/* ── 담임교사 등록 전용 흐름 ── */}
+          {mode==='register' && isHomeroom && !match && (
             <>
+              {/* 이름 */}
+              <div style={{position:'relative'}}>
+                <span style={{position:'absolute',left:13,top:'50%',transform:'translateY(-50%)',opacity:0.35}}>
+                  <svg width="15" height="15" fill="none" stroke={c} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </span>
+                <input className="input" type="text" placeholder="이름"
+                  value={name} onChange={e=>{setName(e.target.value);setCodeErr('');}}
+                  style={{paddingLeft:36}}/>
+              </div>
+              {/* 인증코드 */}
               <div style={{position:'relative'}}>
                 <span style={{position:'absolute',left:13,top:'50%',transform:'translateY(-50%)',opacity:0.35}}>
                   <svg width="15" height="15" fill="none" stroke={c} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -425,47 +429,73 @@ function LoginScreen({role, onLogin, onBack}) {
                   value={teacherCode} onChange={e=>{setTeacherCode(e.target.value);setCodeErr('');}}
                   style={{paddingLeft:36}}/>
               </div>
-              {codeErr&&<p style={{fontSize:11,color:'#e53935',margin:0}}>❌ {codeErr}</p>}
-              <button type="button" onClick={async()=>{
+              {/* 확인 버튼 */}
+              <button type="button" disabled={codeChecking} onClick={async()=>{
+                if (!name.trim()) return setCodeErr('이름을 입력하세요.');
                 if (!teacherCode.trim()) return setCodeErr('인증코드를 입력하세요.');
                 setCodeChecking(true); setCodeErr('');
                 try {
-                  const r = await callAPI({action:'checkTeacherCode',code:teacherCode.trim()});
-                  if (r.success) setCodeVerified(true);
-                  else setCodeErr(r.message||'잘못된 코드입니다.');
+                  const codeRes = await callAPI({action:'checkTeacherCode', code:teacherCode.trim()});
+                  if (!codeRes.success) { setCodeErr(codeRes.message||'잘못된 인증코드입니다.'); setCodeChecking(false); return; }
+                  const nameRes = await callAPI({action:'lookupTeacher', name:name.trim()});
+                  if (nameRes.success) { setMatch(nameRes); }
+                  else { setCodeErr(nameRes.message||'교사명단에 없는 이름입니다.'); }
                 } catch(e) { setCodeErr('서버 오류'); }
                 setCodeChecking(false);
-              }} disabled={codeChecking}
-              style={{width:'100%',padding:'13px',borderRadius:14,border:'none',background:c,color:'#fff',fontSize:13,fontWeight:800,cursor:'pointer',fontFamily:'inherit',opacity:codeChecking?0.7:1}}>
-                {codeChecking?<Spin/>:'인증 확인'}
+              }} style={{width:'100%',padding:'13px',borderRadius:14,border:'none',
+                background:codeErr?'#6a1515':c,
+                color:'#fff',fontSize:13,fontWeight:800,cursor:'pointer',fontFamily:'inherit',
+                transition:'background .2s',opacity:codeChecking?0.7:1}}>
+                {codeChecking?<Spin/>:codeErr?'❌ 다시 확인하기':'이름 · 인증코드 확인하기'}
               </button>
+              {/* 안내 박스 */}
               <div style={{background:'#f0faf6',border:'1px solid #b2dfce',borderRadius:10,padding:'8px 12px',display:'flex',alignItems:'flex-start',gap:7}}>
                 <div style={{width:4,height:4,borderRadius:'50%',background:c,flexShrink:0,marginTop:5}}/>
                 <p style={{fontSize:10,color:'#0a6e55',margin:0,lineHeight:1.65,fontWeight:500}}>
-                  담임교사 인증코드는 교무기획부에 문의하세요<br/>
-                  인증코드 확인 후 정보 입력이 가능합니다
+                  교사명단에 등록된 이름과 일치해야 합니다<br/>
+                  담임교사 인증코드는 교무기획부에 문의하세요
                 </p>
+              </div>
+              {codeErr&&<p style={{fontSize:11,color:'#e53935',margin:0}}>❌ {codeErr}</p>}
+            </>
+          )}
+
+          {/* 담임교사 등록 — 확인 완료 후 아이디+비밀번호 */}
+          {mode==='register' && isHomeroom && match && (
+            <>
+              <div style={{background:'#e8f5e9',border:'1px solid #a5d6a7',borderRadius:10,padding:'8px 12px',fontSize:12,color:'#2e7d32',fontWeight:700,display:'flex',alignItems:'center',gap:6}}>
+                <svg width="13" height="13" fill="none" stroke="#2e7d32" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                {match.homeroomClass ? `${match.homeroomClass[0]}학년 ${match.homeroomClass.slice(1)}반 담임 확인됐습니다` : '확인됐습니다'}
+              </div>
+              {/* 아이디 */}
+              <div style={{position:'relative'}}>
+                <span style={{position:'absolute',left:13,top:'50%',transform:'translateY(-50%)',opacity:0.35}}>
+                  <svg width="15" height="15" fill="none" stroke={c} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                </span>
+                <input className="input" type="text" placeholder="사용할 아이디"
+                  value={id} onChange={e=>setId(e.target.value)} style={{paddingLeft:36}}/>
               </div>
             </>
           )}
 
-          {/* 담임교사 등록 — STEP2: 인증완료 뱃지 */}
-          {mode==='register' && isHomeroom && codeVerified && (
-            <div style={{background:'#e8f5e9',border:'1px solid #a5d6a7',borderRadius:10,padding:'8px 12px',fontSize:12,color:'#2e7d32',fontWeight:700,display:'flex',alignItems:'center',gap:6}}>
-              <svg width="13" height="13" fill="none" stroke="#2e7d32" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-              인증코드 확인 완료
+          {/* 학번/아이디 — 학생·진로담당·교과목 (담임교사는 위에서 처리) */}
+          {(!isHomeroom || mode==='login') && (
+            <div style={{position:'relative'}}>
+              <span style={{position:'absolute',left:13,top:'50%',transform:'translateY(-50%)',opacity:0.35}}>
+                <svg width="15" height="15" fill="none" stroke={c} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              </span>
+              <input className="input" type={isStudent?'number':'text'} placeholder={isStudent?'학번 (예: 1101)':'아이디'} value={id} onChange={e=>{setId(e.target.value);setMatch(null);}} style={{paddingLeft:36}}/>
             </div>
           )}
 
-          {/* 이름 (등록 시 — 담임교사는 인증코드 통과 후에만 표시) */}
-          {mode==='register' && (isStudent || (!isHomeroom) || (isHomeroom && codeVerified)) && (
+          {/* 이름 — 학생·진로담당 등록 시 */}
+          {mode==='register' && !isHomeroom && !isStudent && (
             <div style={{position:'relative'}}>
               <span style={{position:'absolute',left:13,top:'50%',transform:'translateY(-50%)',opacity:0.35}}>
                 <svg width="15" height="15" fill="none" stroke={c} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
               </span>
               <input className="input" type="text" placeholder="이름" value={name}
                 onChange={e=>{setName(e.target.value);setMatch(null);}}
-                onBlur={()=>{ if(isHomeroom && codeVerified) checkName(); }}
                 style={{paddingLeft:36}}/>
             </div>
           )}
@@ -499,27 +529,14 @@ function LoginScreen({role, onLogin, onBack}) {
             </>
           )}
 
-          {/* 담임교사 이름 확인 상태 메시지 */}
-          {mode==='register'&&isHomeroom&&codeVerified&&checking&&(
-            <p style={{fontSize:11,color:c,margin:0,display:'flex',alignItems:'center',gap:5}}>
-              <Spin/> 확인 중...
-            </p>
-          )}
-          {mode==='register'&&isHomeroom&&codeVerified&&match===false&&(
-            <p style={{fontSize:11,color:'#e53935',margin:0}}>❌ 일치하지 않습니다</p>
-          )}
-          {mode==='register'&&isHomeroom&&codeVerified&&match&&match.homeroomClass&&(
-            <p style={{fontSize:11,color:'#43a047',margin:0}}>✅ {match.homeroomClass[0]}학년 {match.homeroomClass.slice(1)}반 담임</p>
-          )}
-
-          {/* 비밀번호 */}
+          {/* 비밀번호 — 담임교사는 확인 완료 후에만, 학생은 match 후에만 */}
           <div style={{position:'relative'}}>
             <span style={{position:'absolute',left:13,top:'50%',transform:'translateY(-50%)',opacity:0.35}}>
               <svg width="15" height="15" fill="none" stroke={c} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             </span>
             <input className="input" type="password" placeholder="비밀번호" value={pw} onChange={e=>setPw(e.target.value)}
-              style={{paddingLeft:36,opacity:(mode==='register'&&isStudent&&!match)?0.4:1}}
-              disabled={mode==='register'&&isStudent&&!match}/>
+              style={{paddingLeft:36,opacity:(mode==='register'&&((isStudent&&!match)||(isHomeroom&&!match)))?0.4:1}}
+              disabled={mode==='register'&&((isStudent&&!match)||(isHomeroom&&!match))}/>
           </div>
 
           {/* 아이디 저장 + 자동 로그인 */}
