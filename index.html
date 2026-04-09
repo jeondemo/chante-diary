@@ -292,16 +292,15 @@ function LoginScreen({role, onLogin, onBack}) {
       } else if (isStudent) {
         res=await callAPI({action:'register',studentId:id.trim(),name:name.trim(),password:pw,role:'student',homeroomClass:''});
       } else if (isTeacher) {
-        // 담임 등록
+        // 교과목 데이터 먼저 준비
+        const validAssigns=assigns.filter(a=>a.subject&&a.classes.size>0);
+        const assignData=validAssigns.length>0
+          ? JSON.stringify(validAssigns.map(a=>({subject:a.subject,classes:[...a.classes].sort()})))
+          : '';
+        // 담임+교과목 한번에 등록
         res=await callAPI({action:'registerTeacher',teacherId:id.trim(),name:name.trim(),password:pw,role:'teacher',
-          grade:match?.grade||'',classNum:match?.classNum||'',assignments:''});
-        // 교과목도 등록했으면 별도 등록
-        if (res.success&&addSubject&&assigns.some(a=>a.subject&&a.classes.size>0)) {
-          const validAssigns=assigns.filter(a=>a.subject&&a.classes.size>0);
-          const assignData=validAssigns.map(a=>({subject:a.subject,classes:[...a.classes].sort()}));
-          await callAPI({action:'updateTeacherAssignments',teacherId:id.trim(),role:'teacher',assignments:JSON.stringify(assignData)});
-          res.assignments=JSON.stringify(assignData);
-        }
+          grade:match?.grade||'',classNum:match?.classNum||'',assignments:assignData});
+        if (res.success) res.assignments=assignData;
       } else {
         // 진로담당
         res=await callAPI({action:'registerTeacher',teacherId:id.trim(),name:name.trim(),password:pw,role:'career',grade:'',classNum:'',assignments:''});
