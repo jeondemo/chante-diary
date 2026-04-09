@@ -225,8 +225,7 @@ function LoginScreen({role, onLogin, onBack}) {
   // 교과목 등록 (교사 등록 시)
   const [subjects,setSubjects]=useState({});
   const [assigns,setAssigns]=useState([{grade:'1',subject:'',classes:new Set()}]);
-  const [addSubject,setAddSubject]=useState(false);
-
+  const [addSubject,setAddSubject]=useState(true);
   const storageKey=`autologin_${role}`;
   const idKey=`savedid_${role}`;
   const c=ROLE_COLORS[role]||'#9b1c2e';
