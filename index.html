@@ -1736,7 +1736,7 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 {isTeacher&&view==='reports'&&
   <ReportList user={user} onBack={()=>setView('home')}/>}
 {isTeacher&&view==='addSubject'&&
-  <SubjectRegister
+  <AddSubjectOnly
     onDone={async(newAssignData)=>{
       // 기존 과목 + 새 과목 합치기
       const existing=user.assignments?JSON.parse(user.assignments):[];
