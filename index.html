@@ -1755,6 +1755,7 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
       const mergedStr=JSON.stringify(merged);
       alert('전송 아이디: '+user.studentId+' / 데이터: '+mergedStr);
 const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,role:'teacher',assignments:mergedStr});
+alert('응답결과: '+JSON.stringify(res));
       if(res.success){
         const updated={...user,assignments:mergedStr};
         setUser(updated);
