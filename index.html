@@ -36,6 +36,13 @@ p,span,div,button,input,textarea,select,label,a,h1,h2,h3{max-height:999999px !im
 </style>
 </head>
 <body style="background:linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%); min-height:100vh; display:flex; justify-content:center; align-items:flex-start;">
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var s = document.createElement('style');
+  s.textContent = '* { max-height: 999999px !important; } p,span,div,button,input,textarea,select,label,a,h1,h2,h3 { max-height: 999999px !important; }';
+  document.head.appendChild(s);
+});
+</script>
 <div id="root" style="width:100%; display:flex; justify-content:center;"></div>
 <script type="text/babel">
 const {useState,useEffect,useCallback} = React;
