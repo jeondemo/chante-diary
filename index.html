@@ -618,7 +618,101 @@ function LoginScreen({role, onLogin, onBack}) {
     </div>
   );
 }
+function AddSubjectOnly({onDone, onBack}) {
+  const [subjects, setSubjects] = useState({});
+  const [assigns, setAssigns] = useState([{grade:'1', subject:'', classes:new Set()}]);
+  const [loading, setLoading] = useState(false);
 
+  useEffect(()=>{
+    callAPI({action:'getSubjectList'}).then(r=>{if(r.success)setSubjects(r.subjects||{});}).catch(()=>{});
+  },[]);
+
+  const toggle=(idx,cls)=>setAssigns(prev=>prev.map((a,i)=>{
+    if(i!==idx) return a;
+    const s=new Set(a.classes); s.has(cls)?s.delete(cls):s.add(cls); return {...a,classes:s};
+  }));
+
+  const submit=async(e)=>{
+    e.preventDefault();
+    if(!assigns.some(a=>a.subject&&a.classes.size>0)) return alert('과목과 담당 학급을 선택해주세요!');
+    setLoading(true);
+    const validAssigns=assigns.filter(a=>a.subject&&a.classes.size>0);
+    const assignData=JSON.stringify(validAssigns.map(a=>({subject:a.subject,classes:[...a.classes].sort()})));
+    await onDone(assignData);
+    setLoading(false);
+  };
+
+  return(
+    <div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:30}}>
+      <div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'22px 20px 36px',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'repeating-linear-gradient(135deg,rgba(255,255,255,0) 0px,rgba(255,255,255,0) 20px,rgba(255,255,255,0.025) 20px,rgba(255,255,255,0.025) 22px)',pointerEvents:'none'}}/>
+        <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}>
+          <svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}>
+            <path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/>
+          </svg>
+        </div>
+        <div style={{position:'relative',zIndex:3}}>
+          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}>
+            <svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            홈으로
+          </button>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <div style={{width:40,height:40,background:'rgba(255,255,255,0.15)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>📚</div>
+            <div>
+              <p style={{fontSize:20,fontWeight:900,color:'white',margin:0,letterSpacing:'-0.3px'}}>교과목 추가 등록</p>
+              <p style={{fontSize:11,color:'rgba(255,255,255,0.6)',margin:'2px 0 0'}}>담당 과목과 학급을 추가하세요</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{padding:'14px 16px'}}>
+        <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <div style={{width:3,height:12,background:'#5c2fa0',borderRadius:2}}/>
+              <span style={{fontSize:12,fontWeight:700,color:'#5c2fa0'}}>추가할 과목</span>
+            </div>
+            <button type="button" onClick={()=>setAssigns(p=>[...p,{grade:'1',subject:'',classes:new Set()}])}
+              style={{background:'#ede7f6',color:'#5c2fa0',border:'none',borderRadius:10,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer'}}>+ 과목 추가</button>
+          </div>
+
+          {assigns.map((a,idx)=>(
+            <div key={idx} style={{background:'white',borderRadius:14,padding:14,border:'1px solid #ede7f6'}}>
+              {assigns.length>1&&<button type="button" onClick={()=>setAssigns(p=>p.filter((_,i)=>i!==idx))} style={{float:'right',background:'none',border:'none',color:'#ccc',cursor:'pointer',fontSize:14}}>✕</button>}
+              <p style={{fontSize:11,color:'#999',margin:'0 0 6px',fontWeight:700}}>학년</p>
+              <div style={{display:'flex',gap:5,marginBottom:10}}>
+                {['1','2','3'].map(g=>(
+                  <button type="button" key={g} onClick={()=>setAssigns(p=>p.map((x,i)=>i===idx?{...x,grade:g,subject:'',classes:new Set()}:x))}
+                    style={{flex:1,padding:'7px 0',borderRadius:9,border:'none',fontWeight:700,fontSize:13,cursor:'pointer',background:a.grade===g?'#5c2fa0':'#eee',color:a.grade===g?'white':'#666'}}>{g}학년</button>
+                ))}
+              </div>
+              <p style={{fontSize:11,color:'#999',margin:'0 0 6px',fontWeight:700}}>과목</p>
+              <select value={a.subject} onChange={e=>setAssigns(p=>p.map((x,i)=>i===idx?{...x,subject:e.target.value}:x))}
+                style={{width:'100%',padding:'8px 12px',borderRadius:9,border:'1px solid #ede7f6',background:'white',fontSize:13,fontWeight:600,marginBottom:10,outline:'none'}}>
+                <option value="">과목 선택</option>
+                {(subjects[a.grade]||[]).map(s=><option key={s} value={s}>{s}</option>)}
+              </select>
+              <p style={{fontSize:11,color:'#999',margin:'0 0 6px',fontWeight:700}}>담당 학급</p>
+              <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                {Array.from({length:CLASS_COUNT[a.grade]||5},(_,i)=>{
+                  const cls=a.grade+String(i+1); const sel=a.classes.has(cls);
+                  return <button type="button" key={cls} onClick={()=>toggle(idx,cls)}
+                    style={{padding:'5px 12px',borderRadius:20,border:'none',fontSize:12,fontWeight:700,cursor:'pointer',background:sel?'#5c2fa0':'#eee',color:sel?'white':'#666'}}>{i+1}반</button>;
+                })}
+              </div>
+            </div>
+          ))}
+
+          <button type="submit" disabled={loading}
+            style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',color:'white',fontSize:15,fontWeight:800,cursor:'pointer',fontFamily:'inherit',marginTop:4}}>
+            {loading?<Spin/>:'추가 등록 완료'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 /* ── 교과목교사 등록 ── */
 function SubjectRegister({onDone,onBack}){
   const [code,setCode]=useState(''), [verified,setVerified]=useState(false), [checking,setChecking]=useState(false), [codeErr,setCodeErr]=useState('');
