@@ -445,22 +445,13 @@ function LoginScreen({role, onLogin, onBack}) {
                 <input className="input" type="password" placeholder="비밀번호" value={pw} onChange={e=>setPw(e.target.value)} style={{paddingLeft:36}}/>
               </div>
 
-              {/* 교과목 등록 (선택) */}
-              <div style={{margin:'6px 0 2px'}}>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
-                  <div style={{display:'flex',alignItems:'center',gap:6}}>
-                    <div style={{width:3,height:12,background:'#5c2fa0',borderRadius:2}}/>
-                    <span style={{fontSize:10,fontWeight:600,color:'#5c2fa0',letterSpacing:'0.05em'}}>교과목 등록 (선택)</span>
-                  </div>
-                  <label style={{display:'flex',alignItems:'center',gap:5,cursor:'pointer'}}>
-                    <div onClick={()=>setAddSubject(p=>!p)} style={{width:36,height:20,borderRadius:10,background:addSubject?'#5c2fa0':'#ddd',position:'relative',transition:'background .2s',flexShrink:0}}>
-                      <div style={{position:'absolute',top:2,left:addSubject?18:2,width:16,height:16,borderRadius:'50%',background:'white',transition:'left .2s'}}/>
-                    </div>
-                    <span style={{fontSize:11,color:'#999'}}>교과담당</span>
-                  </label>
-                </div>
-                <p style={{fontSize:10,color:'#aaa',margin:'0 0 8px',lineHeight:1.5}}>나중에 홈 화면에서도 추가할 수 있어요</p>
-              </div>
+              {/* 교과목 등록 (필수) */}
+<div style={{margin:'6px 0 2px'}}>
+  <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+    <div style={{width:3,height:12,background:'#5c2fa0',borderRadius:2}}/>
+    <span style={{fontSize:10,fontWeight:600,color:'#5c2fa0',letterSpacing:'0.05em'}}>교과목 등록</span>
+  </div>
+</div>
 
               {addSubject&&(
                 <div style={{background:'#faf7ff',border:'1px solid #ede7f6',borderRadius:14,padding:14}}>
