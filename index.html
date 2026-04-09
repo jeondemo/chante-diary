@@ -1097,13 +1097,35 @@ function TeacherHome({user, records, onSelectStudent, onViewReports, onSubjectHo
           <span style={{fontSize:13,fontWeight:700,color:'#5c2fa0',letterSpacing:'0.04em'}}>교과목 메뉴</span>
         </div>
         {hasSubject?(
-  <div onClick={onSubjectHome} className="active-btn card" style={{padding:'20px',display:'flex',alignItems:'center',gap:16,cursor:'pointer'}}>
-    <div style={{width:52,height:52,background:'linear-gradient(135deg,#7c3aed,#5c2fa0)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>📚</div>
-    <div style={{flex:1}}>
-      <p style={{fontSize:17,fontWeight:900,color:'#1a1a2e',margin:'0 0 4px'}}>교과목별 학생 조회</p>
-      <p style={{fontSize:13,color:'#aaa',margin:0}}>{assigns.map(a=>a.subject).join(' · ')}</p>
+  <>
+    <div onClick={onSubjectHome} className="active-btn card" style={{padding:'20px',display:'flex',alignItems:'center',gap:16,cursor:'pointer'}}>
+      <div style={{width:52,height:52,background:'linear-gradient(135deg,#7c3aed,#5c2fa0)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>📚</div>
+      <div style={{flex:1,minWidth:0}}>
+        <p style={{fontSize:17,fontWeight:900,color:'#1a1a2e',margin:'0 0 8px'}}>교과목별 학생 조회</p>
+        <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+          {assigns.map((a,i)=>{
+            const colors=[
+              {bg:'#ede7f6',color:'#5c2fa0'},
+              {bg:'#e8eaf6',color:'#3949ab'},
+              {bg:'#e0f2f1',color:'#00695c'},
+              {bg:'#fce4ec',color:'#c2185b'},
+              {bg:'#fff8e1',color:'#e65100'},
+              {bg:'#e8f5e9',color:'#2e7d32'},
+            ];
+            const c=colors[i%colors.length];
+            return <span key={i} style={{background:c.bg,color:c.color,fontSize:12,fontWeight:800,padding:'4px 10px',borderRadius:20}}>{a.subject}</span>;
+          })}
+        </div>
+      </div>
     </div>
-  </div>
+    <div onClick={onAddSubject} className="active-btn card" style={{padding:'16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer',border:'1.5px dashed #ded8f5'}}>
+      <div style={{width:44,height:44,background:'#f3f0f9',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>➕</div>
+      <div style={{flex:1}}>
+        <p style={{fontSize:15,fontWeight:900,color:'#5c2fa0',margin:'0 0 2px'}}>교과목 추가 등록</p>
+        <p style={{fontSize:12,color:'#aaa',margin:0}}>담당 과목·학급을 추가하세요</p>
+      </div>
+    </div>
+  </>
 ):(
   <div onClick={onAddSubject} className="active-btn card" style={{padding:'20px',display:'flex',alignItems:'center',gap:16,cursor:'pointer',border:'1.5px dashed #ded8f5'}}>
     <div style={{width:52,height:52,background:'#f3f0f9',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>📚</div>
@@ -1621,10 +1643,25 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
   <ReportList user={user} onBack={()=>setView('home')}/>}
 {isTeacher&&view==='addSubject'&&
   <SubjectRegister
-    onDone={async(assignData)=>{
-      const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,role:'teacher',assignments:assignData});
+    onDone={async(newAssignData)=>{
+      // 기존 과목 + 새 과목 합치기
+      const existing=user.assignments?JSON.parse(user.assignments):[];
+      const newItems=JSON.parse(newAssignData);
+      // 같은 과목이면 학급 합치기, 새 과목이면 추가
+      const merged=[...existing];
+      newItems.forEach(ni=>{
+        const idx=merged.findIndex(e=>e.subject===ni.subject);
+        if(idx>=0){
+          const combined=[...new Set([...merged[idx].classes,...ni.classes])].sort();
+          merged[idx]={...merged[idx],classes:combined};
+        } else {
+          merged.push(ni);
+        }
+      });
+      const mergedStr=JSON.stringify(merged);
+      const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,role:'teacher',assignments:mergedStr});
       if(res.success){
-        const updated={...user,assignments:assignData};
+        const updated={...user,assignments:mergedStr};
         setUser(updated);
         fetchRecords(updated);
       }
