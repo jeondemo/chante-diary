@@ -1753,7 +1753,8 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
         }
       });
       const mergedStr=JSON.stringify(merged);
-      const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,role:'teacher',assignments:mergedStr});
+      alert('전송 아이디: '+user.studentId+' / 데이터: '+mergedStr);
+const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,role:'teacher',assignments:mergedStr});
       if(res.success){
         const updated={...user,assignments:mergedStr};
         setUser(updated);
