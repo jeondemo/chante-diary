@@ -713,8 +713,8 @@ function StudentHome({user, records, loading, onCat, onBack}) {
         <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'repeating-linear-gradient(135deg,rgba(255,255,255,0) 0px,rgba(255,255,255,0) 20px,rgba(255,255,255,0.025) 20px,rgba(255,255,255,0.025) 22px)',pointerEvents:'none'}}/>
         <div style={{position:'absolute',top:-30,right:-30,width:90,height:90,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
         <div style={{position:'absolute',left:18,right:18,top:72,lineHeight:1.15,pointerEvents:'none',zIndex:1}}>
-          <span style={{display:'block',fontSize:18,fontWeight:900,color:'rgba(255,255,255,0.055)',whiteSpace:'nowrap'}}>CREATING TOMORROW,</span>
-          <span style={{display:'block',fontSize:18,fontWeight:900,color:'rgba(255,255,255,0.055)',whiteSpace:'nowrap',textAlign:'right'}}>TOGETHER</span>
+          <span style={{display:'block',fontSize:22,fontWeight:900,color:'rgba(255,255,255,0.18)',whiteSpace:'nowrap'}}>CREATING TOMORROW,</span>
+<span style={{display:'block',fontSize:22,fontWeight:900,color:'rgba(255,255,255,0.18)',whiteSpace:'nowrap',textAlign:'right'}}>TOGETHER</span>
         </div>
         <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}>
           <svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}>
@@ -1065,9 +1065,9 @@ function TeacherHome({user, records, onSelectStudent, onViewReports, onSubjectHo
             <div style={{width:4,height:4,borderRadius:'50%',background:'rgba(255,255,255,0.45)'}}/>
             <span style={{fontSize:9,color:'rgba(255,255,255,0.55)',fontWeight:600,letterSpacing:'0.1em'}}>교사</span>
           </div>
-          <p style={{fontSize:28,fontWeight:900,color:'white',letterSpacing:'-0.5px',margin:'0 0 2px',lineHeight:1.1}}>{user.name}</p>
-          <p style={{fontSize:14,color:'rgba(255,255,255,0.75)',fontWeight:600,margin:'0 0 4px'}}>선생님{hc&&` · ${g}학년 ${c}반 담임`}</p>
-          <p style={{fontSize:9,color:'rgba(255,255,255,0.4)',letterSpacing:'0.1em'}}>GWACHEON WOMANS HIGH SCHOOL</p>
+          <p style={{fontSize:34,fontWeight:900,color:'white',letterSpacing:'-0.5px',margin:'0 0 4px',lineHeight:1.1}}>{user.name} <span style={{fontSize:20,fontWeight:600,opacity:0.85}}>선생님</span></p>
+<p style={{fontSize:17,color:'rgba(255,255,255,0.85)',fontWeight:700,margin:'0 0 6px'}}>{hc&&`${g}학년 ${c}반 담임`}</p>
+<p style={{fontSize:10,color:'rgba(255,255,255,0.45)',letterSpacing:'0.1em'}}>GWACHEON WOMANS HIGH SCHOOL</p>
         </div>
       </div>
 
@@ -1075,46 +1075,46 @@ function TeacherHome({user, records, onSelectStudent, onViewReports, onSubjectHo
         {/* 담임 메뉴 섹션 */}
         <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
           <div style={{width:3,height:12,background:col,borderRadius:2}}/>
-          <span style={{fontSize:11,fontWeight:700,color:col,letterSpacing:'0.04em'}}>담임 메뉴</span>
+          <span style={{fontSize:13,fontWeight:700,color:col,letterSpacing:'0.04em'}}>담임 메뉴</span>
         </div>
-        <div onClick={onSelectStudent} className="active-btn card" style={{padding:'16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer'}}>
-          <div style={{width:44,height:44,background:'linear-gradient(135deg,#4db6ac,#26a69a)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>🎓</div>
-          <div>
-            <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 2px'}}>학생별 기록 조회</p>
-            <p style={{fontSize:11,color:'#aaa',margin:0}}>기록 선택 후 AI 생기부 생성</p>
-          </div>
-        </div>
-        <div onClick={onViewReports} className="active-btn card" style={{padding:'16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer'}}>
-          <div style={{width:44,height:44,background:'linear-gradient(135deg,#f48fb1,#ce93d8)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>📝</div>
-          <div>
-            <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 2px'}}>생기부 결과 조회</p>
-            <p style={{fontSize:11,color:'#aaa',margin:0}}>저장된 AI 생기부 목록</p>
-          </div>
-        </div>
+        <div onClick={onSelectStudent} className="active-btn card" style={{padding:'20px',display:'flex',alignItems:'center',gap:16,cursor:'pointer'}}>
+  <div style={{width:52,height:52,background:'linear-gradient(135deg,#4db6ac,#26a69a)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>🎓</div>
+  <div>
+    <p style={{fontSize:17,fontWeight:900,color:'#1a1a2e',margin:'0 0 4px'}}>학생별 기록 조회</p>
+    <p style={{fontSize:13,color:'#aaa',margin:0}}>기록 선택 후 AI 생기부 생성</p>
+  </div>
+</div>
+<div onClick={onViewReports} className="active-btn card" style={{padding:'20px',display:'flex',alignItems:'center',gap:16,cursor:'pointer'}}>
+  <div style={{width:52,height:52,background:'linear-gradient(135deg,#f48fb1,#ce93d8)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>📝</div>
+  <div>
+    <p style={{fontSize:17,fontWeight:900,color:'#1a1a2e',margin:'0 0 4px'}}>생기부 결과 조회</p>
+    <p style={{fontSize:13,color:'#aaa',margin:0}}>저장된 AI 생기부 목록</p>
+  </div>
+</div>
 
         {/* 교과목 메뉴 섹션 */}
         <div style={{display:'flex',alignItems:'center',gap:6,marginTop:6,marginBottom:2}}>
           <div style={{width:3,height:12,background:'#5c2fa0',borderRadius:2}}/>
-          <span style={{fontSize:11,fontWeight:700,color:'#5c2fa0',letterSpacing:'0.04em'}}>교과목 메뉴</span>
+          <span style={{fontSize:13,fontWeight:700,color:'#5c2fa0',letterSpacing:'0.04em'}}>교과목 메뉴</span>
         </div>
         {hasSubject?(
-          <div onClick={onSubjectHome} className="active-btn card" style={{padding:'16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer'}}>
-            <div style={{width:44,height:44,background:'linear-gradient(135deg,#7c3aed,#5c2fa0)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>📚</div>
-            <div style={{flex:1}}>
-              <p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:'0 0 2px'}}>교과목별 학생 조회</p>
-              <p style={{fontSize:11,color:'#aaa',margin:0}}>{assigns.map(a=>a.subject).join(' · ')}</p>
-            </div>
-          </div>
-        ):(
-          <div onClick={onAddSubject} className="active-btn card" style={{padding:'16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer',border:'1.5px dashed #ded8f5'}}>
-            <div style={{width:44,height:44,background:'#f3f0f9',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>📚</div>
-            <div style={{flex:1}}>
-              <p style={{fontSize:15,fontWeight:900,color:'#5c2fa0',margin:'0 0 2px'}}>교과목 등록</p>
-              <p style={{fontSize:11,color:'#aaa',margin:0}}>담당 과목·학급을 등록하세요</p>
-            </div>
-            <span style={{background:'#fef3e2',color:'#a05c00',fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:8}}>미등록</span>
-          </div>
-        )}
+  <div onClick={onSubjectHome} className="active-btn card" style={{padding:'20px',display:'flex',alignItems:'center',gap:16,cursor:'pointer'}}>
+    <div style={{width:52,height:52,background:'linear-gradient(135deg,#7c3aed,#5c2fa0)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>📚</div>
+    <div style={{flex:1}}>
+      <p style={{fontSize:17,fontWeight:900,color:'#1a1a2e',margin:'0 0 4px'}}>교과목별 학생 조회</p>
+      <p style={{fontSize:13,color:'#aaa',margin:0}}>{assigns.map(a=>a.subject).join(' · ')}</p>
+    </div>
+  </div>
+):(
+  <div onClick={onAddSubject} className="active-btn card" style={{padding:'20px',display:'flex',alignItems:'center',gap:16,cursor:'pointer',border:'1.5px dashed #ded8f5'}}>
+    <div style={{width:52,height:52,background:'#f3f0f9',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>📚</div>
+    <div style={{flex:1}}>
+      <p style={{fontSize:17,fontWeight:900,color:'#5c2fa0',margin:'0 0 4px'}}>교과목 등록</p>
+      <p style={{fontSize:13,color:'#aaa',margin:0}}>담당 과목·학급을 등록하세요</p>
+    </div>
+    <span style={{background:'#fef3e2',color:'#a05c00',fontSize:11,fontWeight:700,padding:'4px 10px',borderRadius:8}}>미등록</span>
+  </div>
+)}
       </div>
     </div>
   );
