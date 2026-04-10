@@ -493,7 +493,7 @@ function App(){
   const deleteRec=async(id)=>{if(!confirm('삭제할까요?'))return;try{await callAPI({action:'deleteRecord',recordId:id,studentId:user.studentId});fetchRecords(user);}catch(e){alert('삭제 실패');}};
 
   const dH=isDesktop?Math.min(window.innerHeight*0.92,900):null,dW=isDesktop?Math.round(dH*(430/844)):null;
-  const cs={width:isDesktop?dW:'100%',maxWidth:isDesktop?dW:430,margin:isDesktop?`${window.innerHeight*0.04}px auto`:0,background:'white',height:isDesktop?dH:'auto',minHeight:isDesktop?dH:'100dvh',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden',boxShadow:isDesktop?'0 30px 80px rgba(206,147,216,0.4)':'none',borderRadius:isDesktop?44:0};
+  const cs={width:isDesktop?dW:'100%',maxWidth:isDesktop?dW:430,margin:isDesktop?`${window.innerHeight*0.04}px auto`:0,background:'white',height:isDesktop?dH:'auto',minHeight:isDesktop?dH:'100dvh',display:'flex',flexDirection:'column',position:'relative',overflow:'visible',boxShadow:isDesktop?'0 30px 80px rgba(206,147,216,0.4)':'none',borderRadius:isDesktop?44:0};
 
   if(!role)return<div style={cs}><RoleScreen onSelect={setRole}/></div>;
   if(!user)return<div style={cs}><LoginScreen role={role} onLogin={login} onBack={()=>setRole(null)}/></div>;
