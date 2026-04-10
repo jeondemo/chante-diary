@@ -15,7 +15,7 @@ body{font-family:'Apple SD Gothic Neo',-apple-system,sans-serif;margin:0;padding
 *{max-height:999999px !important;-webkit-tap-highlight-color:transparent;box-sizing:border-box}
 p,span,div,button,input,textarea,select,label,a,h1,h2,h3{max-height:999999px !important}
 .no-scrollbar::-webkit-scrollbar{display:none}
-.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;touch-action:pan-y;-webkit-overflow-scrolling:touch;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .fade-up{animation:fadeUp 0.45s cubic-bezier(0.16,1,0.3,1) forwards}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.85)}}
