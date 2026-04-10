@@ -477,13 +477,19 @@ function App(){
 
   // 새로고침 방지: pull-to-refresh 차단
   useEffect(()=>{
-    let startY=0;
-    const onTS=e=>{startY=e.touches[0].pageY;};
-    const onTM=e=>{const el=e.target.closest('.no-scrollbar')||document.scrollingElement;if(el&&el.scrollTop<=0&&e.touches[0].pageY>startY)e.preventDefault();};
-    document.addEventListener('touchstart',onTS,{passive:true});
-    document.addEventListener('touchmove',onTM,{passive:false});
-    return()=>{document.removeEventListener('touchstart',onTS);document.removeEventListener('touchmove',onTM);};
-  },[]);
+  let startY=0;
+  const onTS=e=>{startY=e.touches[0].pageY;};
+  const onTM=e=>{
+    const el=e.target.closest('.no-scrollbar');
+    if(!el)return;
+    const goingDown=e.touches[0].pageY>startY;
+    const atTop=el.scrollTop<=0;
+    if(atTop&&goingDown)e.preventDefault();
+  };
+  document.addEventListener('touchstart',onTS,{passive:true});
+  document.addEventListener('touchmove',onTM,{passive:false});
+  return()=>{document.removeEventListener('touchstart',onTS);document.removeEventListener('touchmove',onTM);};
+},[]);
 
   const fetchRecords=useCallback(async(u)=>{if(!u)return;setLoading(true);try{const isS=u.role==='student';let p;if(isS)p={action:'getRecords',studentId:u.studentId};else{let sc=[];if(u.assignments){try{sc=JSON.parse(u.assignments).flatMap(a=>a.classes);}catch(e){}}p={action:'getAllRecords',role:u.role,grade:u.grade||'',classNum:u.classNum||'',homeroomClass:u.homeroomClass||'',subjectClasses:sc,studentId:u.studentId};}const res=await callAPI(p);if(res.success)setRecords(res.records||[]);}catch(e){}setLoading(false);},[]);
 
