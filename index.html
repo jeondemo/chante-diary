@@ -60,22 +60,37 @@ function callAPI(payload){return fetch(GAS_URL,{method:'POST',redirect:'follow',
 
 async function callAIWithRetry(text,onProgress){
   const MAX=3, DELAYS=[0,4000,8000];
+  const ENGINE_MSGS=[
+    'Gemini 2.5 Flash 시도 중...',
+    'Gemini Flash Latest 재시도 중...',
+    'GPT-4o Mini로 전환 중...'
+  ];
   for(let i=0;i<MAX;i++){
-    if(DELAYS[i]>0){const s=Math.round(DELAYS[i]/1000);if(onProgress)onProgress(`${i+1}/${MAX} 번째 시도 중... (${s}초 대기)`);await new Promise(r=>setTimeout(r,DELAYS[i]));}
-    else{if(onProgress)onProgress(`1/${MAX} 번째 시도 중...`);}
+    if(DELAYS[i]>0){
+      if(onProgress)onProgress(`${ENGINE_MSGS[i]} (${Math.round(DELAYS[i]/1000)}초 대기)`);
+      await new Promise(r=>setTimeout(r,DELAYS[i]));
+    } else {
+      if(onProgress)onProgress(ENGINE_MSGS[i]);
+    }
     try{
       const res=await callAPI({action:'generateAI',text});
-      if(res.success&&res.content){if(onProgress)onProgress(`완료! (${res.modelNum||'?'}/${res.totalModels||3} 모델 사용)`);return res;}
-      if(res.errorType==='overloaded'&&i<MAX-1){if(onProgress)onProgress(`${i+1}/${MAX} 서버 과부하, 재시도 준비...`);continue;}
+      if(res.success&&res.content){
+        const modelLabel=res.model==='gpt-4o-mini'?'GPT-4o Mini':res.model||'AI';
+        if(onProgress)onProgress(`✓ ${modelLabel} 생성 완료!`);
+        return res;
+      }
+      if(res.errorType==='overloaded'&&i<MAX-1){
+        if(onProgress)onProgress(`${ENGINE_MSGS[i]} 실패 → 다음 엔진으로...`);
+        continue;
+      }
       return res;
-    }catch(e){if(i<MAX-1){if(onProgress)onProgress(`${i+1}/${MAX} 통신 오류, 재시도 중...`);continue;}throw e;}
+    }catch(e){
+      if(i<MAX-1){if(onProgress)onProgress(`${ENGINE_MSGS[i]} 오류 → 다음 엔진으로...`);continue;}
+      throw e;
+    }
   }
   return{success:false,errorType:'overloaded',message:'선생님! 지금은 AI 요청이 많아 완성하지 못했습니다. 한번 더 시도해 주세요.'};
 }
-
-const Spin=()=><svg className="animate-spin h-5 w-5 text-white inline" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>;
-const Back=()=><svg className="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>;
-const Arr=()=><svg width="14" height="14" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>;
 
 function RoleIcon({role,size=22,color="rgba(255,255,255,0.9)"}){const s={width:size,height:size};if(role==='student')return<svg style={s} fill="none" stroke={color} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>;if(role==='teacher'||role==='homeroom')return<svg style={s} fill="none" stroke={color} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>;if(role==='career')return<svg style={s} fill="none" stroke={color} strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0L9 7"/></svg>;return null;}
 
