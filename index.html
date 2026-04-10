@@ -264,7 +264,7 @@ function TeacherHome({user,records,onSelectStudent,onViewReports,onSubjectHome,o
         <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}><div style={{width:3,height:12,background:col,borderRadius:2}}/><span style={{fontSize:13,fontWeight:700,color:col}}>{isCareer?'진로 메뉴':'담임 메뉴'}</span></div>
         <div onClick={onSelectStudent} className="active-btn card" style={{padding:'20px',display:'flex',alignItems:'center',gap:16,cursor:'pointer'}}>
           <div style={{width:52,height:52,background:'linear-gradient(135deg,#4db6ac,#26a69a)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>🎓</div>
-          <div><p style={{fontSize:17,fontWeight:900,color:'#1a1a2e',margin:'0 0 4px'}}>{isCareer?'진로활동 기록 조회':'학생별 기록 조회'}</p><p style={{fontSize:13,color:'#aaa',margin:0}}>기록 선택 후 AI 생기부 생성</p></div>
+          <div><p style={{fontSize:17,fontWeight:900,color:'#1a1a2e',margin:'0 0 4px'}}>{isCareer?'진로활동 기록 조회':'학생별 진로·창체활동 기록 조회'}</p><p style={{fontSize:13,color:'#aaa',margin:0}}>기록 선택 후 AI 생기부 생성</p></div>
         </div>
         <div onClick={onViewReports} className="active-btn card" style={{padding:'20px',display:'flex',alignItems:'center',gap:16,cursor:'pointer'}}>
           <div style={{width:52,height:52,background:'linear-gradient(135deg,#f48fb1,#ce93d8)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>📝</div>
