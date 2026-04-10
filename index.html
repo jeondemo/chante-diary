@@ -299,7 +299,6 @@ function MyReportList({user,onBack}){
   const saveEdit=async(sid)=>{setSaving(true);try{const r=await callAPI({action:'updateReport',studentId:sid,teacherId:user.studentId,content:editContent});if(r.success){setReports(prev=>prev.map(p=>p.studentId===sid?{...p,content:editContent}:p));setEditId(null);alert('수정 완료!');}else alert(r.message);}catch(e){alert('수정 실패');}setSaving(false);};
   const delReport=async(sid)=>{if(!confirm('삭제할까요?'))return;try{const r=await callAPI({action:'deleteReport',studentId:sid,teacherId:user.studentId});if(r.success){setReports(prev=>prev.filter(p=>p.studentId!==sid));alert('삭제됨');}else alert(r.message);}catch(e){alert('삭제 실패');}};
 
-  // 과목별 그룹핑
   const grouped={};
   reports.forEach(r=>{
     const subj=r.subject||'기타';
@@ -328,14 +327,12 @@ function MyReportList({user,onBack}){
         const totalCount=reports.filter(r=>(r.subject||'기타')===subj).length;
         const isOpen=openSubject===subj;
         return(<div key={subj} className="card" style={{overflow:'hidden'}}>
-          {/* 과목 헤더 */}
           <div onClick={()=>{setOpenSubject(isOpen?null:subj);setOpenClass(null);}} style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:10,cursor:'pointer',background:isOpen?bg:'white'}}>
             <div style={{width:8,height:8,borderRadius:'50%',background:color,flexShrink:0}}/>
             <span style={{fontSize:15,fontWeight:900,color:'#1a1a2e',flex:1}}>{subj}</span>
             <span style={{fontSize:11,background:bg,color:color,padding:'2px 9px',borderRadius:20,fontWeight:700}}>{totalCount}명</span>
             <span style={{fontSize:11,color:'#ccc'}}>{isOpen?'▼':'▶'}</span>
           </div>
-          {/* 반 목록 */}
           {isOpen&&(<div style={{borderTop:`1px solid ${bg}`}}>
             {classes.map(cls=>{
               const students=grouped[subj][cls];
@@ -347,7 +344,6 @@ function MyReportList({user,onBack}){
                   <span style={{fontSize:11,color:'#999'}}>{students.length}명</span>
                   <span style={{fontSize:10,color:'#ccc',marginLeft:4}}>{isClsOpen?'▼':'▶'}</span>
                 </div>
-                {/* 학생 목록 */}
                 {isClsOpen&&students.map(r=>(<div key={r.studentId} style={{padding:'12px 16px 12px 32px',borderBottom:'1px solid #f5f5f5',background:'#fafafa'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                     <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>{r.name} <span style={{fontSize:10,color:'#bbb',fontWeight:500}}>({r.studentId})</span></span>
