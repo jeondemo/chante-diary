@@ -27,6 +27,8 @@ p,span,div,button,input,textarea,select,label,a,h1,h2,h3{max-height:999999px !im
 .input{background:#fafafa;border:1.5px solid #f3e5f5;border-radius:12px;padding:12px 16px;width:100%;font-size:14px;color:#1a1a2e;outline:none;font-family:inherit}
 .input:focus{border-color:#ce93d8;background:white}
 .active-btn:active{transform:scale(.97)}
+@keyframes waveRed{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes waveGreen{0%{background-position:100% 50%}50%{background-position:0% 50%}100%{background-position:100% 50%}}
 </style>
 </head>
 <body style="background:linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%); min-height:100vh; display:flex; justify-content:center; align-items:flex-start; overscroll-behavior-y:contain;">
@@ -103,40 +105,67 @@ function clearSession(){try{sessionStorage.removeItem('diary_session');}catch(e)
 
 /* ── 역할 선택 ── */
 function RoleScreen({onSelect}){
-  const roles=[
-    {id:'student',label:'학생',labelEn:'Student',desc:'창체활동 기록\n교과 · 진로활동',iconBg:'#f5eaec',tagBg:'#f5eaec',tagColor:'#9b1c2e',icon:<svg width="26" height="26" fill="none" stroke="#9b1c2e" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>},
-    {id:'teacher',label:'교사',labelEn:'Teacher',desc:'담임+교과 통합관리\nAI 생기부 작성',iconBg:'#e6f4f0',tagBg:'#e6f4f0',tagColor:'#0a6e55',icon:<svg width="26" height="26" fill="none" stroke="#0a6e55" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>},
-    {id:'career',label:'진로담당',labelEn:'Career',desc:'진로활동 조회\n생기부 작성',iconBg:'#fef3e2',tagBg:'#fef3e2',tagColor:'#a05c00',icon:<svg width="26" height="26" fill="none" stroke="#a05c00" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0L9 7"/></svg>},
-  ];
   return(<div style={{flex:1,display:'flex',flexDirection:'column',overflowY:'auto'}}>
-    <div style={{background:'#9b1c2e',padding:'30px 20px 36px',position:'relative',overflow:'hidden',flexShrink:0}}>
-      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f7f0f2"/></svg></div>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18,position:'relative',zIndex:1}}>
-        <div style={{display:'flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 11px'}}><div style={{width:6,height:6,borderRadius:'50%',background:'#ffd580'}}/><span style={{fontSize:10,color:'rgba(255,255,255,0.9)',fontWeight:500}}>{getSemesterLabel()}</span></div>
-        <div style={{display:'flex',alignItems:'center',gap:5}}><div className="pulse-dot" style={{width:6,height:6,borderRadius:'50%',background:'#4ade80'}}/><span style={{fontSize:10,color:'rgba(255,255,255,0.6)'}}>운영중</span></div>
-      </div>
-      <p style={{fontSize:26,fontWeight:600,color:'#fff',margin:'0 0 5px',position:'relative',zIndex:1}}>과천여자고등학교</p>
-      <p style={{fontSize:13,color:'rgba(255,255,255,0.5)',letterSpacing:'0.14em',margin:'0 0 18px',position:'relative',zIndex:1}}>GWACHEON WOMANS HIGH SCHOOL</p>
-      <div style={{width:'100%',height:1,background:'rgba(255,255,255,0.12)',margin:'0 0 14px',position:'relative',zIndex:1}}/>
-      <div style={{display:'flex',flexDirection:'column',gap:5,position:'relative',zIndex:1}}>
-        {['창의적 체험활동 다이어리','학교생활기록부 작성 지원 시스템','과목별 세부특기사항 작성 지원 시스템'].map((t,i)=>(<div key={i} style={{display:'flex',alignItems:'center',gap:8}}><div style={{width:4,height:4,borderRadius:'50%',background:'rgba(255,255,255,0.45)'}}/><span style={{fontSize:11,color:'rgba(255,255,255,0.65)',lineHeight:1.5}}>{t}</span></div>))}
+    <div style={{background:'#9b1c2e',padding:'36px 24px 52px',position:'relative',overflow:'hidden',flexShrink:0}}>
+      <div style={{position:'absolute',top:-60,right:-60,width:200,height:200,background:'rgba(255,255,255,0.05)',borderRadius:'50%'}}/>
+      <div style={{position:'absolute',top:30,right:30,width:90,height:90,background:'rgba(255,255,255,0.04)',borderRadius:'50%'}}/>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 50" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,46 180,50 280,34 C340,24 370,18 390,16 L390,50 L0,50 Z" fill="#f7f0f2"/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:26}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.2)',borderRadius:20,padding:'5px 12px'}}><div style={{width:6,height:6,borderRadius:'50%',background:'#ffd580'}}/><span style={{fontSize:10,color:'rgba(255,255,255,0.9)',fontWeight:600}}>{getSemesterLabel()}</span></div>
+          <div style={{display:'flex',alignItems:'center',gap:5}}><div className="pulse-dot" style={{width:6,height:6,borderRadius:'50%',background:'#4ade80'}}/><span style={{fontSize:10,color:'rgba(255,255,255,0.6)'}}>운영중</span></div>
+        </div>
+        <p style={{fontSize:33,fontWeight:900,color:'#fff',margin:'0 0 4px',letterSpacing:'-0.5px',lineHeight:1.1}}>과천여자고등학교</p>
+        <p style={{fontSize:12,color:'rgba(255,255,255,0.45)',letterSpacing:'0.18em',margin:'0 0 22px'}}>GWACHEON WOMANS HIGH SCHOOL</p>
+        <div style={{width:'100%',height:1,background:'rgba(255,255,255,0.1)',margin:'0 0 14px'}}/>
+        <div style={{display:'flex',flexDirection:'column',gap:5}}>
+          {['창의적 체험활동 다이어리','학교생활기록부 작성 지원 시스템','과목별 세부특기사항 작성 지원 시스템'].map((t,i)=>(<div key={i} style={{display:'flex',alignItems:'center',gap:8}}><div style={{width:4,height:4,borderRadius:'50%',background:'rgba(255,255,255,0.35)'}}/><span style={{fontSize:11,color:'rgba(255,255,255,0.55)',lineHeight:1.5}}>{t}</span></div>))}
+        </div>
       </div>
     </div>
     <div style={{padding:'16px 14px 20px'}}>
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}><div style={{width:3,height:14,background:'#9b1c2e',borderRadius:2}}/><span style={{fontSize:11,fontWeight:500,color:'#9b1c2e'}}>로그인 유형을 선택하세요</span></div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
-        {roles.map(r=>(<button key={r.id} onClick={()=>onSelect(r.id)} style={{background:'#fff',border:'1px solid #e2d0d3',borderRadius:16,padding:'16px 10px 14px',cursor:'pointer',textAlign:'left',position:'relative',overflow:'hidden'}}>
-          <div style={{width:44,height:44,borderRadius:12,background:r.iconBg,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:10}}>{r.icon}</div>
-          <p style={{fontSize:15,fontWeight:700,color:'#111',margin:'0 0 4px'}}>{r.label}</p>
-          <p style={{fontSize:10,color:'#7a7070',margin:0,lineHeight:1.6,whiteSpace:'pre-line'}}>{r.desc}</p>
-          <span style={{display:'inline-block',fontSize:10,fontWeight:500,borderRadius:6,padding:'3px 7px',marginTop:8,background:r.tagBg,color:r.tagColor}}>{r.labelEn}</span>
-        </button>))}
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16}}><div style={{width:3,height:14,background:'#9b1c2e',borderRadius:2}}/><span style={{fontSize:12,fontWeight:700,color:'#9b1c2e'}}>로그인 유형을 선택하세요</span></div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
+
+        {/* 학생 카드 */}
+        <div onClick={()=>onSelect('student')} style={{borderRadius:22,overflow:'hidden',cursor:'pointer',boxShadow:'0 4px 24px rgba(155,28,46,0.18),0 0 0 2px #9b1c2e,0 0 0 4px #ffd6dc'}}>
+          <div style={{background:'linear-gradient(145deg,#fff5f6,#ffe8ec,#ffd6dc,#fff0f2,#ffe0e6)',backgroundSize:'300% 300%',animation:'waveRed 6s ease infinite',padding:'20px 16px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <div style={{width:46,height:46,borderRadius:15,background:'white',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(155,28,46,0.15)'}}>
+                <svg width="22" height="22" fill="none" stroke="#9b1c2e" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+              </div>
+              <span style={{fontSize:8,fontWeight:800,color:'#9b1c2e',letterSpacing:'0.1em'}}>STUDENT</span>
+            </div>
+            <p style={{fontSize:19,fontWeight:900,color:'#1a1a2e',margin:'0 0 3px'}}>학생</p>
+            <p style={{fontSize:10,color:'#c08080',margin:'0 0 16px',lineHeight:1.6}}>창체·교과·진로 기록<br/>AI 생기부 지원</p>
+            <div style={{background:'white',borderRadius:11,padding:'8px 0',textAlign:'center',boxShadow:'0 1px 4px rgba(155,28,46,0.1)'}}>
+              <span style={{fontSize:11,fontWeight:800,color:'#9b1c2e'}}>로그인 →</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 교사 카드 */}
+        <div onClick={()=>onSelect('teacher')} style={{borderRadius:22,overflow:'hidden',cursor:'pointer',boxShadow:'0 4px 24px rgba(10,110,85,0.18),0 0 0 2px #0a6e55,0 0 0 4px #b8e8d8'}}>
+          <div style={{background:'linear-gradient(145deg,#e0f5ee,#b8e8d8,#d4f2e8,#a8dfc8,#cceedd)',backgroundSize:'300% 300%',animation:'waveGreen 6s ease infinite',padding:'20px 16px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <div style={{width:46,height:46,borderRadius:15,background:'white',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(10,110,85,0.15)'}}>
+                <svg width="22" height="22" fill="none" stroke="#0a6e55" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              </div>
+              <span style={{fontSize:8,fontWeight:800,color:'#0a6e55',letterSpacing:'0.1em'}}>TEACHER</span>
+            </div>
+            <p style={{fontSize:19,fontWeight:900,color:'#1a1a2e',margin:'0 0 3px'}}>교사</p>
+            <p style={{fontSize:10,color:'#4a9e7a',margin:'0 0 16px',lineHeight:1.6}}>담임+교과 관리<br/>AI 생기부 작성</p>
+            <div style={{background:'white',borderRadius:11,padding:'8px 0',textAlign:'center',boxShadow:'0 1px 4px rgba(10,110,85,0.12)'}}>
+              <span style={{fontSize:11,fontWeight:800,color:'#0a6e55'}}>로그인 →</span>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <div style={{marginTop:14,background:'#fff',border:'1px solid #e2d0d3',borderRadius:12,padding:'10px 14px',display:'flex',alignItems:'center',gap:10}}><div style={{width:6,height:6,borderRadius:'50%',background:'#9b1c2e'}}/><p style={{fontSize:10,color:'#7a7070',margin:0,lineHeight:1.5}}>본 시스템은 과천여자고등학교 내부 서비스입니다.<br/>문의: 교무기획부</p></div>
+      <div style={{background:'#fff',border:'1px solid #ead8db',borderRadius:12,padding:'10px 14px',display:'flex',alignItems:'center',gap:10}}><div style={{width:6,height:6,borderRadius:'50%',background:'#9b1c2e'}}/><p style={{fontSize:10,color:'#aaa',margin:0,lineHeight:1.5}}>본 시스템은 과천여자고등학교 내부 서비스입니다.<br/>문의: 교무기획부</p></div>
     </div>
   </div>);
 }
-
 /* ── 로그인 (간략화) ── */
 function LoginScreen({role,onLogin,onBack}){
   const isStudent=role==='student',isTeacher=role==='teacher',isCareer=role==='career';
