@@ -285,12 +285,33 @@ function TeacherHome({user,records,onSelectStudent,onViewReports,onSubjectHome,o
 
 /* ── 내가 저장한 생기부 목록 ── */
 function MyReportList({user,onBack}){
-  const [reports,setReports]=useState([]),[loading,setLoading]=useState(true),[editId,setEditId]=useState(null),[editContent,setEditContent]=useState(''),[saving,setSaving]=useState(false);
-  useEffect(()=>{callAPI({action:'getMyReports',teacherId:user.studentId}).then(r=>{setReports(r.reports||[]);setLoading(false);}).catch(()=>setLoading(false));},[]);
+  const [reports,setReports]=useState([]),[loading,setLoading]=useState(true);
+  const [openSubject,setOpenSubject]=useState(null),[openClass,setOpenClass]=useState(null);
+  const [editId,setEditId]=useState(null),[editContent,setEditContent]=useState(''),[saving,setSaving]=useState(false);
+
+  useEffect(()=>{
+    callAPI({action:'getMyReports',teacherId:user.studentId}).then(r=>{
+      setReports(r.reports||[]);setLoading(false);
+    }).catch(()=>setLoading(false));
+  },[]);
+
   const copy=(text)=>{try{navigator.clipboard.writeText(text);}catch(e){}alert('복사되었습니다!');};
-  const startEdit=(r)=>{setEditId(r.studentId);setEditContent(r.content);};
   const saveEdit=async(sid)=>{setSaving(true);try{const r=await callAPI({action:'updateReport',studentId:sid,teacherId:user.studentId,content:editContent});if(r.success){setReports(prev=>prev.map(p=>p.studentId===sid?{...p,content:editContent}:p));setEditId(null);alert('수정 완료!');}else alert(r.message);}catch(e){alert('수정 실패');}setSaving(false);};
   const delReport=async(sid)=>{if(!confirm('삭제할까요?'))return;try{const r=await callAPI({action:'deleteReport',studentId:sid,teacherId:user.studentId});if(r.success){setReports(prev=>prev.filter(p=>p.studentId!==sid));alert('삭제됨');}else alert(r.message);}catch(e){alert('삭제 실패');}};
+
+  // 과목별 그룹핑
+  const grouped={};
+  reports.forEach(r=>{
+    const subj=r.subject||'기타';
+    if(!grouped[subj])grouped[subj]={};
+    const cls=String(r.studentId).slice(0,2);
+    if(!grouped[subj][cls])grouped[subj][cls]=[];
+    grouped[subj][cls].push(r);
+  });
+  const subjects=Object.keys(grouped).sort();
+  const subjectColors=['#7c3aed','#1565c0','#2e7d32','#c2185b','#e65100','#00695c'];
+  const subjectBgs=['#ede7f6','#e3f2fd','#e8f5e9','#fce4ec','#fff3e0','#e0f2f1'];
+
   return(<div style={{paddingBottom:20}}>
     <div style={{background:'linear-gradient(135deg,#ef6c00,#ff9800)',padding:'20px 16px 28px'}}>
       <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 홈</button>
@@ -300,22 +321,59 @@ function MyReportList({user,onBack}){
     <div style={{padding:'0 14px',marginTop:-12,display:'flex',flexDirection:'column',gap:10}}>
       {loading&&<p style={{textAlign:'center',color:'#ccc',padding:20}}>불러오는 중...</p>}
       {!loading&&reports.length===0&&<div className="card" style={{padding:30,textAlign:'center',color:'#ccc'}}>저장된 생기부가 없습니다</div>}
-      {reports.map(r=>(<div key={r.studentId} className="card" style={{padding:'14px 16px'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-          <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>{r.name} <span style={{fontSize:10,color:'#bbb',fontWeight:500}}>({r.studentId})</span></span>
-          <div style={{display:'flex',gap:6}}>
-            <button onClick={()=>copy(r.content)} style={{background:'#e8eaf6',color:'#3949ab',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>복사</button>
-            {editId!==r.studentId&&<button onClick={()=>startEdit(r)} style={{background:'#fff3e0',color:'#ef6c00',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>수정</button>}
-            <button onClick={()=>delReport(r.studentId)} style={{background:'#fce4ec',color:'#e53935',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>삭제</button>
+      {subjects.map((subj,si)=>{
+        const color=subjectColors[si%subjectColors.length];
+        const bg=subjectBgs[si%subjectBgs.length];
+        const classes=Object.keys(grouped[subj]).sort();
+        const totalCount=reports.filter(r=>(r.subject||'기타')===subj).length;
+        const isOpen=openSubject===subj;
+        return(<div key={subj} className="card" style={{overflow:'hidden'}}>
+          {/* 과목 헤더 */}
+          <div onClick={()=>{setOpenSubject(isOpen?null:subj);setOpenClass(null);}} style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:10,cursor:'pointer',background:isOpen?bg:'white'}}>
+            <div style={{width:8,height:8,borderRadius:'50%',background:color,flexShrink:0}}/>
+            <span style={{fontSize:15,fontWeight:900,color:'#1a1a2e',flex:1}}>{subj}</span>
+            <span style={{fontSize:11,background:bg,color:color,padding:'2px 9px',borderRadius:20,fontWeight:700}}>{totalCount}명</span>
+            <span style={{fontSize:11,color:'#ccc'}}>{isOpen?'▼':'▶'}</span>
           </div>
-        </div>
-        {editId===r.studentId?(<>
-          <textarea className="input" rows="6" value={editContent} onChange={e=>setEditContent(e.target.value)} style={{resize:'none',lineHeight:1.6,marginBottom:8}}/>
-          <div style={{display:'flex',gap:6}}><button onClick={()=>setEditId(null)} style={{flex:1,background:'#f5f5f5',border:'none',borderRadius:10,padding:'8px 0',fontSize:12,fontWeight:700,cursor:'pointer'}}>취소</button><button onClick={()=>saveEdit(r.studentId)} disabled={saving} style={{flex:2,background:'linear-gradient(135deg,#ef6c00,#ff9800)',color:'white',border:'none',borderRadius:10,padding:'8px 0',fontSize:12,fontWeight:800,cursor:'pointer'}}>{saving?<Spin/>:'저장'}</button></div>
-          <p style={{fontSize:10,color:'#999',margin:'6px 0 0'}}>{new TextEncoder().encode(editContent).length} bytes</p>
-        </>):(<p style={{fontSize:12,color:'#666',margin:0,lineHeight:1.6}}>{r.content}</p>)}
-        {r.savedAt&&editId!==r.studentId&&<p style={{fontSize:10,color:'#ccc',margin:'6px 0 0',textAlign:'right'}}>{r.savedAt}</p>}
-      </div>))}
+          {/* 반 목록 */}
+          {isOpen&&(<div style={{borderTop:`1px solid ${bg}`}}>
+            {classes.map(cls=>{
+              const students=grouped[subj][cls];
+              const isClsOpen=openClass===subj+cls;
+              const clsLabel=`${cls[0]}학년 ${cls.slice(1)}반`;
+              return(<div key={cls}>
+                <div onClick={()=>setOpenClass(isClsOpen?null:subj+cls)} style={{padding:'11px 16px 11px 28px',display:'flex',alignItems:'center',gap:8,cursor:'pointer',background:isClsOpen?'#fafafa':'white',borderBottom:'1px solid #f5f5f5'}}>
+                  <span style={{fontSize:13,fontWeight:700,color:'#555',flex:1}}>{clsLabel}</span>
+                  <span style={{fontSize:11,color:'#999'}}>{students.length}명</span>
+                  <span style={{fontSize:10,color:'#ccc',marginLeft:4}}>{isClsOpen?'▼':'▶'}</span>
+                </div>
+                {/* 학생 목록 */}
+                {isClsOpen&&students.map(r=>(<div key={r.studentId} style={{padding:'12px 16px 12px 32px',borderBottom:'1px solid #f5f5f5',background:'#fafafa'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>{r.name} <span style={{fontSize:10,color:'#bbb',fontWeight:500}}>({r.studentId})</span></span>
+                    <div style={{display:'flex',gap:5}}>
+                      <button onClick={()=>copy(r.content)} style={{background:'#e8eaf6',color:'#3949ab',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>복사</button>
+                      {editId!==r.studentId&&<button onClick={()=>{setEditId(r.studentId);setEditContent(r.content);}} style={{background:'#fff3e0',color:'#ef6c00',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>수정</button>}
+                      <button onClick={()=>delReport(r.studentId)} style={{background:'#fce4ec',color:'#e53935',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>삭제</button>
+                    </div>
+                  </div>
+                  {editId===r.studentId?(<>
+                    <textarea className="input" rows="5" value={editContent} onChange={e=>setEditContent(e.target.value)} style={{resize:'none',lineHeight:1.6,marginBottom:6,fontSize:12}}/>
+                    <div style={{display:'flex',gap:6,marginBottom:4}}>
+                      <button onClick={()=>setEditId(null)} style={{flex:1,background:'#f5f5f5',border:'none',borderRadius:10,padding:'7px 0',fontSize:12,fontWeight:700,cursor:'pointer'}}>취소</button>
+                      <button onClick={()=>saveEdit(r.studentId)} disabled={saving} style={{flex:2,background:'linear-gradient(135deg,#ef6c00,#ff9800)',color:'white',border:'none',borderRadius:10,padding:'7px 0',fontSize:12,fontWeight:800,cursor:'pointer'}}>{saving?<Spin/>:'저장'}</button>
+                    </div>
+                    <p style={{fontSize:10,color:'#999',margin:0}}>{new TextEncoder().encode(editContent).length} bytes</p>
+                  </>):(
+                    <p style={{fontSize:12,color:'#666',margin:0,lineHeight:1.6}}>{r.content}</p>
+                  )}
+                  {r.savedAt&&editId!==r.studentId&&<p style={{fontSize:10,color:'#ccc',margin:'6px 0 0',textAlign:'right'}}>{r.savedAt}</p>}
+                </div>))}
+              </div>);
+            })}
+          </div>)}
+        </div>);
+      })}
     </div>
   </div>);
 }
