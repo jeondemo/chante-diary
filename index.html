@@ -506,7 +506,7 @@ function App(){
       <h1 style={{flex:1,textAlign:'center',fontSize:15,fontWeight:900,color:'#1a1a2e',margin:0}}>창체 다이어리</h1>
       <button onClick={logout} style={{position:'absolute',right:16,background:'#fce4ec',border:'none',color:'#c2185b',fontSize:11,fontWeight:700,padding:'5px 11px',borderRadius:18,cursor:'pointer'}}>로그아웃</button>
     </div>
-    <div className="no-scrollbar" style={{flex:1,overflowY:'auto',minHeight:0,background:phoneBg,overscrollBehaviorY:'contain'}}>
+    <div className="no-scrollbar" style={{flex:1,overflowY:'auto',minHeight:0,background:phoneBg,overscrollBehaviorY:'contain',height:0}}>
       {isStudent&&view==='home'&&!catId&&<StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}} onBack={goBackToRole}/>}
       {isStudent&&view==='cat'&&catId!=='subject'&&!writing&&<RecordList catId={catId} records={records} onBack={()=>{setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRec} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
       {isStudent&&view==='cat'&&catId!=='subject'&&writing&&<WriteForm catId={catId} editing={editing} onSave={editing?updateRec:saveRec} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
