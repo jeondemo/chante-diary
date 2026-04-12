@@ -104,6 +104,7 @@ function loadSession(){try{const d=sessionStorage.getItem('diary_session');retur
 function clearSession(){try{sessionStorage.removeItem('diary_session');}catch(e){}}
 
 /* ── 역할 선택 ── */
+/* ── 역할 선택 ── */
 function RoleScreen({onSelect}){
   return(<div style={{flex:1,display:'flex',flexDirection:'column',overflowY:'auto'}}>
     <div style={{background:'#9b1c2e',padding:'36px 24px 52px',position:'relative',overflow:'hidden',flexShrink:0}}>
@@ -126,83 +127,34 @@ function RoleScreen({onSelect}){
     <div style={{padding:'16px 14px 20px'}}>
       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16}}><div style={{width:3,height:14,background:'#9b1c2e',borderRadius:2}}/><span style={{fontSize:12,fontWeight:700,color:'#9b1c2e'}}>로그인 유형을 선택하세요</span></div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
-
         <div onClick={()=>onSelect('student')} style={{borderRadius:22,overflow:'hidden',cursor:'pointer',boxShadow:'0 4px 24px rgba(155,28,46,0.18),0 0 0 2px #9b1c2e,0 0 0 4px #ffd6dc'}}>
           <div style={{background:'linear-gradient(145deg,#ffe0e6,#ffb3c1,#ffd6dc,#ff8fa3,#ffc2cc)',backgroundSize:'300% 300%',animation:'waveRed 6s ease infinite',padding:'22px 18px 22px',display:'flex',flexDirection:'column',boxSizing:'border-box'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16}}>
-              <div style={{width:50,height:50,borderRadius:15,background:'white',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(155,28,46,0.15)'}}>
-                <svg width="26" height="26" fill="none" stroke="#9b1c2e" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
-              </div>
+              <div style={{width:50,height:50,borderRadius:15,background:'white',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(155,28,46,0.15)'}}><svg width="26" height="26" fill="none" stroke="#9b1c2e" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg></div>
               <span style={{fontSize:9,fontWeight:700,color:'#9b1c2e',letterSpacing:'0.12em',background:'rgba(155,28,46,0.1)',padding:'3px 7px',borderRadius:6}}>STUDENT</span>
             </div>
             <p style={{fontSize:22,fontWeight:700,color:'#1a1a2e',margin:'0 0 6px'}}>학생</p>
             <p style={{fontSize:11,color:'#b06070',margin:'0 0 16px',lineHeight:1.7,flex:1}}>창체·교과·진로 기록<br/>AI 생기부 지원</p>
             <div style={{background:'white',borderRadius:9,padding:'5px 10px 5px 12px',display:'flex',alignItems:'center',justifyContent:'space-between',boxShadow:'0 1px 6px rgba(155,28,46,0.15)'}}>
               <span style={{fontSize:11,fontWeight:700,color:'#9b1c2e',letterSpacing:'0.08em'}}>SIGN IN</span>
-              <div style={{width:16,height:16,background:'#9b1c2e',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                <svg width="7" height="7" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth="3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-              </div>
+              <div style={{width:16,height:16,background:'#9b1c2e',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><svg width="7" height="7" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth="3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg></div>
             </div>
           </div>
         </div>
-
         <div onClick={()=>onSelect('teacher')} style={{borderRadius:22,overflow:'hidden',cursor:'pointer',boxShadow:'0 4px 24px rgba(10,110,85,0.18),0 0 0 2px #0a6e55,0 0 0 4px #b8e8d8'}}>
           <div style={{background:'linear-gradient(145deg,#b8e8d8,#80d4b8,#c8f0e0,#5cc4a0,#a0dcc8)',backgroundSize:'300% 300%',animation:'waveGreen 6s ease infinite',padding:'22px 18px 22px',display:'flex',flexDirection:'column',boxSizing:'border-box'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16}}>
-              <div style={{width:50,height:50,borderRadius:15,background:'white',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(10,110,85,0.15)'}}>
-                <svg width="26" height="26" fill="none" stroke="#0a6e55" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-              </div>
+              <div style={{width:50,height:50,borderRadius:15,background:'white',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(10,110,85,0.15)'}}><svg width="26" height="26" fill="none" stroke="#0a6e55" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></div>
               <span style={{fontSize:9,fontWeight:700,color:'#0a6e55',letterSpacing:'0.12em',background:'rgba(10,110,85,0.1)',padding:'3px 7px',borderRadius:6}}>TEACHER</span>
             </div>
             <p style={{fontSize:22,fontWeight:700,color:'#1a1a2e',margin:'0 0 6px'}}>교사</p>
             <p style={{fontSize:11,color:'#3a8a6a',margin:'0 0 16px',lineHeight:1.7,flex:1}}>담임+교과 관리<br/>AI 생기부 작성</p>
             <div style={{background:'white',borderRadius:9,padding:'5px 10px 5px 12px',display:'flex',alignItems:'center',justifyContent:'space-between',boxShadow:'0 1px 6px rgba(10,110,85,0.15)'}}>
               <span style={{fontSize:11,fontWeight:700,color:'#0a6e55',letterSpacing:'0.08em'}}>SIGN IN</span>
-              <div style={{width:16,height:16,background:'#0a6e55',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                <svg width="7" height="7" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth="3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-              </div>
+              <div style={{width:16,height:16,background:'#0a6e55',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><svg width="7" height="7" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth="3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg></div>
             </div>
           </div>
         </div>
-
-      </div>
-      <div style={{background:'#fff',border:'1px solid #ead8db',borderRadius:12,padding:'10px 14px',display:'flex',alignItems:'center',gap:10}}><div style={{width:6,height:6,borderRadius:'50%',background:'#9b1c2e'}}/><p style={{fontSize:10,color:'#aaa',margin:0,lineHeight:1.5}}>본 시스템은 과천여자고등학교 내부 서비스입니다.<br/>문의: 교무기획부</p></div>
-    </div>
-  </div>);
-}
-
-        
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-              <div style={{width:46,height:46,borderRadius:15,background:'white',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(155,28,46,0.15)'}}>
-                <svg width="22" height="22" fill="none" stroke="#9b1c2e" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
-              </div>
-              <span style={{fontSize:8,fontWeight:800,color:'#9b1c2e',letterSpacing:'0.1em'}}>STUDENT</span>
-            </div>
-            <p style={{fontSize:19,fontWeight:900,color:'#1a1a2e',margin:'0 0 3px'}}>학생</p>
-            <p style={{fontSize:10,color:'#c08080',margin:'0 0 16px',lineHeight:1.6}}>창체·교과·진로 기록<br/>AI 생기부 지원</p>
-            <div style={{background:'white',borderRadius:11,padding:'8px 0',textAlign:'center',boxShadow:'0 1px 4px rgba(155,28,46,0.1)'}}>
-              <span style={{fontSize:11,fontWeight:800,color:'#9b1c2e'}}>로그인 →</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 교사 카드 */}
-        <div onClick={()=>onSelect('teacher')} style={{borderRadius:22,overflow:'hidden',cursor:'pointer',boxShadow:'0 4px 24px rgba(10,110,85,0.18),0 0 0 2px #0a6e55,0 0 0 4px #b8e8d8'}}>
-          <div style={{background:'linear-gradient(145deg,#e0f5ee,#b8e8d8,#d4f2e8,#a8dfc8,#cceedd)',backgroundSize:'300% 300%',animation:'waveGreen 6s ease infinite',padding:'20px 16px'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-              <div style={{width:46,height:46,borderRadius:15,background:'white',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(10,110,85,0.15)'}}>
-                <svg width="22" height="22" fill="none" stroke="#0a6e55" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-              </div>
-              <span style={{fontSize:8,fontWeight:800,color:'#0a6e55',letterSpacing:'0.1em'}}>TEACHER</span>
-            </div>
-            <p style={{fontSize:19,fontWeight:900,color:'#1a1a2e',margin:'0 0 3px'}}>교사</p>
-            <p style={{fontSize:10,color:'#4a9e7a',margin:'0 0 16px',lineHeight:1.6}}>담임+교과 관리<br/>AI 생기부 작성</p>
-            <div style={{background:'white',borderRadius:11,padding:'8px 0',textAlign:'center',boxShadow:'0 1px 4px rgba(10,110,85,0.12)'}}>
-              <span style={{fontSize:11,fontWeight:800,color:'#0a6e55'}}>로그인 →</span>
-            </div>
-          </div>
-        </div>
-
       </div>
       <div style={{background:'#fff',border:'1px solid #ead8db',borderRadius:12,padding:'10px 14px',display:'flex',alignItems:'center',gap:10}}><div style={{width:6,height:6,borderRadius:'50%',background:'#9b1c2e'}}/><p style={{fontSize:10,color:'#aaa',margin:0,lineHeight:1.5}}>본 시스템은 과천여자고등학교 내부 서비스입니다.<br/>문의: 교무기획부</p></div>
     </div>
