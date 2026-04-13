@@ -588,7 +588,7 @@ function SubjectTeacherHome({user,records,onSelectSubject,onBack}){
       if(String(r.subject||'')!==String(a.subject||''))return false;
       if(!a.classes.some(c=>String(r.studentId).startsWith(c)))return false;
       const d=new Date(r.date);
-      return(now-d)<7*24*60*60*1000;
+      return(now-d)<3*24*60*60*1000;
     });
   };
 
