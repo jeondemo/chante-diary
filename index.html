@@ -736,7 +736,8 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onBack}){cons
           <span style={{fontSize:10,background:tabBg,color:tabColor,padding:'2px 7px',borderRadius:8,fontWeight:700}}>{tab==='career'?'진로':'창체'}</span>
           <span style={{fontSize:10,color:'#ccc'}}>{r.date}</span>
         </div>
-        <p style={{fontSize:13,fontWeight:700,color:'#1a1a2e',margin:0}}>{r.title}</p>
+        <p style={{fontSize:13,fontWeight:700,color:'#1a1a2e',margin:'0 0 4px'}}>{r.title}</p>
+        {r.content&&<p style={{fontSize:11,color:'#666',margin:0,lineHeight:1.6}}>{r.content}</p>}
       </div>))}
     </div>
   </div>);
