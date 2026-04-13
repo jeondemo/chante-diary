@@ -114,7 +114,7 @@ function RoleScreen({onSelect}){
   <img src="https://jeondemo.github.io/chante-diary/logo.png" style={{width:'100%',height:'100%',objectFit:'contain',filter:'none'}} alt=""/>
 </div>
       <div style={{position:'absolute',top:30,right:30,width:90,height:90,background:'rgba(255,255,255,0.04)',borderRadius:'50%'}}/>
-      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 50" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,46 180,50 280,34 C340,24 370,18 390,16 L390,50 L0,50 Z" fill="#f7f0f2"/></svg></div>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 50" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,46 180,50 280,34 C340,24 370,18 390,16 L390,50 L0,50 Z" fill="white"/>
       <div style={{position:'relative',zIndex:3}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:26}}>
           <div style={{display:'flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.2)',borderRadius:20,padding:'5px 12px'}}><div style={{width:6,height:6,borderRadius:'50%',background:'#ffd580'}}/><span style={{fontSize:10,color:'rgba(255,255,255,0.9)',fontWeight:600}}>{getSemesterLabel()}</span></div>
@@ -128,7 +128,7 @@ function RoleScreen({onSelect}){
         </div>
       </div>
     </div>
-    <div style={{padding:'16px 14px 20px'}}>
+    <div style={{padding:'16px 14px 20px',background:'white'}}>
       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16}}><div style={{width:3,height:14,background:'#9b1c2e',borderRadius:2}}/><span style={{fontSize:12,fontWeight:700,color:'#9b1c2e'}}>로그인 유형을 선택하세요</span></div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
         <div onClick={()=>onSelect('student')} style={{borderRadius:22,overflow:'hidden',cursor:'pointer',boxShadow:'0 4px 24px rgba(155,28,46,0.18),0 0 0 2px #9b1c2e,0 0 0 4px #ffd6dc'}}>
