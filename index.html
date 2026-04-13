@@ -135,7 +135,9 @@ function RoleScreen({onSelect}){
         <div onClick={()=>onSelect('student')} style={{borderRadius:22,overflow:'hidden',cursor:'pointer',boxShadow:'0 4px 24px rgba(155,28,46,0.18),0 0 0 2px #9b1c2e,0 0 0 4px #ffd6dc'}}>
           <div style={{background:'linear-gradient(145deg,#ffe0e6,#ffb3c1,#ffd6dc,#ff8fa3,#ffc2cc)',backgroundSize:'300% 300%',animation:'waveRed 6s ease infinite',padding:'22px 18px 22px',display:'flex',flexDirection:'column',boxSizing:'border-box'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16}}>
-              <div style={{width:50,height:50,borderRadius:15,background:'white',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(155,28,46,0.15)'}}><svg width="26" height="26" fill="none" stroke="#9b1c2e" strokeWidth="1.7" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg></div>
+              <div style={{width:50,height:50,borderRadius:15,background:'white',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(155,28,46,0.15)',overflow:'hidden'}}>
+  <img src="https://jeondemo.github.io/chante-diary/2.png" style={{width:'100%',height:'100%',objectFit:'cover'}} alt="student"/>
+</div>
               <span style={{fontSize:9,fontWeight:700,color:'#9b1c2e',letterSpacing:'0.12em',background:'rgba(155,28,46,0.1)',padding:'3px 7px',borderRadius:6}}>STUDENT</span>
             </div>
             <p style={{fontSize:22,fontWeight:700,color:'#1a1a2e',margin:'0 0 6px'}}>학생</p>
