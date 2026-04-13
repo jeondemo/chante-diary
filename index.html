@@ -679,6 +679,7 @@ function App(){
   const [catId,setCatId]=useState(null),[subject,setSubject]=useState(null),[writing,setWriting]=useState(false),[editing,setEditing]=useState(null);
   const [selStudent,setSelStudent]=useState(null),[selAssignment,setSelAssignment]=useState(null),[selClass,setSelClass]=useState(null);
   const [isDesktop,setIsDesktop]=useState(window.innerWidth>500);
+  const [subjectRecords,setSubjectRecords]=useState(null);
 
   useEffect(()=>{const h=()=>setIsDesktop(window.innerWidth>500);window.addEventListener('resize',h);return()=>window.removeEventListener('resize',h);},[]);
 
@@ -721,7 +722,7 @@ function App(){
       {isStudent&&view==='cat'&&catId==='subject'&&subject&&!writing&&<SubjectRecords subject={subject} records={records} onBack={()=>setSubject(null)} onWrite={()=>setWriting(true)} onDelete={deleteRec} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
       {isStudent&&view==='cat'&&catId==='subject'&&subject&&writing&&<SubjectForm subject={subject} editing={editing} onSave={editing?updateRec:saveRec} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
 
-      {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>setView('subjectHome')} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onBack={goBackToRole}/>}
+      {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={async()=>{let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}const res=await callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId});if(res.success)setSubjectRecords(res.records||[]);setView('subjectHome');}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onBack={goBackToRole}/>}
       {(isTeacher||isCareer)&&view==='students'&&!selStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onBack={()=>setView('home')}/>}
       {(isTeacher||isCareer)&&view==='ai'&&selStudent&&<AIReport student={selStudent} user={user} onBack={()=>{setSelStudent(null);setView('students');}}/>}
       {(isTeacher||isCareer)&&view==='reports'&&<ReportList user={user} onBack={()=>setView('home')}/>}
@@ -729,9 +730,9 @@ function App(){
       {isTeacher&&view==='myReports'&&<MyReportList user={user} onBack={()=>setView('home')}/>}
       {isTeacher&&view==='addSubject'&&<AddSubjectOnly onDone={async(nd)=>{let ex=[];try{ex=user.assignments?JSON.parse(user.assignments):[];}catch(e){}const ni=JSON.parse(nd);const mg=[...ex];ni.forEach(n=>{const idx=mg.findIndex(e=>e.subject===n.subject);if(idx>=0)mg[idx]={...mg[idx],classes:[...new Set([...mg[idx].classes,...n.classes])].sort()};else mg.push(n);});const ms=JSON.stringify(mg);const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,assignments:ms});if(res.success){const u2={...user,assignments:ms};setUser(u2);saveSession({role:u2.role,user:u2});fetchRecords(u2);}setView('home');}} onBack={()=>setView('home')}/>}
       {isTeacher&&view==='subjectHome'&&!selAssignment&&<SubjectTeacherHome user={user} onSelectSubject={a=>{setSelAssignment(a);setView('classes');}} onBack={()=>setView('home')}/>}
-      {isTeacher&&view==='classes'&&selAssignment&&!selClass&&<SubjectClassList assignment={selAssignment} records={records} onSelect={cls=>{setSelClass(cls);setView('students2');}} onBack={()=>{setSelAssignment(null);setView('subjectHome');}}/>}
-      {isTeacher&&view==='students2'&&selClass&&!selStudent&&<SubjectStudentList assignment={selAssignment} classCode={selClass} records={records} onSelect={s=>{setSelStudent(s);setView('detail');}} onBack={()=>{setSelClass(null);setView('classes');}}/>}
-      {isTeacher&&view==='detail'&&selStudent&&<SubjectStudentDetail student={selStudent} user={user} records={records} onBack={()=>{setSelStudent(null);setView('students2');}}/>}
+      {isTeacher&&view==='classes'&&selAssignment&&!selClass&&<SubjectClassList assignment={selAssignment} records={subjectRecords||records} onSelect={cls=>{setSelClass(cls);setView('students2');}} onBack={()=>{setSelAssignment(null);setView('subjectHome');}}/>}
+      {isTeacher&&view==='students2'&&selClass&&!selStudent&&<SubjectStudentList assignment={selAssignment} classCode={selClass} records={subjectRecords||records} onSelect={s=>{setSelStudent(s);setView('detail');}} onBack={()=>{setSelClass(null);setView('classes');}}/>}
+      {isTeacher&&view==='detail'&&selStudent&&<SubjectStudentDetail student={selStudent} user={user} records={subjectRecords||records} onBack={()=>{setSelStudent(null);setView('students2');}}/>}
     </div>
   </div>);
 }
