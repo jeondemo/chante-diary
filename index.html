@@ -623,8 +623,42 @@ function SubjectTeacherHome({user,records,onSelectSubject,onBack}){
   </div>);
 }
 
-function SubjectClassList({assignment,records,onSelect,onBack}){return(<div style={{background:'#f3f0f9',minHeight:'100%'}}><div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'22px 20px 40px',position:'relative',overflow:'hidden'}}><div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div><div style={{position:'relative',zIndex:3}}><button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>과목 목록</button><p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 3px'}}>{assignment.subject}</p></div></div><div style={{padding:'0 16px 20px',marginTop:-14}}>{assignment.classes.map((cls,i)=>{const cnt=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===assignment.subject&&String(r.studentId).startsWith(cls)).length;return(<div key={cls} onClick={()=>onSelect(cls)} className="active-btn" style={{background:'white',borderRadius:16,padding:'12px 14px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:8,border:'1.5px solid #ede8f7'}}><div style={{background:'linear-gradient(135deg,#7c3aed,#5c2fa0)',borderRadius:10,padding:'5px 13px'}}><span style={{fontSize:13,fontWeight:900,color:'white'}}>{cls[0]}학년 {cls.slice(1)}반</span></div><p style={{flex:1,fontSize:12,color:'#666',margin:0,fontWeight:600}}>{cnt>0?<>기록 <span style={{color:'#7c3aed',fontWeight:900}}>{cnt}건</span></>:'기록 없음'}</p><svg width="12" height="12" fill="none" stroke="#ce93d8" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg></div>);})}</div></div>);}
+function SubjectClassList({assignment,records,onSelect,onBack}){
+  const hasNew=(cls)=>{
+    const now=new Date();
+    return records.some(r=>{
+      if(r.categoryId!=='subject')return false;
+      if(String(r.subject||'')!==assignment.subject)return false;
+      if(!String(r.studentId).startsWith(cls))return false;
+      const d=new Date(r.date);
+      return(now-d)<3*24*60*60*1000;
+    });
+  };
 
+  return(<div style={{background:'#f3f0f9',minHeight:'100%'}}>
+    <div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'22px 20px 40px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>과목 목록</button>
+        <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 3px'}}>{assignment.subject}</p>
+      </div>
+    </div>
+    <div style={{padding:'0 16px 20px',marginTop:-14}}>
+      {assignment.classes.map((cls,i)=>{
+        const cnt=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===assignment.subject&&String(r.studentId).startsWith(cls)).length;
+        const isNew=hasNew(cls);
+        return(<div key={cls} onClick={()=>onSelect(cls)} className="active-btn" style={{background:'white',borderRadius:16,padding:'12px 14px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:8,border:'1.5px solid #ede8f7'}}>
+          <div style={{background:'linear-gradient(135deg,#7c3aed,#5c2fa0)',borderRadius:10,padding:'5px 13px'}}>
+            <span style={{fontSize:13,fontWeight:900,color:'white'}}>{cls[0]}학년 {cls.slice(1)}반</span>
+          </div>
+          <p style={{flex:1,fontSize:12,color:'#666',margin:0,fontWeight:600}}>{cnt>0?<>기록 <span style={{color:'#7c3aed',fontWeight:900}}>{cnt}건</span></>:'기록 없음'}</p>
+          {isNew&&<span style={{fontSize:9,fontWeight:900,color:'white',background:'#e53935',padding:'2px 7px',borderRadius:20,letterSpacing:'0.05em',animation:'blinkNew 1.2s ease-in-out infinite'}}>NEW</span>}
+          <svg width="12" height="12" fill="none" stroke="#ce93d8" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
+        </div>);
+      })}
+    </div>
+  </div>);
+}
 function SubjectStudentList({assignment,classCode,records,onSelect,onBack}){const filtered=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===assignment.subject&&String(r.studentId).startsWith(classCode));const grouped={};filtered.forEach(r=>{if(!grouped[r.studentId])grouped[r.studentId]={name:r.name,recs:[]};grouped[r.studentId].recs.push(r);});const list=Object.entries(grouped).sort(([a],[b])=>Number(a)-Number(b));return(<div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:20}}><div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'22px 20px 38px',position:'relative',overflow:'hidden'}}><div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div><div style={{position:'relative',zIndex:3}}><button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>반 목록</button><p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 3px'}}>{classCode[0]}학년 {classCode.slice(1)}반</p><p style={{fontSize:11,color:'rgba(255,255,255,0.65)',margin:0}}>{assignment.subject} · {list.length}명</p></div></div><div style={{padding:'0 16px',marginTop:-14}}>{list.length===0&&<div style={{background:'white',borderRadius:14,padding:24,textAlign:'center',color:'#ccc'}}>기록 없음</div>}{list.map(([sid,{name,recs}])=>(<button key={sid} onClick={()=>onSelect({id:sid,name,subject:assignment.subject})} className="active-btn" style={{background:'white',borderRadius:14,padding:'11px 14px',display:'flex',alignItems:'center',gap:12,textAlign:'left',width:'100%',border:'1.5px solid #ede8f7',cursor:'pointer',marginBottom:7}}><div style={{width:34,height:34,background:'linear-gradient(135deg,#ede7f6,#d1c4e9)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:'#5c2fa0',flexShrink:0}}>{name[0]}</div><div style={{flex:1}}><p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:0}}>{name}</p></div><span style={{fontSize:11,background:'#ede7f6',color:'#5c2fa0',padding:'3px 9px',borderRadius:8,fontWeight:700}}>{recs.length}건</span><svg width="11" height="11" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg></button>))}</div></div>);}
 
   function AIReport({student,user,onBack}){
