@@ -660,24 +660,88 @@ function SubjectClassList({assignment,records,onSelect,onBack}){return(<div styl
 
 function SubjectStudentList({assignment,classCode,records,onSelect,onBack}){const filtered=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===assignment.subject&&String(r.studentId).startsWith(classCode));const grouped={};filtered.forEach(r=>{if(!grouped[r.studentId])grouped[r.studentId]={name:r.name,recs:[]};grouped[r.studentId].recs.push(r);});const list=Object.entries(grouped).sort(([a],[b])=>Number(a)-Number(b));return(<div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:20}}><div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'22px 20px 38px',position:'relative',overflow:'hidden'}}><div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div><div style={{position:'relative',zIndex:3}}><button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>반 목록</button><p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 3px'}}>{classCode[0]}학년 {classCode.slice(1)}반</p><p style={{fontSize:11,color:'rgba(255,255,255,0.65)',margin:0}}>{assignment.subject} · {list.length}명</p></div></div><div style={{padding:'0 16px',marginTop:-14}}>{list.length===0&&<div style={{background:'white',borderRadius:14,padding:24,textAlign:'center',color:'#ccc'}}>기록 없음</div>}{list.map(([sid,{name,recs}])=>(<button key={sid} onClick={()=>onSelect({id:sid,name,subject:assignment.subject})} className="active-btn" style={{background:'white',borderRadius:14,padding:'11px 14px',display:'flex',alignItems:'center',gap:12,textAlign:'left',width:'100%',border:'1.5px solid #ede8f7',cursor:'pointer',marginBottom:7}}><div style={{width:34,height:34,background:'linear-gradient(135deg,#ede7f6,#d1c4e9)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:'#5c2fa0',flexShrink:0}}>{name[0]}</div><div style={{flex:1}}><p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:0}}>{name}</p></div><span style={{fontSize:11,background:'#ede7f6',color:'#5c2fa0',padding:'3px 9px',borderRadius:8,fontWeight:700}}>{recs.length}건</span><svg width="11" height="11" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg></button>))}</div></div>);}
 
-function SubjectStudentDetail({student,user,records,onBack}){const recs=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===student.subject&&String(r.studentId)===String(student.id)).sort((a,b)=>new Date(b.date)-new Date(a.date));const[showAI,setShowAI]=useState(false),[result,setResult]=useState(''),[generating,setGenerating]=useState(false),[copied,setCopied]=useState(false),[saving,setSaving]=useState(false),[errMsg,setErrMsg]=useState(''),[progress,setProgress]=useState('');
-  const generate=async()=>{setGenerating(true);setResult('');setErrMsg('');setProgress('1/3 번째 시도 중...');const text=recs.map(r=>`[${r.subject}]단원:${r.unit||''} 배움:${r.learned||''}`).join('\n');try{const res=await callAIWithRetry(text,msg=>setProgress(msg));if(res.success&&res.content){setResult(adjustToByteRange(res.content));setProgress('');}else{setErrMsg(res.message||'AI 생성 실패');setProgress('');}}catch(e){setErrMsg('서버 오류');setProgress('');}setGenerating(false);};
+function SubjectStudentDetail({student,user,records,onBack}){
+  const recs=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===student.subject&&String(r.studentId)===String(student.id)).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const [selected,setSelected]=useState([]);
+  const [result,setResult]=useState(''),[generating,setGenerating]=useState(false),[copied,setCopied]=useState(false),[saving,setSaving]=useState(false),[errMsg,setErrMsg]=useState(''),[progress,setProgress]=useState('');
+  const [usedModel,setUsedModel]=useState('');
+
+  const toggleSel=(id)=>setSelected(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);
+  const selRecs=recs.filter(r=>selected.includes(r.id));
+
+  const generate=async()=>{
+    if(selRecs.length===0)return;
+    setGenerating(true);setResult('');setErrMsg('');setUsedModel('');
+    const text=selRecs.map(r=>`[${r.subject}]단원:${r.unit||''} 배움:${r.learned||''}`).join('\n');
+    try{
+      const res=await callAIWithRetry(text,msg=>setProgress(msg));
+      if(res.success&&res.content){
+        setResult(adjustToByteRange(res.content));
+        setUsedModel(res.model||'');
+        setProgress('');
+      }else{setErrMsg(res.message||'AI 생성 실패');setProgress('');}
+    }catch(e){setErrMsg('서버 오류');setProgress('');}
+    setGenerating(false);
+  };
+
   const copy=()=>{try{navigator.clipboard.writeText(result);}catch(e){}setCopied(true);setTimeout(()=>setCopied(false),2000);};
   const save=async()=>{if(!result)return;setSaving(true);try{await callAPI({action:'saveReport',studentId:student.id,name:student.name,content:result,savedAt:new Date().toLocaleString(),teacherId:user?.studentId||'',teacherName:user?.name||'',subject:student.subject||''});alert('저장됐습니다!');}catch(e){alert('저장 실패');}setSaving(false);};
-  return(<div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:20}}><div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'22px 20px 38px',position:'relative',overflow:'hidden'}}><div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div><div style={{position:'relative',zIndex:3}}><button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>학생 목록</button><div style={{display:'flex',alignItems:'center',gap:12}}><div style={{width:44,height:44,background:'rgba(255,255,255,0.2)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,fontWeight:900,color:'white',flexShrink:0}}>{student.name[0]}</div><div><p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 2px'}}>{student.name}</p><p style={{fontSize:11,color:'rgba(255,255,255,0.65)',margin:0}}>{student.subject} · {recs.length}건</p></div></div></div></div>
-    <div style={{padding:'0 16px',marginTop:-14}}>
-      {!showAI?(<button onClick={()=>setShowAI(true)} disabled={recs.length===0} style={{width:'100%',background:recs.length>0?'linear-gradient(135deg,#5c2fa0,#7c3aed)':'#ccc',color:'white',border:'none',borderRadius:16,padding:'14px',fontSize:14,fontWeight:800,cursor:recs.length>0?'pointer':'default',marginTop:18,marginBottom:12}}>AI 세특 생기부 생성</button>):(
-        <div style={{background:'white',borderRadius:18,padding:16,border:'1.5px solid #d1c4e9',marginTop:18,marginBottom:12}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><p style={{fontSize:13,fontWeight:800,color:'#5c2fa0',margin:0}}>AI 세특 생기부</p><button onClick={()=>{setShowAI(false);setResult('');setErrMsg('');}} style={{background:'none',border:'none',color:'#bbb',cursor:'pointer',fontSize:12}}>닫기</button></div>
-          {errMsg&&<div style={{background:errMsg.includes('선생님')?'#fff3e0':'#fce4ec',borderRadius:10,padding:'9px 12px',marginBottom:10,fontSize:12,color:errMsg.includes('선생님')?'#e65100':'#c2185b',fontWeight:700}}>{errMsg}</div>}
-          {generating&&progress&&<div style={{background:'#ede7f6',borderRadius:10,padding:'9px 12px',marginBottom:8,fontSize:12,color:'#5c2fa0',fontWeight:700,display:'flex',alignItems:'center',gap:8}}><Spin/> {progress}</div>}
-          <button onClick={generate} disabled={generating} style={{width:'100%',background:generating?'#b0a0cc':'linear-gradient(135deg,#5c2fa0,#7c3aed)',color:'white',border:'none',borderRadius:12,padding:'11px',fontSize:13,fontWeight:800,cursor:'pointer',marginBottom:result?12:0}}>{generating?'생성 중 (자동 재시도)':`${recs.length}건으로 세특 작성`}</button>
-          {result&&(<><div style={{display:'flex',justifyContent:'space-between',margin:'8px 0 6px'}}><span style={{fontSize:10,color:'#7c3aed',fontWeight:700}}>{new TextEncoder().encode(result).length} bytes</span><span style={{fontSize:10,color:'#bbb'}}>1400~1500 범위</span></div><p style={{fontSize:13,color:'#333',lineHeight:1.75,margin:'0 0 12px',background:'#faf8ff',borderRadius:10,padding:'10px 12px'}}>{result}</p><div style={{display:'flex',gap:7}}><button onClick={copy} style={{flex:1,background:copied?'#5c2fa0':'#f5f0ff',color:copied?'white':'#5c2fa0',border:'none',borderRadius:10,padding:'9px 0',fontSize:12,fontWeight:700,cursor:'pointer'}}>{copied?'복사됨':'복사'}</button><button onClick={generate} disabled={generating} style={{flex:1,background:'#ede7f6',color:'#5c2fa0',border:'none',borderRadius:10,padding:'9px 0',fontSize:12,fontWeight:800,cursor:'pointer'}}>{generating?<Spin/>:'재작성'}</button><button onClick={save} disabled={saving} style={{flex:1,background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',color:'white',border:'none',borderRadius:10,padding:'9px 0',fontSize:12,fontWeight:800,cursor:'pointer'}}>{saving?<Spin/>:'저장'}</button></div></>)}
+
+  return(<div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:20}}>
+    <div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'22px 20px 38px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>학생 목록</button>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:44,height:44,background:'rgba(255,255,255,0.2)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,fontWeight:900,color:'white',flexShrink:0}}>{student.name[0]}</div>
+          <div><p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 2px'}}>{student.name}</p><p style={{fontSize:11,color:'rgba(255,255,255,0.65)',margin:0}}>{student.subject} · {recs.length}건</p></div>
         </div>
-      )}
-      <div style={{display:'flex',alignItems:'center',gap:6,margin:'16px 0 10px'}}><div style={{width:3,height:12,background:'#5c2fa0',borderRadius:2}}/><p style={{fontSize:12,fontWeight:800,color:'#5c2fa0',margin:0}}>활동 기록 {recs.length}건</p></div>
+      </div>
+    </div>
+
+    <div style={{padding:'0 16px',marginTop:-14}}>
+
+      {/* AI 생성 영역 */}
+      <div style={{background:'white',borderRadius:18,padding:16,border:'1.5px solid #d1c4e9',marginTop:18,marginBottom:16}}>
+        <div style={{background:'#f3f0f9',borderRadius:10,padding:'9px 12px',marginBottom:12,fontSize:11,color:'#7c3aed',fontWeight:700,textAlign:'center'}}>
+          {selected.length===0?'아래에서 활동내용을 먼저 선택하세요.':`${selected.length}건 선택됨 · AI 생성 버튼을 눌러 주십시오.`}
+        </div>
+        {errMsg&&<div style={{background:errMsg.includes('선생님')?'#fff3e0':'#fce4ec',borderRadius:10,padding:'9px 12px',marginBottom:10,fontSize:12,color:errMsg.includes('선생님')?'#e65100':'#c2185b',fontWeight:700}}>{errMsg}</div>}
+        {generating&&progress&&<div style={{background:'#ede7f6',borderRadius:10,padding:'9px 12px',marginBottom:8,fontSize:12,color:'#5c2fa0',fontWeight:700,display:'flex',alignItems:'center',gap:8}}><Spin/> {progress}</div>}
+        <button onClick={generate} disabled={generating||selected.length===0} style={{width:'100%',background:selected.length>0&&!generating?'linear-gradient(135deg,#5c2fa0,#7c3aed)':'#d1c4e9',color:'white',border:'none',borderRadius:12,padding:'12px',fontSize:13,fontWeight:800,cursor:selected.length>0&&!generating?'pointer':'default',marginBottom:result?12:0,transition:'background 0.2s'}}>
+          {generating?'생성 중 (자동 재시도)':selected.length===0?'AI 세특 생기부 생성':'AI 세특 생기부 생성'}
+        </button>
+        {usedModel&&!generating&&<p style={{fontSize:10,color:'#9c7cc0',margin:'0 0 8px',textAlign:'right'}}>✓ {usedModel==='gpt-4o-mini'?'GPT-4o Mini':usedModel} 생성 완료</p>}
+        {result&&(<>
+          <div style={{display:'flex',justifyContent:'space-between',margin:'4px 0 6px'}}><span style={{fontSize:10,color:'#7c3aed',fontWeight:700}}>{new TextEncoder().encode(result).length} bytes</span><span style={{fontSize:10,color:'#bbb'}}>1400~1500 범위</span></div>
+          <p style={{fontSize:13,color:'#333',lineHeight:1.75,margin:'0 0 12px',background:'#faf8ff',borderRadius:10,padding:'10px 12px'}}>{result}</p>
+          <div style={{display:'flex',gap:7}}>
+            <button onClick={copy} style={{flex:1,background:copied?'#5c2fa0':'#f5f0ff',color:copied?'white':'#5c2fa0',border:'none',borderRadius:10,padding:'9px 0',fontSize:12,fontWeight:700,cursor:'pointer'}}>{copied?'복사됨':'복사'}</button>
+            <button onClick={generate} disabled={generating||selected.length===0} style={{flex:1,background:'#ede7f6',color:'#5c2fa0',border:'none',borderRadius:10,padding:'9px 0',fontSize:12,fontWeight:800,cursor:'pointer'}}>{generating?<Spin/>:'재작성'}</button>
+            <button onClick={save} disabled={saving} style={{flex:1,background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',color:'white',border:'none',borderRadius:10,padding:'9px 0',fontSize:12,fontWeight:800,cursor:'pointer'}}>{saving?<Spin/>:'저장'}</button>
+          </div>
+        </>)}
+      </div>
+
+      {/* 활동 기록 목록 */}
+      <div style={{display:'flex',alignItems:'center',gap:6,margin:'0 0 10px'}}><div style={{width:3,height:12,background:'#5c2fa0',borderRadius:2}}/><p style={{fontSize:12,fontWeight:800,color:'#5c2fa0',margin:0}}>활동 기록 {recs.length}건</p></div>
       {recs.length===0&&<div style={{background:'white',borderRadius:14,padding:24,textAlign:'center',color:'#ccc'}}>기록 없음</div>}
-      {recs.map(r=>(<div key={r.id} style={{background:'white',borderRadius:14,padding:'13px 14px',marginBottom:8,borderLeft:'3px solid #7c3aed'}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}><span style={{fontSize:10,background:'#ede7f6',color:'#5c2fa0',padding:'2px 8px',borderRadius:6,fontWeight:700}}>{r.subject}</span><span style={{fontSize:10,color:'#ccc'}}>{r.date}</span></div><p style={{fontSize:13,fontWeight:800,color:'#1a1a2e',margin:'0 0 5px'}}>{r.unit||'(단원없음)'}</p>{r.learned&&<p style={{fontSize:11,color:'#666',margin:0,lineHeight:1.5}}>{r.learned}</p>}</div>))}
+      {recs.map(r=>{
+        const isSel=selected.includes(r.id);
+        return(<div key={r.id} onClick={()=>toggleSel(r.id)} style={{background:'white',borderRadius:14,padding:'13px 14px',marginBottom:8,borderLeft:`3px solid ${isSel?'#5c2fa0':'#d1c4e9'}`,cursor:'pointer',boxShadow:isSel?'0 2px 12px rgba(92,47,160,0.15)':'none',transition:'all 0.15s'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <div style={{width:18,height:18,borderRadius:'50%',border:`2px solid ${isSel?'#5c2fa0':'#ddd'}`,background:isSel?'#5c2fa0':'white',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                {isSel&&<svg width="10" height="10" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
+              </div>
+              <span style={{fontSize:10,background:'#ede7f6',color:'#5c2fa0',padding:'2px 8px',borderRadius:6,fontWeight:700}}>{r.subject}</span>
+            </div>
+            <span style={{fontSize:10,color:'#ccc'}}>{r.date}</span>
+          </div>
+          <p style={{fontSize:13,fontWeight:800,color:'#1a1a2e',margin:'0 0 5px',paddingLeft:24}}>{r.unit||'(단원없음)'}</p>
+          {r.learned&&<p style={{fontSize:11,color:'#666',margin:0,lineHeight:1.5,paddingLeft:24}}>{r.learned}</p>}
+        </div>);
+      })}
     </div>
   </div>);
 }
