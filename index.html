@@ -488,7 +488,7 @@ function MyReportList({user,onBack}){
 
   useEffect(()=>{
     callAPI({action:'getMyReports',teacherId:user.studentId}).then(r=>{
-      setReports(r.reports||[]);setLoading(false);
+      setReports((r.reports||[]).filter(p=>p.subject!=='진로활동'&&p.subject!=='창체활동'));setLoading(false);
     }).catch(()=>setLoading(false));
   },[]);
 
