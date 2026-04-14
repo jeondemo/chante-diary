@@ -962,6 +962,7 @@ function App(){
       {isTeacher&&view==='detail'&&selStudent&&<SubjectStudentDetail student={selStudent} user={user} records={subjectRecords||records} onBack={()=>{setSelStudent(null);setView('students2');}}/>}
       {isTeacher&&view==='clubHome'&&!selStudent&&<ClubStudentList user={user} records={subjectRecords||[]} onSelect={s=>{setSelStudent(s);setView('clubDetail');}} onBack={()=>setView('home')}/>}
       {isTeacher&&view==='clubDetail'&&selStudent&&<ClubStudentDetail student={selStudent} user={user} records={subjectRecords||[]} onBack={()=>{setSelStudent(null);setView('clubHome');}}/>}
+      {isTeacher&&view==='clubReports'&&<ClubReportList user={user} onBack={()=>setView('home')}/>}
     </div>
   </div>);
 }
