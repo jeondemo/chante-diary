@@ -48,7 +48,7 @@ const {useState,useEffect,useCallback,useRef} = React;
 const CATS = {
   career:{id:'career',label:'진로활동',desc:'꿈과 진로 탐색 기록',grad:'linear-gradient(135deg,#ff8a65,#ef5350)',chipText:'#c2185b',chipBg:'#fce4ec'},
   subject:{id:'subject',label:'교과활동',desc:'수업 배움 세특 기록',grad:'linear-gradient(135deg,#7986cb,#5c6bc0)',chipText:'#3949ab',chipBg:'#e8eaf6'},
-  creative:{id:'creative',label:'창의적 체험활동',desc:'동아리·봉사 기록',grad:'linear-gradient(135deg,#4db6ac,#26a69a)',chipText:'#00695c',chipBg:'#e0f2f1'}
+  creative:{id:'creative',label:'자율 활동',desc:'창의적 체험 활동',grad:'linear-gradient(135deg,#4db6ac,#26a69a)',chipText:'#00695c',chipBg:'#e0f2f1'}
 };
 const CLASS_COUNT = {'1':5,'2':5,'3':6};
 function getSemesterLabel(){const n=new Date(),y=n.getFullYear(),m=n.getMonth()+1;return `${y}학년도 ${m>8||(m===8&&n.getDate()>=1)?'2':'1'}학기`;}
