@@ -381,13 +381,7 @@ function TeacherHome({user,records,onSelectStudent,onViewReports,onSubjectHome,o
               </div>
               <svg width="12" height="12" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
             </div>
-            <div onClick={onAddSubject} className="active-btn" style={{display:'flex',alignItems:'center',gap:12,padding:10,background:'white',borderRadius:12,cursor:'pointer',border:'1.5px dashed #ded8f5'}}>
-              <div style={{width:42,height:42,background:'#f3f0f9',borderRadius:13,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>➕</div>
-              <div style={{flex:1}}>
-                <p style={{fontSize:13,fontWeight:600,color:'#5c2fa0',margin:'0 0 1px'}}>교과목 추가 등록</p>
-                <p style={{fontSize:10,color:'#bbb',margin:0}}>담당 과목·학급 추가</p>
-              </div>
-            </div>
+            
           </>):(
             <div onClick={onAddSubject} className="active-btn" style={{display:'flex',alignItems:'center',gap:12,padding:10,background:'white',borderRadius:12,cursor:'pointer',border:'1.5px dashed #ded8f5'}}>
               <div style={{width:42,height:42,background:'#f3f0f9',borderRadius:13,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>📚</div>
