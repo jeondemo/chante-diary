@@ -750,7 +750,13 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onBack}){cons
   const switchTab=(t)=>{setTab(t);setSel(new Set());setResult('');setErrMsg('');setProgress('');setUsedModel('');};
 
   const generate=async()=>{if(!sel.size)return;setGenerating(true);setResult('');setErrMsg('');setUsedModel('');setProgress('Gemini 2.5 Flash 시도 중...');
-    const text=recs.filter(r=>sel.has(r.id)).map(r=>`[${r.categoryId==='career'?'진로':'창체'}]${r.title}: ${r.content}`).join('\n');
+    const text = recs.filter(r => sel.has(r.id))
+  .map(r => {
+    if (r.categoryId === 'career') return `[진로]${r.title}: ${r.content}`;
+    if (r.categoryId === 'creative') return `[동아리]${r.title}: ${r.content}`;
+    return `[자율]${r.title}: ${r.content}`;
+  })
+  .join('\n');
     try{const res=await callAIWithRetry(text,msg=>setProgress(msg));if(res.success){setResult(adjustToByteRange(res.content||''));setUsedModel(res.model||'');}else setErrMsg(res.message||'AI 생성 실패');}catch(e){setErrMsg('서버 오류: '+e.message);}setProgress('');setGenerating(false);};
 
   const save=async()=>{if(!result)return;setSaving(true);try{await callAPI({action:'saveReport',studentId:student.id,name:student.name,content:result,savedAt:new Date().toLocaleString(),teacherId:user?.studentId||'',teacherName:user?.name||'',subject:tab==='career'?'진로활동':'창체활동'});alert('저장됐습니다!');}catch(e){alert('저장 실패');}setSaving(false);};
