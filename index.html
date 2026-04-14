@@ -688,6 +688,7 @@ function SubjectTeacherHome({user,records,onSelectSubject,onBack}){
       </div>
     </div>
     <div style={{padding:'14px 16px 0'}}>
+      <div onClick={onAddSubject} className="active-btn" style={{background:'#ede7f6',border:'1.5px dashed #5c2fa0',borderRadius:12,padding:'10px',display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginBottom:12,cursor:'pointer'}}><svg width="14" height="14" fill="none" stroke="#5c2fa0" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14"/></svg><span style={{fontSize:13,fontWeight:700,color:'#5c2fa0'}}>교과목 추가</span></div>
       {assigns.map((a,i)=>{
         const g=ig[i%ig.length];
         const isNew=hasNew(a);
@@ -698,6 +699,7 @@ function SubjectTeacherHome({user,records,onSelectSubject,onBack}){
               <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:1}}>
                 <p style={{fontSize:14,fontWeight:900,color:'#1a1a2e',margin:0}}>{a.subject}</p>
                 {isNew&&<span style={{fontSize:9,fontWeight:900,color:'white',background:'#e53935',padding:'2px 7px',borderRadius:20,letterSpacing:'0.05em',animation:'blinkNew 1.2s ease-in-out infinite'}}>NEW</span>}
+                <span onClick={e=>{e.stopPropagation();onDeleteSubject(a);}} style={{fontSize:9,fontWeight:900,color:'white',background:'#e53935',padding:'2px 7px',borderRadius:20,cursor:'pointer'}}>과목삭제</span>
               </div>
               <p style={{fontSize:10,color:'#999',margin:0,fontWeight:600}}>{a.classes.length}개 학급</p>
             </div>
@@ -976,7 +978,7 @@ function App(){
 
       {isTeacher&&view==='myReports'&&<MyReportList user={user} onBack={()=>setView('home')}/>}
       {isTeacher&&view==='addSubject'&&<AddSubjectOnly onDone={async(nd)=>{let ex=[];try{ex=user.assignments?JSON.parse(user.assignments):[];}catch(e){}const ni=JSON.parse(nd);const mg=[...ex];ni.forEach(n=>{const idx=mg.findIndex(e=>e.subject===n.subject);if(idx>=0)mg[idx]={...mg[idx],classes:[...new Set([...mg[idx].classes,...n.classes])].sort()};else mg.push(n);});const ms=JSON.stringify(mg);const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,assignments:ms});if(res.success){const u2={...user,assignments:ms};setUser(u2);saveSession({role:u2.role,user:u2});fetchRecords(u2);}setView('home');}} onBack={()=>setView('home')}/>}
-      {isTeacher&&view==='subjectHome'&&!selAssignment&&<SubjectTeacherHome user={user} records={subjectRecords||[]} onSelectSubject={a=>{setSelAssignment(a);setView('classes');}} onBack={()=>setView('home')}/>}
+      {isTeacher&&view==='subjectHome'&&!selAssignment&&<SubjectTeacherHome user={user} records={subjectRecords||[]} onSelectSubject={a=>{setSelAssignment(a);setView('classes');}} onAddSubject={()=>setView('addSubject')} onDeleteSubject={async(a)=>{if(!confirm(`"${a.subject}" 과목을 삭제할까요?`))return;let ex=[];try{ex=user.assignments?JSON.parse(user.assignments):[];}catch(e){}const mg=ex.filter(e=>e.subject!==a.subject);const ms=JSON.stringify(mg);const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,assignments:ms});if(res.success){const u2={...user,assignments:ms};setUser(u2);saveSession({role:u2.role,user:u2});fetchRecords(u2);}}} onBack={()=>setView('home')}/>}
       {isTeacher&&view==='classes'&&selAssignment&&!selClass&&<SubjectClassList assignment={selAssignment} records={subjectRecords||records} onSelect={cls=>{setSelClass(cls);setView('students2');}} onBack={()=>{setSelAssignment(null);setView('subjectHome');}}/>}
       {isTeacher&&view==='students2'&&selClass&&!selStudent&&<SubjectStudentList assignment={selAssignment} classCode={selClass} records={subjectRecords||records} onSelect={s=>{setSelStudent(s);setView('detail');}} onBack={()=>{setSelClass(null);setView('classes');}}/>}
       {isTeacher&&view==='detail'&&selStudent&&<SubjectStudentDetail student={selStudent} user={user} records={subjectRecords||records} onBack={()=>{setSelStudent(null);setView('students2');}}/>}
