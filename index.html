@@ -166,7 +166,7 @@ function RoleScreen({onSelect}){
             </div>
             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
               <div style={{width:60,height:60,borderRadius:16,background:'white',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 12px rgba(10,110,85,0.15)',overflow:'hidden',flexShrink:0}}>
-                <img src="https://jeondemo.github.io/chante-diary/1.png" style={{width:'90%',height:'90%',objectFit:'contain',objectPosition:'bottom'}} alt="teacher"/>
+                <img src="https://jeondemo.github.io/chante-diary/3.png" style={{width:'90%',height:'90%',objectFit:'contain',objectPosition:'bottom'}} alt="teacher"/>
               </div>
               <div style={{display:'flex',flexDirection:'column',gap:3}}>
                 <p style={{fontSize:10,color:'#3a8a6a',margin:0,lineHeight:1.5}}>담임·교과 관리</p>
@@ -220,7 +220,7 @@ function LoginScreen({role,onLogin,onBack}){
           <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button>
           <div style={{display:'inline-flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.18)',border:'1px solid rgba(255,255,255,0.3)',borderRadius:20,padding:'5px 11px',height:26}}><div style={{width:5,height:5,borderRadius:'50%',background:'#ffd580'}}/><span style={{fontSize:10,color:'rgba(255,255,255,0.9)',fontWeight:600}}>{ROLE_LABELS[role]}</span></div>
         </div>
-        <div style={{width:64,height:64,background:'white',borderRadius:16,display:'flex',alignItems:'flex-end',justifyContent:'center',marginBottom:10,overflow:'hidden',boxShadow:`0 2px 12px rgba(${role==='student'?'155,28,46':'10,110,85'},0.25)`}}><img src={`https://jeondemo.github.io/chante-diary/${role==='student'?'2':'1'}.png`} style={{width:'90%',height:'90%',objectFit:'contain',objectPosition:'bottom'}} alt=""/></div>
+        <div style={{width:64,height:64,background:'white',borderRadius:16,display:'flex',alignItems:'flex-end',justifyContent:'center',marginBottom:10,overflow:'hidden',boxShadow:`0 2px 12px rgba(${role==='student'?'155,28,46':'10,110,85'},0.25)`}}><img src={`https://jeondemo.github.io/chante-diary/${role==='student'?'1':'3'}.png`} style={{width:'90%',height:'90%',objectFit:'contain',objectPosition:'bottom'}} alt=""/></div>
         <p style={{fontSize:22,fontWeight:700,color:'#fff',margin:'0 0 3px'}}>{mode==='login'?'로그인':'계정 등록'}</p>
         <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',letterSpacing:'0.1em',margin:0}}>GWACHEON WOMANS HIGH SCHOOL</p>
       </div>
