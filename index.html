@@ -587,8 +587,14 @@ function MyReportList({user,onBack}){
   const [editId,setEditId]=useState(null),[editContent,setEditContent]=useState(''),[saving,setSaving]=useState(false);
 
   useEffect(()=>{
+    let mySubjects=[];
+    try{
+      const assigns=user.assignments?JSON.parse(user.assignments):[];
+      mySubjects=assigns.map(a=>a.subject).filter(Boolean);
+    }catch(e){}
     callAPI({action:'getMyReports',teacherId:user.studentId}).then(r=>{
-      setReports((r.reports||[]).filter(p=>p.subject!=='진로활동'&&p.subject!=='자율활동'));setLoading(false);
+      setReports((r.reports||[]).filter(p=>mySubjects.includes(p.subject)));
+      setLoading(false);
     }).catch(()=>setLoading(false));
   },[]);
 
