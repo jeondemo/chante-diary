@@ -62,7 +62,16 @@ function adjustToByteRange(text,min=1400,max=1500){const enc=new TextEncoder();i
 
 const GAS_URL='https://script.google.com/macros/s/AKfycbzqesWKR4hO0Yo4kb0sp4-RdJ3h8d8bmQoUQ4fKDUQfifP7itBSjtj6CTmyReX5rVjl/exec';
 
-function callAPI(payload){return fetch(GAS_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}).then(r=>{if(!r.ok)return r.text().then(t=>{throw new Error('HTTP '+r.status);});return r.json();});}
+let currentUser=null;
+function setCurrentUser(u){currentUser=u;}
+function callAPI(payload){
+  const publicActions=['login','register','registerTeacher','lookupTeacher','lookupStudent','checkTeacherCode','getSubjectList','getClubList','getSubjectsByClass','getStudentsByClass'];
+  if(currentUser&&currentUser.authToken&&publicActions.indexOf(payload.action)===-1){
+    payload.authToken=currentUser.authToken;
+    payload.requesterId=currentUser.studentId;
+  }
+  return fetch(GAS_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}).then(r=>{if(!r.ok)return r.text().then(t=>{throw new Error('HTTP '+r.status);});return r.json().then(data=>{if(data.authExpired){alert('인증이 만료되었습니다. 다시 로그인해주세요.');try{sessionStorage.removeItem('diary_session');localStorage.removeItem('autologin_student');localStorage.removeItem('autologin_teacher');localStorage.removeItem('autologin_career');}catch(e){}location.reload();}return data;});});
+}
 
 async function callAIWithRetry(text,onProgress){
   const MAX=3, DELAYS=[0,4000,8000];
@@ -241,14 +250,14 @@ function LoginScreen({role,onLogin,onBack}){
   const storageKey=`autologin_${role}`,idKey=`savedid_${role}`;
   const c=ROLE_COLORS[role]||'#9b1c2e',phoneBg=ROLE_PHONE_BG[role]||'#f7f0f2';
 
-  useEffect(()=>{try{const saved=localStorage.getItem(storageKey);if(saved){const{savedId,savedPw}=JSON.parse(saved);if(savedId&&savedPw){setId(savedId);setPw(savedPw);setAutoLogin(true);setSaveId(true);setLoading(true);callAPI({action:'login',studentId:savedId,password:savedPw,role}).then(res=>{if(res.success)onLogin({studentId:savedId,name:res.name,role,homeroomClass:res.homeroomClass||'',assignments:res.assignments||''});else{localStorage.removeItem(storageKey);setAutoLogin(false);setPw('');}setLoading(false);}).catch(()=>setLoading(false));return;}}const si=localStorage.getItem(idKey);if(si){setId(si);setSaveId(true);}}catch(e){}},[]);
+  useEffect(()=>{try{const saved=localStorage.getItem(storageKey);if(saved){const{savedId,savedPw}=JSON.parse(saved);if(savedId&&savedPw){setId(savedId);setPw(savedPw);setAutoLogin(true);setSaveId(true);setLoading(true);callAPI({action:'login',studentId:savedId,password:savedPw,role}).then(res=>{if(res.success)onLogin({studentId:savedId,name:res.name,role,homeroomClass:res.homeroomClass||'',assignments:res.assignments||'',club:res.club||'',authToken:res.authToken||''});else{localStorage.removeItem(storageKey);setAutoLogin(false);setPw('');}setLoading(false);}).catch(()=>setLoading(false));.then(res=>{if(res.success)onLogin({studentId:savedId,name:res.name,role,homeroomClass:res.homeroomClass||'',assignments:res.assignments||''});else{localStorage.removeItem(storageKey);setAutoLogin(false);setPw('');}setLoading(false);}).catch(()=>setLoading(false));return;}}const si=localStorage.getItem(idKey);if(si){setId(si);setSaveId(true);}}catch(e){}},[]);
   useEffect(()=>{if((isTeacher||isCareer)&&mode==='register')callAPI({action:'getSubjectList'}).then(r=>{if(r.success)setSubjects(r.subjects||{});}).catch(()=>{});},[mode]);
 
   const toggleClass=(idx,cls)=>setAssigns(prev=>prev.map((a,i)=>{if(i!==idx)return a;const s=new Set(a.classes);s.has(cls)?s.delete(cls):s.add(cls);return{...a,classes:s};}));
 
   const checkName=async()=>{if(!id.trim()||!name.trim()||!phone.trim())return alert('학번, 이름, 전화번호를 모두 입력해주세요!');setChecking(true);setMatch(null);try{const r=await callAPI({action:'lookupStudent',studentId:id.trim(),name:name.trim(),phone:phone.replace(/\D/g,'')});if(r.success)setMatch(true);else{setMatch(false);alert(r.message||'불일치');}}catch(e){setMatch(false);}setChecking(false);};
 
-  const submit=async(e)=>{e.preventDefault();if(!id.trim()||!pw.trim())return alert('입력해주세요!');if(mode==='register'&&!name.trim())return alert('이름을 입력해주세요!');if(mode==='register'&&isStudent&&!match)return alert('학번 확인이 필요합니다!');if(mode==='register'&&isTeacher&&!match)return alert('이름/인증코드 확인이 필요합니다!');setLoading(true);try{let res;if(mode==='login'){res=await callAPI({action:'login',studentId:id.trim(),password:pw,role});}else if(isStudent){res=await callAPI({action:'register',studentId:id.trim(),name:name.trim(),password:pw,role:'student'});}else if(isTeacher){const va=assigns.filter(a=>a.subject&&a.classes.size>0);const ad=va.length>0?JSON.stringify(va.map(a=>({subject:a.subject,classes:[...a.classes].sort()}))):'';;res=await callAPI({action:'registerTeacher',teacherId:id.trim(),name:name.trim(),password:pw,role:'teacher',grade:match?.grade||'',classNum:match?.classNum||'',assignments:ad});if(res.success)res.assignments=ad;}else{res=await callAPI({action:'registerTeacher',teacherId:id.trim(),name:name.trim(),password:pw,role:'career',grade:'',classNum:'',assignments:''});}if(res.success){if(mode==='login'){if(autoLogin)try{localStorage.setItem(storageKey,JSON.stringify({savedId:id.trim(),savedPw:pw}));}catch(e){}else if(saveId){try{localStorage.removeItem(storageKey);}catch(e){}try{localStorage.setItem(idKey,id.trim());}catch(e){}}else{try{localStorage.removeItem(storageKey);localStorage.removeItem(idKey);}catch(e){}}}onLogin({studentId:id.trim(),name:mode==='login'?res.name:name.trim(),role,homeroomClass:res.homeroomClass||(isTeacher&&match?match.homeroomClass:''),assignments:res.assignments||'',club:res.club||''});}else alert(res.message||'오류');}catch(e){alert('서버 오류');}setLoading(false);};
+  const submit=async(e)=>{e.preventDefault();if(!id.trim()||!pw.trim())return alert('입력해주세요!');if(mode==='register'&&!name.trim())return alert('이름을 입력해주세요!');if(mode==='register'&&isStudent&&!match)return alert('학번 확인이 필요합니다!');if(mode==='register'&&isTeacher&&!match)return alert('이름/인증코드 확인이 필요합니다!');setLoading(true);try{let res;if(mode==='login'){res=await callAPI({action:'login',studentId:id.trim(),password:pw,role});}else if(isStudent){res=await callAPI({action:'register',studentId:id.trim(),name:name.trim(),password:pw,role:'student'});}else if(isTeacher){const va=assigns.filter(a=>a.subject&&a.classes.size>0);const ad=va.length>0?JSON.stringify(va.map(a=>({subject:a.subject,classes:[...a.classes].sort()}))):'';;res=await callAPI({action:'registerTeacher',teacherId:id.trim(),name:name.trim(),password:pw,role:'teacher',grade:match?.grade||'',classNum:match?.classNum||'',assignments:ad});if(res.success)res.assignments=ad;}else{res=await callAPI({action:'registerTeacher',teacherId:id.trim(),name:name.trim(),password:pw,role:'career',grade:'',classNum:'',assignments:''});}if(res.success){if(mode==='login'){if(autoLogin)try{localStorage.setItem(storageKey,JSON.stringify({savedId:id.trim(),savedPw:pw}));}catch(e){}else if(saveId){try{localStorage.removeItem(storageKey);}catch(e){}try{localStorage.setItem(idKey,id.trim());}catch(e){}}else{try{localStorage.removeItem(storageKey);localStorage.removeItem(idKey);}catch(e){}}}onLogin({studentId:id.trim(),name:mode==='login'?res.name:name.trim(),role,homeroomClass:res.homeroomClass||(isTeacher&&match?match.homeroomClass:''),assignments:res.assignments||'',club:res.club||'',authToken:res.authToken||''});}else alert(res.message||'오류');}catch(e){alert('서버 오류');}setLoading(false);};
 
   if(loading&&autoLogin)return(<div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',background:phoneBg}}><div style={{textAlign:'center'}}><div style={{width:52,height:52,background:c,borderRadius:15,margin:'0 auto 14px',display:'flex',alignItems:'center',justifyContent:'center'}}><RoleIcon role={role}/></div><p style={{fontSize:14,fontWeight:700,color:c,margin:'0 0 8px'}}>자동 로그인 중...</p><Spin/></div></div>);
 
@@ -1025,6 +1034,7 @@ function App(){
   const session=loadSession();
   const [role,setRole]=useState(session?.role||null);
   const [user,setUser]=useState(session?.user||null);
+  useEffect(()=>{if(session?.user)setCurrentUser(session.user);},[]);
   const [records,setRecords]=useState([]);
   const [loading,setLoading]=useState(false);
   const [view,setView]=useState('home');
@@ -1040,12 +1050,12 @@ function App(){
 
   const fetchRecords=useCallback(async(u)=>{if(!u)return;setLoading(true);try{const isS=u.role==='student';let p;if(isS)p={action:'getRecords',studentId:u.studentId};else{let sc=[];if(u.assignments){try{sc=JSON.parse(u.assignments).flatMap(a=>a.classes);}catch(e){}}p={action:'getAllRecords',role:u.role,grade:u.grade||'',classNum:u.classNum||'',homeroomClass:u.homeroomClass||'',subjectClasses:sc,studentId:u.studentId};}const res=await callAPI(p);if(res.success)setRecords(res.records||[]);}catch(e){}setLoading(false);},[]);
 
-  const login=u=>{setUser(u);saveSession({role:u.role,user:u});fetchRecords(u);};
+  const login=u=>{setCurrentUser(u);setUser(u);saveSession({role:u.role,user:u});fetchRecords(u);};
 
   // 세션 복원 시 records 로드
   useEffect(()=>{if(user&&records.length===0)fetchRecords(user);},[user]);
 
-  const goBackToRole=()=>{try{if(user)localStorage.removeItem(`autologin_${user.role}`);}catch(e){}setUser(null);setRole(null);setRecords([]);setView('home');setCatId(null);setSubject(null);setWriting(false);setEditing(null);setSelStudent(null);setSelAssignment(null);setSelClass(null);clearSession();};
+  const goBackToRole=()=>{try{if(user)localStorage.removeItem(`autologin_${user.role}`);}catch(e){}setCurrentUser(null);setUser(null);setRole(null);setRecords([]);setView('home');setCatId(null);setSubject(null);setWriting(false);setEditing(null);setSelStudent(null);setSelAssignment(null);setSelClass(null);clearSession();};
   const logout=()=>goBackToRole();
 
   const saveRec=async(data)=>{try{const r=await callAPI({action:'saveRecord',record:{...data,studentId:user.studentId,name:user.name}});if(r.success){await fetchRecords(user);setWriting(false);setEditing(null);}else alert(r.message);}catch(e){alert('저장 실패');}};
