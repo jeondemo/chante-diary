@@ -955,7 +955,7 @@ function SubjectStudentDetail({student,user,records,onBack}){
   const generate=async()=>{
     if(!sel.size)return;
     setGenerating(true);setResult('');setErrMsg('');setUsedModel('');setProgress('Gemini 2.5 Flash 시도 중...');
-    const text=recs.filter(r=>sel.has(r.id)).map(r=>`[${r.subject}]단원:${r.unit||''} 배움:${r.learned||''}`).join('\n');
+    const text=recs.filter(r=>sel.has(r.id)).map(r=>`[교과]${r.subject} 단원:${r.unit||''} 배움:${r.learned||''}`).join('\n');
     try{
       const res=await callAIWithRetry(text,msg=>setProgress(msg));
       if(res.success){setResult(adjustToByteRange(res.content||''));setUsedModel(res.model||'');}
