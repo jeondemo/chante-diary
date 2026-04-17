@@ -829,7 +829,7 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onBack}){cons
     <div style={{padding:'12px 14px'}}>
       {result&&(<div style={{background:tabBg,borderRadius:14,padding:16,marginBottom:12}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-          <span style={{fontSize:12,fontWeight:800,color:tabColor}}>AI 생기부 — {tab==='career'?'진로활동':'창체활동'}</span>
+          <span style={{fontSize:12,fontWeight:800,color:tabColor}}>AI 생기부 — {tab==='career'?'진로활동':'자율활동'}</span>
           <div style={{display:'flex',alignItems:'center',gap:6}}>
             {usedModel&&<span style={{fontSize:10,background:'#e8eaf6',color:'#3949ab',padding:'2px 7px',borderRadius:8,fontWeight:700}}>{usedModel}</span>}
             <span style={{fontSize:11,color:'#999'}}>{new TextEncoder().encode(result).length} bytes</span>
