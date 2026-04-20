@@ -1772,7 +1772,7 @@ function App() {
   if(!role)return<div style={cs}><RoleScreen onSelect={setRole}/></div>;
   if(!user)return<div style={cs}><LoginScreen role={role} onLogin={login} onBack={()=>setRole(null)}/></div>;
 
-  const isStudent=user.role==='student',isTeacher=user.role==='teacher',isCareer=user.role==='career';
+  const isStudent=user.role==='student',isTeacher=user.role==='teacher',isCareer=user.role==='career',isAdmin=user.role==='admin';
   const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 
   return(<div style={cs}>
