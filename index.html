@@ -54,9 +54,9 @@ const CATS = {
 };
 const CLASS_COUNT = {'1':5,'2':5,'3':6};
 function getSemesterLabel(){const n=new Date(),y=n.getFullYear(),m=n.getMonth()+1;return `${y}학년도 ${m>8||(m===8&&n.getDate()>=1)?'2':'1'}학기`;}
-const ROLE_COLORS={student:'#9b1c2e',teacher:'#0a6e55',career:'#a05c00'};
-const ROLE_PHONE_BG={student:'#f7f0f2',teacher:'#f0f7f5',career:'#f7f3ec'};
-const ROLE_LABELS={student:'학생 · Student',teacher:'교사 · Teacher',career:'진로담당 · Career'};
+const ROLE_COLORS={student:'#9b1c2e',teacher:'#0a6e55',career:'#a05c00',admin:'#4a148c'};
+const ROLE_PHONE_BG={student:'#f7f0f2',teacher:'#f0f7f5',career:'#f7f3ec',admin:'#f4f0f9'};
+const ROLE_LABELS={student:'학생 · Student',teacher:'교사 · Teacher',career:'진로담당 · Career',admin:'관리자 · Admin'};
 
 function adjustToByteRange(text,min=1400,max=1500){const enc=new TextEncoder();if(!text||typeof text!=='string')return text||'';let r=text.trim().replace(/^(이\s*)?학생은\s*/,'').replace(/^해당\s*학생은\s*/,'');if(enc.encode(r).length>=min&&enc.encode(r).length<=max)return r;if(enc.encode(r).length>max){const ends=['함.','임.','음.','됨.','보임.','나타냄.'];let at=0;while(enc.encode(r).length>max&&at<200){at++;if(r.length<10)break;let lp=-1;for(const e of ends){const idx=r.lastIndexOf(e);if(idx>lp&&idx<r.length-e.length)lp=idx;}if(lp>0){const ep=ends.find(e=>r.indexOf(e,lp)===lp);r=r.slice(0,lp+(ep?ep.length:2)).trim();}else{const ld=r.lastIndexOf('.');if(ld>r.length*0.5)r=r.slice(0,ld+1).trim();else r=r.slice(0,-Math.ceil(20/3)).trim();}}}return r;}
 
@@ -285,7 +285,7 @@ function RoleScreen({onSelect}){
 }
 /* ── 로그인 (간략화) ── */
 function LoginScreen({role,onLogin,onBack}){
-  const isStudent=role==='student',isTeacher=role==='teacher',isCareer=role==='career';
+  const isStudent=role==='student',isTeacher=role==='teacher',isCareer=role==='career',isAdmin=role==='admin';
   const [mode,setMode]=useState('login');
   const [id,setId]=useState(''),[name,setName]=useState(''),[pw,setPw]=useState(''),[phone,setPhone]=useState('');
   const [match,setMatch]=useState(null),[loading,setLoading]=useState(false),[checking,setChecking]=useState(false);
@@ -323,9 +323,18 @@ function LoginScreen({role,onLogin,onBack}){
       </div>
     </div>
     <div style={{padding:'8px 16px 28px'}}>
-      <div style={{display:'flex',gap:6,marginBottom:18,marginTop:4}}>
+      {!isAdmin&&<div style={{display:'flex',gap:6,marginBottom:18,marginTop:4}}>
         {['login','register'].map(m=>(<button key={m} onClick={()=>{setMode(m);setPw('');setName('');setPhone('');setMatch(null);setTeacherCode('');setCodeErr('');}} style={{flex:1,padding:'9px 0',borderRadius:12,border:`1.5px solid ${mode===m?c:'#e8d8db'}`,background:mode===m?c:'#fff',fontSize:12,fontWeight:700,color:mode===m?'#fff':'#bbb',cursor:'pointer',fontFamily:'inherit'}}>{m==='login'?'로그인':'계정 등록'}</button>))}
-      </div>
+      </div>}
+      {isAdmin&&<div style={{background:'#fff',border:`1.5px solid ${c}33`,borderRadius:12,padding:'10px 14px',marginBottom:18,marginTop:4,display:'flex',alignItems:'center',gap:10}}>
+        <div style={{width:30,height:30,background:c,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="14" height="14" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 7a4 4 0 11-4 4v5l-2 2h-2v-2h-2v-2H3V10a4 4 0 014-4h5z"/></svg>
+        </div>
+        <div>
+          <p style={{fontSize:12,fontWeight:900,color:c,margin:'0 0 2px'}}>관리자 로그인</p>
+          <p style={{fontSize:10,color:'#999',margin:0}}>등록된 관리자 계정으로만 접속할 수 있습니다</p>
+        </div>
+      </div>}
       <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:10}}>
         {/* 교사 등록 — 이름+인증코드 */}
         {mode==='register'&&isTeacher&&!match&&(<>
@@ -377,7 +386,7 @@ function LoginScreen({role,onLogin,onBack}){
         </div>)}
         <button type="submit" className="btn-pink" disabled={loading||(mode==='register'&&isStudent&&!match)||(mode==='register'&&isTeacher&&!match)} style={{marginTop:2,background:c,borderRadius:14}}>{loading?<Spin/>:(mode==='login'?'시작하기':'등록 후 시작')}</button>
       </form>
-      {mode==='login'&&(<><div style={{display:'flex',alignItems:'center',gap:10,margin:'14px 0'}}><div style={{flex:1,height:1,background:'#ece3e5'}}/><span style={{fontSize:10,color:'#ccc',fontWeight:600}}>또는</span><div style={{flex:1,height:1,background:'#ece3e5'}}/></div><button onClick={()=>{setMode('register');setPw('');setName('');setPhone('');setMatch(null);}} style={{width:'100%',padding:13,borderRadius:14,background:'#fff',border:'1.5px solid #e8d8db',color:c,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>계정 등록하기</button></>)}
+      {mode==='login'&&!isAdmin&&(<><div style={{display:'flex',alignItems:'center',gap:10,margin:'14px 0'}}><div style={{flex:1,height:1,background:'#ece3e5'}}/><span style={{fontSize:10,color:'#ccc',fontWeight:600}}>또는</span><div style={{flex:1,height:1,background:'#ece3e5'}}/></div><button onClick={()=>{setMode('register');setPw('');setName('');setPhone('');setMatch(null);}} style={{width:'100%',padding:13,borderRadius:14,background:'#fff',border:'1.5px solid #e8d8db',color:c,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>계정 등록하기</button></>)}
     </div>
   </div>);
 }
