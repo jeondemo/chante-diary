@@ -150,6 +150,17 @@ function saveSession(data){try{sessionStorage.setItem('diary_session',JSON.strin
 function loadSession(){try{const d=sessionStorage.getItem('diary_session');return d?JSON.parse(d):null;}catch(e){return null;}}
 function clearSession(){try{sessionStorage.removeItem('diary_session');}catch(e){}}
 
+/* ── 공통 상단 바 (헤더 카드 안에 삽입) ── */
+function TopBar({onLogout}){
+  return(<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingBottom:8,marginBottom:12,borderBottom:'0.5px solid rgba(255,255,255,0.15)'}}>
+    <div style={{display:'flex',alignItems:'center',gap:6}}>
+      <div style={{width:5,height:5,borderRadius:'50%',background:'#ffd580'}}/>
+      <span style={{fontSize:9,color:'rgba(255,255,255,0.8)',fontWeight:500,letterSpacing:'0.05em'}}>과천여고 생기부 작성 프로그램</span>
+    </div>
+    <button onClick={onLogout} style={{background:'rgba(255,255,255,0.15)',border:'0.5px solid rgba(255,255,255,0.25)',color:'white',fontSize:9,fontWeight:500,padding:'3px 9px',borderRadius:12,cursor:'pointer',fontFamily:'inherit'}}>로그아웃</button>
+  </div>);
+}
+  
 /* ── 역할 선택 ── */
 /* ── 역할 선택 ── */
 function RoleScreen({onSelect}){
@@ -372,7 +383,7 @@ function LoginScreen({role,onLogin,onBack}){
 }
 
 /* ── 교사 홈 (담임 없으면 담임메뉴 숨김) ── */
-function TeacherHome({user,records,onSelectStudent,onViewReports,onSubjectHome,onAddSubject,onMyReports,onClubHome,onClubReports,onBehavior,onBack}){
+function TeacherHome({user,records,onSelectStudent,onViewReports,onSubjectHome,onAddSubject,onMyReports,onClubHome,onClubReports,onBehavior,onBack,onLogout}){
   const hc=user.homeroomClass||'',g=hc[0]||'',cls=hc.slice(1)||'';
   const col=ROLE_COLORS[user.role]||'#0a6e55',phoneBg=ROLE_PHONE_BG[user.role]||'#f0f7f5';
   const isCareer=user.role==='career';
@@ -382,10 +393,11 @@ function TeacherHome({user,records,onSelectStudent,onViewReports,onSubjectHome,o
   const hasClub=!!(user.club);
 
   return(<div style={{paddingBottom:20}}>
-    <div style={{background:`linear-gradient(135deg,${col},${isCareer?'#c68a00':'#0d8c6a'})`,padding:'28px 20px 40px',position:'relative',overflow:'hidden'}}>
+    <div style={{background:`linear-gradient(135deg,${col},${isCareer?'#c68a00':'#0d8c6a'})`,padding:'10px 20px 40px',position:'relative',overflow:'hidden'}}>
       <div style={{position:'absolute',top:-30,right:-30,width:90,height:90,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
       <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
       <div style={{position:'relative',zIndex:3}}>
+        <TopBar onLogout={onLogout}/>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
           <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button>
           <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>HOME</span>
@@ -507,13 +519,14 @@ function TeacherHome({user,records,onSelectStudent,onViewReports,onSubjectHome,o
 }
 
 /* ── 학생 홈 (간략화) ── */
-function StudentHome({user,records,loading,onCat,onBack}){
+function StudentHome({user,records,loading,onCat,onBack,onLogout}){
   const sid=String(user.studentId||''),g=sid[0]||'',c=sid[1]||'',n=sid.slice(2)||'';
   const info=g&&c&&n?`${g}학년 ${c}반 ${parseInt(n)}번`:'';const col=ROLE_COLORS.student;
   return(<div style={{paddingBottom:20}}>
-    <div style={{background:`linear-gradient(135deg,${col},#c62828)`,padding:'22px 20px 34px',position:'relative',overflow:'hidden'}}>
+    <div style={{background:`linear-gradient(135deg,${col},#c62828)`,padding:'10px 20px 34px',position:'relative',overflow:'hidden'}}>
       <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f7f0f2"/></svg></div>
       <div style={{position:'relative',zIndex:3}}>
+        <TopBar onLogout={onLogout}/>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
           <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button><span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>HOME</span>
         </div>
@@ -1701,12 +1714,8 @@ function App() {
 
   return(<div style={cs}>
     <AIProgressOverlay/>
-    <div style={{background:'white',borderBottom:'1px solid #f8e8f0',padding:'0 20px',height:52,display:'flex',alignItems:'center',position:'sticky',top:0,zIndex:30,boxShadow:'0 1px 10px rgba(206,147,216,0.1)'}}>
-      <h1 style={{flex:1,textAlign:'center',fontSize:15,fontWeight:900,color:'#1a1a2e',margin:0}}>과천여고 생기부 작성 프로그램</h1>
-      <button onClick={logout} style={{position:'absolute',right:16,background:'#fce4ec',border:'none',color:'#c2185b',fontSize:11,fontWeight:700,padding:'5px 11px',borderRadius:18,cursor:'pointer'}}>로그아웃</button>
-    </div>
     <div className="no-scrollbar" style={{flex:1,overflowY:'scroll',minHeight:0,background:phoneBg,height:0}}>
-      {isStudent&&view==='home'&&!catId&&<StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}} onBack={goBackToRole}/>}
+      {isStudent&&view==='home'&&!catId&&<StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}} onBack={goBackToRole} onLogout={logout}/>}
       {isStudent&&view==='cat'&&catId!=='subject'&&catId!=='club'&&!writing&&<RecordList catId={catId} records={records} onBack={()=>{setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRec} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
       {isStudent&&view==='cat'&&catId!=='subject'&&catId!=='club'&&writing&&<WriteForm catId={catId} editing={editing} onSave={editing?updateRec:saveRec} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
       {isStudent&&view==='cat'&&catId==='subject'&&!subject&&<SubjectList user={user} records={records} onSelect={s=>setSubject(s)} onBack={()=>{setCatId(null);setView('home');}}/>}
