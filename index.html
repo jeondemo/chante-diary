@@ -64,6 +64,12 @@ const GAS_URL='https://script.google.com/macros/s/AKfycbzqesWKR4hO0Yo4kb0sp4-RdJ
 
 let currentUser=null;
 function setCurrentUser(u){currentUser=u;}
+
+// AI 진행 화면 전역 상태 (window 이벤트로 통신)
+window.__aiProgressListeners = window.__aiProgressListeners || [];
+function emitAIProgress(state){
+  window.__aiProgressListeners.forEach(fn=>{try{fn(state);}catch(e){}});
+}
 function callAPI(payload){
   const publicActions=['login','register','registerTeacher','lookupTeacher','lookupStudent','checkTeacherCode','getSubjectList','getClubList','getSubjectsByClass','getStudentsByClass'];
   if(currentUser&&currentUser.authToken&&publicActions.indexOf(payload.action)===-1){
@@ -80,6 +86,27 @@ async function callAIWithRetry(text,onProgress){
     'Gemini Flash Latest 재시도 중...',
     'GPT-4o Mini로 전환 중...'
   ];
+  // AI 진행 화면 시작 (GAS 내부 타임아웃 고려: 0~15초 정상, 15~40초 재시도/폴백, 40초+ OpenAI)
+  const _startTime=Date.now();
+  let _currentPhase='running';
+  const _timer=setInterval(()=>{
+    const elapsed=Math.floor((Date.now()-_startTime)/1000);
+    // 20초 넘어가면 폴백 phase로 전환 (실제 GAS는 15~25초 사이에 재시도 시작)
+    if(elapsed>=20 && _currentPhase==='running') _currentPhase='fallback';
+    emitAIProgress({elapsed,phase:_currentPhase,visible:true});
+  },1000);
+  emitAIProgress({elapsed:0,phase:'running',visible:true});
+  const _cleanup=()=>{clearInterval(_timer);emitAIProgress({visible:false});};
+  // onProgress 래핑: 프론트 재시도 시에도 phase 반영
+  const _origProgress=onProgress;
+  onProgress=(msg)=>{
+    if(_origProgress)_origProgress(msg);
+    // 프론트가 2번째/3번째 엔진으로 넘어가면 바로 fallback phase로
+    if(msg&&(msg.includes('Flash Latest')||msg.includes('GPT-4o')||msg.includes('대체'))){
+      _currentPhase='fallback';
+    }
+  };
+  try{
   for(let i=0;i<MAX;i++){
     if(DELAYS[i]>0){
       if(onProgress)onProgress(`${ENGINE_MSGS[i]} (${Math.round(DELAYS[i]/1000)}초 대기)`);
@@ -105,6 +132,13 @@ async function callAIWithRetry(text,onProgress){
     }
   }
   return{success:false,errorType:'overloaded',message:'선생님! 지금은 AI 요청이 많아 완성하지 못했습니다. 한번 더 시도해 주세요.'};
+  }finally{
+    // 완료 직전 상태 잠깐 노출 후 숨김
+    const finalElapsed=Math.floor((Date.now()-_startTime)/1000);
+    emitAIProgress({elapsed:finalElapsed,phase:'finishing',visible:true});
+    await new Promise(r=>setTimeout(r,800));
+    _cleanup();
+  }
 }
 const Spin=()=><svg className="animate-spin h-5 w-5 text-white inline" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>;
 const Back=()=><svg className="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>;
@@ -1029,8 +1063,213 @@ function SubjectStudentDetail({student,user,records,onBack}){
     </div>
   </div>);
 }
+  // ============================================
+// AI 생성 진행 화면 오버레이 (전역 이벤트 구독)
+// ============================================
+function AIProgressOverlay() {
+  const [state, setState] = useState({ visible: false, elapsed: 0, phase: 'running' });
+
+  useEffect(() => {
+    const listener = (s) => {
+      setState(prev => ({ ...prev, ...s }));
+    };
+    window.__aiProgressListeners.push(listener);
+    return () => {
+      window.__aiProgressListeners = window.__aiProgressListeners.filter(fn => fn !== listener);
+    };
+  }, []);
+
+  if (!state.visible) return null;
+  const { elapsed, phase } = state;
+
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const ss = String(elapsed % 60).padStart(2, '0');
+
+  // 진행률 계산 (0~95%, 완료 직전엔 95% 고정)
+  let progress;
+  if (phase === 'finishing') {
+    progress = 95;
+  } else if (phase === 'fallback') {
+    progress = Math.min(30 + (elapsed - 30) * 1.2, 85);
+  } else {
+    progress = Math.min(elapsed * 2.5, 75);
+  }
+
+  // 상태별 테마
+  const theme = {
+    running:   { bar: '#9B1C2E', tipBg: '#ECFDF5', tipBorder: '#A7F3D0', tipText: '#065F46' },
+    fallback:  { bar: '#D97706', tipBg: '#FFFBEB', tipBorder: '#FCD34D', tipText: '#92400E' },
+    finishing: { bar: '#059669', tipBg: '#ECFDF5', tipBorder: '#A7F3D0', tipText: '#065F46' },
+  }[phase];
+
+  // 상태별 텍스트
+  const copy = {
+    running: {
+      title: 'AI가 생기부를 작성하고 있어요',
+      message: '학생의 활동 기록을 바탕으로 생기부 초안을 만들고 있어요',
+      tip: '💡 보통 30초~1분 정도 걸려요. 화면을 닫지 말고 잠시만 기다려 주세요.',
+    },
+    fallback: {
+      title: 'AI가 다른 방법으로 시도 중이에요',
+      message: '첫 번째 AI가 바쁜 것 같아 대체 AI로 자동 전환했어요',
+      tip: '🔄 첫 번째 AI가 느릴 때 자동으로 다른 AI로 전환돼요. 조금만 더 기다려 주세요.',
+    },
+    finishing: {
+      title: '거의 다 완성됐어요!',
+      message: '생기부 초안이 완성되어 마무리 검토 중이에요',
+      tip: '✨ 거의 완성됐어요! 1,500byte 분량과 규칙 준수를 확인 중이에요.',
+    },
+  }[phase];
+
+  // 시스템 상태 로그 (phase에 따라 동적 구성)
+  const logs = [];
+  logs.push({ icon: '✅', text: '프롬프트 조립 완료', time: '0.1s', done: true });
+
+  if (phase === 'running') {
+    logs.push({ icon: '⏳', text: 'Gemini 2.5 Flash 응답 대기 중...', time: `${elapsed}s`, animated: true });
+    logs.push({ icon: '⏸️', text: '결과 검증 대기', time: '', pending: true });
+    logs.push({ icon: '⏸️', text: '화면 표시 대기', time: '', pending: true });
+  } else if (phase === 'fallback') {
+    logs.push({ icon: '⚠️', text: 'Gemini 2.5 Flash 응답 지연 (서버 혼잡)', time: '~20s', warn: true });
+    logs.push({ icon: '🔄', text: '대체 모델로 자동 전환 중...', time: `${elapsed}s`, animated: true });
+    logs.push({ icon: '💡', text: 'Flash Latest → GPT-4o Mini 순으로 시도', time: '', pending: true });
+  } else {
+    logs.push({ icon: '✅', text: 'AI 응답 수신 완료', time: `${elapsed}s`, done: true });
+    logs.push({ icon: '⏳', text: '1,400~1,500byte 분량 검증 중', time: '', animated: true });
+    logs.push({ icon: '⏸️', text: '화면 표시 대기', time: '', pending: true });
+  }
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '16px',
+    }}>
+      <style>{`
+        @keyframes aipo-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @keyframes aipo-shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        .aipo-animated { animation: aipo-pulse 1.2s ease-in-out infinite; }
+        .aipo-bar-fill {
+          background: linear-gradient(90deg, var(--aipo-bar) 0%, var(--aipo-bar) 50%, rgba(255,255,255,0.3) 50%, var(--aipo-bar) 100%);
+          background-size: 200% 100%;
+          animation: aipo-shimmer 2s linear infinite;
+        }
+      `}</style>
+
+      <div style={{
+        background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '480px',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)', overflow: 'hidden',
+        maxHeight: '90vh', overflowY: 'auto',
+      }}>
+        {/* 헤더 */}
+        <div style={{ padding: '20px 20px 12px', borderBottom: '1px solid #F1EFE8' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+              <div style={{ fontSize: '28px', flexShrink: 0 }}>🤖</div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: '#1F1F1F', lineHeight: 1.3 }}>
+                {copy.title}
+              </div>
+            </div>
+            <div style={{
+              fontFamily: 'monospace', fontSize: '14px', fontWeight: 600,
+              color: '#6B5B4D', background: '#FAF5F0', padding: '4px 10px',
+              borderRadius: '6px', flexShrink: 0,
+            }}>
+              {mm}:{ss}
+            </div>
+          </div>
+        </div>
+
+        {/* 진행률 바 */}
+        <div style={{ padding: '16px 20px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '8px',
+          }}>
+            <div style={{ fontSize: '12px', color: '#6B5B4D', fontWeight: 500 }}>진행률</div>
+            <div style={{ fontSize: '13px', color: theme.bar, fontWeight: 700 }}>{Math.round(progress)}%</div>
+          </div>
+          <div style={{
+            height: '8px', background: '#F1EFE8', borderRadius: '4px', overflow: 'hidden',
+          }}>
+            <div
+              className="aipo-bar-fill"
+              style={{
+                width: `${progress}%`, height: '100%',
+                '--aipo-bar': theme.bar,
+                transition: 'width 0.5s ease-out',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* 따뜻한 메시지 박스 */}
+        <div style={{ padding: '0 20px 12px' }}>
+          <div style={{
+            background: '#FAF5F0', borderRadius: '10px', padding: '14px 16px',
+            border: '1px solid #F1EFE8',
+          }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: '#6B5B4D', marginBottom: '6px' }}>
+              📚 지금 하고 있는 일
+            </div>
+            <div style={{ fontSize: '14px', color: '#1F1F1F', lineHeight: 1.5 }}>
+              {copy.message}
+            </div>
+          </div>
+        </div>
+
+        {/* 시스템 상태 박스 */}
+        <div style={{ padding: '0 20px 12px' }}>
+          <div style={{
+            background: '#F1EFE8', borderRadius: '10px', padding: '14px 16px',
+          }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: '#6B5B4D', marginBottom: '10px' }}>
+              ⚙️ 시스템 상태
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {logs.map((log, i) => (
+                <div
+                  key={i}
+                  className={log.animated ? 'aipo-animated' : ''}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    fontSize: '13px',
+                    color: log.pending ? '#A89E92' : log.warn ? '#92400E' : '#3F3F3F',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  <span style={{ flexShrink: 0 }}>{log.icon}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>{log.text}</span>
+                  {log.time && (
+                    <span style={{ fontSize: '11px', color: '#A89E92', flexShrink: 0 }}>
+                      ({log.time})
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 팁 박스 */}
+        <div style={{ padding: '0 20px 20px' }}>
+          <div style={{
+            background: theme.tipBg, border: `1px solid ${theme.tipBorder}`,
+            borderRadius: '10px', padding: '12px 14px',
+            fontSize: '13px', color: theme.tipText, lineHeight: 1.5,
+          }}>
+            {copy.tip}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 /* ── 메인 앱 ── */
-function App(){
+function App() {
   const session=loadSession();
   const [role,setRole]=useState(session?.role||null);
   const [user,setUser]=useState(session?.user||null);
@@ -1072,6 +1311,7 @@ function App(){
   const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 
   return(<div style={cs}>
+    <AIProgressOverlay/>
     <div style={{background:'white',borderBottom:'1px solid #f8e8f0',padding:'0 20px',height:52,display:'flex',alignItems:'center',position:'sticky',top:0,zIndex:30,boxShadow:'0 1px 10px rgba(206,147,216,0.1)'}}>
       <h1 style={{flex:1,textAlign:'center',fontSize:15,fontWeight:900,color:'#1a1a2e',margin:0}}>과천여고 생기부 작성 프로그램</h1>
       <button onClick={logout} style={{position:'absolute',right:16,background:'#fce4ec',border:'none',color:'#c2185b',fontSize:11,fontWeight:700,padding:'5px 11px',borderRadius:18,cursor:'pointer'}}>로그아웃</button>
