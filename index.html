@@ -150,6 +150,60 @@ function saveSession(data){try{sessionStorage.setItem('diary_session',JSON.strin
 function loadSession(){try{const d=sessionStorage.getItem('diary_session');return d?JSON.parse(d):null;}catch(e){return null;}}
 function clearSession(){try{sessionStorage.removeItem('diary_session');}catch(e){}}
 
+/* ── 관리자 홈 ── */
+function AdminHome({user,onUnregistered,onClassStats,onBack,onLogout}){
+  const c='#4a148c';
+  const phoneBg='#f4f0f9';
+  return(<div style={{paddingBottom:20}}>
+    <div style={{background:`linear-gradient(135deg,${c},#6a1b9a)`,padding:'10px 20px 40px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',top:-30,right:-30,width:90,height:90,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <TopBar onLogout={onLogout}/>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button>
+          <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>ADMIN</span>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+          <div style={{width:44,height:44,borderRadius:12,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <svg width="22" height="22" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" strokeLinecap="round" strokeLinejoin="round"/><path strokeLinecap="round" strokeLinejoin="round" d="M8 11V7a4 4 0 118 0v4"/></svg>
+          </div>
+          <div>
+            <p style={{fontSize:22,fontWeight:900,color:'white',margin:'0 0 2px',lineHeight:1.1}}>{user.name||'관리자'}</p>
+            <p style={{fontSize:11,color:'rgba(255,255,255,0.75)',margin:0,fontWeight:600}}>시스템 관리자</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style={{padding:'16px 14px'}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+        <div style={{width:3,height:12,background:c,borderRadius:2}}/>
+        <span style={{fontSize:11,fontWeight:700,color:c}}>관리 메뉴</span>
+      </div>
+      <div onClick={onUnregistered} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#ab47bc,#8e24aa)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>가입 안 한 학생 조회</p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>학생명단에 있지만 앱 가입 안 한 학생</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      <div onClick={onClassStats} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#7e57c2,#5e35b1)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>반별 학생 입력 현황</p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>반별 기록 작성 상황 분석</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+    </div>
+  </div>);
+}
+
 /* ── 공통 상단 바 (헤더 카드 안에 삽입) ── */
 function TopBar({onLogout}){
   return(<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingBottom:8,marginBottom:12,borderBottom:'0.5px solid rgba(255,255,255,0.15)'}}>
@@ -1734,7 +1788,8 @@ function App() {
       {isStudent&&view==='cat'&&catId==='club'&&subject&&!writing&&<ClubRecords club={subject} records={records} onBack={()=>{setSubject(null);setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRec} onEdit={r=>{setEditing(r);setWriting(true);}} onChangeClub={()=>{try{localStorage.removeItem('selectedClub_'+user.studentId);}catch(e){}setSubject(null);}}/>}
       {isStudent&&view==='cat'&&catId==='club'&&subject&&writing&&<ClubForm club={subject} editing={editing} onSave={editing?updateRec:saveRec} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
 
-      {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole}/>}
+      {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
+      {isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onBack={goBackToRole} onLogout={logout}/>}
       {(isTeacher||isCareer)&&view==='students'&&!selStudent&&!teacherWriteStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherWrite');}} onBack={()=>setView('home')}/>}
       {(isTeacher||isCareer)&&view==='ai'&&selStudent&&<AIReport student={selStudent} user={user} refreshKey={aiRefreshKey} onEdit={(r)=>{setTeacherWriteStudent(selStudent);setTeacherWriteEditing(r);setView('teacherWrite');}} onDelete={async(id)=>{if(!confirm('삭제할까요?'))return;try{await callAPI({action:'deleteRecord',recordId:id,studentId:selStudent.id});setAiRefreshKey(k=>k+1);fetchRecords(user);}catch(e){alert('삭제 실패');}}} onBack={()=>{setSelStudent(null);setView('students');}}/>}
       {(isTeacher||isCareer)&&view==='teacherWrite'&&teacherWriteStudent&&<TeacherWriteForm student={teacherWriteStudent} editing={teacherWriteEditing} onSave={async(data)=>{try{const payload={...data,studentId:teacherWriteStudent.id,name:teacherWriteStudent.name};const action=teacherWriteEditing?'updateRecord':'saveRecord';const r=await callAPI({action,record:payload});if(r.success){await fetchRecords(user);setAiRefreshKey(k=>k+1);setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'ai':'students');}else alert(r.message);}catch(e){alert('저장 실패');}}} onCancel={()=>{setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'ai':'students');}}/>}
