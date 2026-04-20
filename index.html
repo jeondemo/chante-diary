@@ -91,8 +91,8 @@ async function callAIWithRetry(text,onProgress){
   let _currentPhase='running';
   const _timer=setInterval(()=>{
     const elapsed=Math.floor((Date.now()-_startTime)/1000);
-    // 20초 넘어가면 폴백 phase로 전환 (실제 GAS는 15~25초 사이에 재시도 시작)
-    if(elapsed>=20 && _currentPhase==='running') _currentPhase='fallback';
+    // 40초 넘어가면 폴백 phase로 전환
+    if(elapsed>=40 && _currentPhase==='running') _currentPhase='fallback';
     emitAIProgress({elapsed,phase:_currentPhase,visible:true});
   },1000);
   emitAIProgress({elapsed:0,phase:'running',visible:true});
@@ -1353,9 +1353,9 @@ function AIProgressOverlay() {
   if (phase === 'finishing') {
     progress = 95;
   } else if (phase === 'fallback') {
-    progress = Math.min(30 + (elapsed - 30) * 1.2, 85);
+    progress = Math.min(60 + (elapsed - 40) * 1.0, 85);
   } else {
-    progress = Math.min(elapsed * 2.5, 75);
+    progress = Math.min(elapsed * 1.5, 60);
   }
 
   // 상태별 테마
