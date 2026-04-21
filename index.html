@@ -453,16 +453,16 @@ function AdminAIStats({onBack,onLogout}){
       <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
       <div style={{position:'relative',zIndex:3}}>
         <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>관리자 홈</button>
-        <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 2px'}}>🤖 AI 생성 통계</p>
-        <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>전체 요청 {data.finalTotal}건 · 시도 {data.attemptTotal}회</p>
+        <p style={{fontSize:22,fontWeight:900,color:'white',margin:'0 0 3px'}}>🤖 AI 생성 통계</p>
+        <p style={{fontSize:12,color:'rgba(255,255,255,0.75)',margin:0}}>전체 요청 {data.finalTotal}건 · 시도 {data.attemptTotal}회</p>
       </div>
     </div>
-    <div style={{padding:'12px 14px'}}>
+    <div style={{padding:'14px 14px'}}>
       {/* 오늘/주/월 통계 카드 */}
-      <div style={{background:'white',borderRadius:12,padding:14,border:'1px solid #e1bee7',marginBottom:12}}>
-        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10}}>
-          <div style={{width:3,height:11,background:c,borderRadius:2}}/>
-          <span style={{fontSize:11,fontWeight:700,color:c}}>기간별 통계 (사용자 관점)</span>
+      <div style={{background:'white',borderRadius:14,padding:16,border:'1px solid #e1bee7',marginBottom:14}}>
+        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:14}}>
+          <div style={{width:4,height:14,background:c,borderRadius:2}}/>
+          <span style={{fontSize:13,fontWeight:800,color:c}}>기간별 통계 (사용자 관점)</span>
         </div>
         {[
           {label:'오늘',data:data.today,color:'#e53935'},
@@ -470,127 +470,129 @@ function AdminAIStats({onBack,onLogout}){
           {label:'이번달',data:data.month,color:'#43a047'},
           {label:'누적',data:data.total,color:'#5e35b1'}
         ].map(item=>(
-          <div key={item.label} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 0',borderTop:item.label!=='오늘'?'0.5px solid #f5f5f5':'none'}}>
-            <span style={{fontSize:11,color:'#888',fontWeight:700,width:44,flexShrink:0}}>{item.label}</span>
-            <div style={{flex:1,height:6,background:'#f5f5f5',borderRadius:3,overflow:'hidden'}}>
+          <div key={item.label} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 0',borderTop:item.label!=='오늘'?'0.5px solid #f5f5f5':'none'}}>
+            <span style={{fontSize:13,color:'#555',fontWeight:800,width:52,flexShrink:0}}>{item.label}</span>
+            <div style={{flex:1,height:8,background:'#f5f5f5',borderRadius:4,overflow:'hidden'}}>
               <div style={{width:`${item.data.rate}%`,height:'100%',background:item.data.rate>=90?'#66bb6a':item.data.rate>=70?'#ffa726':'#ef5350'}}/>
             </div>
-            <span style={{fontSize:10,color:'#2e7d32',fontWeight:700,width:30,textAlign:'right',flexShrink:0}}>✓{item.data.success}</span>
-            <span style={{fontSize:10,color:'#c62828',fontWeight:700,width:30,textAlign:'right',flexShrink:0}}>✗{item.data.fail}</span>
-            <span style={{fontSize:11,color:item.color,fontWeight:900,width:36,textAlign:'right',flexShrink:0}}>{item.data.rate}%</span>
+            <span style={{fontSize:12,color:'#2e7d32',fontWeight:700,width:36,textAlign:'right',flexShrink:0}}>✓{item.data.success}</span>
+            <span style={{fontSize:12,color:'#c62828',fontWeight:700,width:36,textAlign:'right',flexShrink:0}}>✗{item.data.fail}</span>
+            <span style={{fontSize:14,color:item.color,fontWeight:900,width:44,textAlign:'right',flexShrink:0}}>{item.data.rate}%</span>
           </div>
         ))}
       </div>
 
       {/* 최근 7일 그래프 */}
-      <div style={{background:'white',borderRadius:12,padding:14,border:'1px solid #e1bee7',marginBottom:12}}>
-        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
-          <div style={{width:3,height:11,background:c,borderRadius:2}}/>
-          <span style={{fontSize:11,fontWeight:700,color:c}}>최근 7일 추이</span>
+      <div style={{background:'white',borderRadius:14,padding:16,border:'1px solid #e1bee7',marginBottom:14}}>
+        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:14}}>
+          <div style={{width:4,height:14,background:c,borderRadius:2}}/>
+          <span style={{fontSize:13,fontWeight:800,color:c}}>최근 7일 추이</span>
         </div>
-        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',height:80,gap:3}}>
+        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',height:100,gap:4}}>
           {data.daily.map((d,i)=>{
             const total=d.success+d.fail;
-            const successH=total>0?Math.max(2,(d.success/maxDaily)*70):0;
-            const failH=total>0?Math.max(d.fail>0?2:0,(d.fail/maxDaily)*70):0;
+            const successH=total>0?Math.max(2,(d.success/maxDaily)*85):0;
+            const failH=total>0?Math.max(d.fail>0?2:0,(d.fail/maxDaily)*85):0;
             const day=new Date(d.date);
             const dayLabel=['일','월','화','수','목','금','토'][day.getDay()];
             const dateLabel=day.getDate();
             return(<div key={d.date} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
-              <span style={{fontSize:9,color:'#999',fontWeight:600}}>{total||''}</span>
-              <div style={{width:'100%',display:'flex',flexDirection:'column',justifyContent:'flex-end',height:70}}>
+              <span style={{fontSize:11,color:'#666',fontWeight:700}}>{total||''}</span>
+              <div style={{width:'100%',display:'flex',flexDirection:'column',justifyContent:'flex-end',height:85}}>
                 {d.fail>0&&<div style={{width:'100%',height:failH,background:'#ef5350',borderRadius:failH>4?'2px 2px 0 0':0}}/>}
                 {d.success>0&&<div style={{width:'100%',height:successH,background:'#66bb6a',borderRadius:d.fail===0?'2px 2px 0 0':0}}/>}
               </div>
-              <span style={{fontSize:9,color:'#bbb',fontWeight:600}}>{dateLabel}</span>
-              <span style={{fontSize:8,color:'#ccc'}}>{dayLabel}</span>
+              <span style={{fontSize:11,color:'#888',fontWeight:600}}>{dateLabel}</span>
+              <span style={{fontSize:10,color:'#aaa'}}>{dayLabel}</span>
             </div>);
           })}
         </div>
-        <div style={{display:'flex',justifyContent:'center',gap:10,marginTop:8}}>
-          <div style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:8,height:8,background:'#66bb6a',borderRadius:2}}/><span style={{fontSize:9,color:'#888'}}>성공</span></div>
-          <div style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:8,height:8,background:'#ef5350',borderRadius:2}}/><span style={{fontSize:9,color:'#888'}}>실패</span></div>
+        <div style={{display:'flex',justifyContent:'center',gap:14,marginTop:12}}>
+          <div style={{display:'flex',alignItems:'center',gap:5}}><div style={{width:10,height:10,background:'#66bb6a',borderRadius:2}}/><span style={{fontSize:11,color:'#666',fontWeight:600}}>성공</span></div>
+          <div style={{display:'flex',alignItems:'center',gap:5}}><div style={{width:10,height:10,background:'#ef5350',borderRadius:2}}/><span style={{fontSize:11,color:'#666',fontWeight:600}}>실패</span></div>
         </div>
       </div>
 
       {/* 모델별 성공률 */}
-      {Object.keys(data.byModel).length>0&&(<div style={{background:'white',borderRadius:12,padding:14,border:'1px solid #e1bee7',marginBottom:12}}>
-        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10}}>
-          <div style={{width:3,height:11,background:c,borderRadius:2}}/>
-          <span style={{fontSize:11,fontWeight:700,color:c}}>모델별 성공률 (시도 기준)</span>
+      {Object.keys(data.byModel).length>0&&(<div style={{background:'white',borderRadius:14,padding:16,border:'1px solid #e1bee7',marginBottom:14}}>
+        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
+          <div style={{width:4,height:14,background:c,borderRadius:2}}/>
+          <span style={{fontSize:13,fontWeight:800,color:c}}>모델별 성공률 (시도 기준)</span>
         </div>
         {Object.entries(data.byModel).sort(([,a],[,b])=>(b.success+b.fail)-(a.success+a.fail)).map(([model,stat])=>{
           const total=stat.success+stat.fail;
           const rate=total>0?Math.round(stat.success/total*100):0;
           const mc=modelColors[model]||'#888';
-          return(<div key={model} style={{padding:'7px 0',borderTop:'0.5px solid #f5f5f5'}}>
-            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
-              <div style={{width:6,height:6,borderRadius:'50%',background:mc}}/>
-              <span style={{fontSize:11,fontWeight:700,color:'#333',flex:1}}>{modelNames[model]||model}</span>
-              <span style={{fontSize:11,fontWeight:900,color:mc}}>{rate}%</span>
+          return(<div key={model} style={{padding:'9px 0',borderTop:'0.5px solid #f5f5f5'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+              <div style={{width:8,height:8,borderRadius:'50%',background:mc}}/>
+              <span style={{fontSize:13,fontWeight:700,color:'#333',flex:1}}>{modelNames[model]||model}</span>
+              <span style={{fontSize:14,fontWeight:900,color:mc}}>{rate}%</span>
             </div>
-            <div style={{display:'flex',alignItems:'center',gap:6}}>
-              <div style={{flex:1,height:5,background:'#f5f5f5',borderRadius:2,overflow:'hidden'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <div style={{flex:1,height:7,background:'#f5f5f5',borderRadius:3,overflow:'hidden'}}>
                 <div style={{width:`${rate}%`,height:'100%',background:mc}}/>
               </div>
-              <span style={{fontSize:9,color:'#999',minWidth:70,textAlign:'right'}}>{stat.success}/{total}회</span>
+              <span style={{fontSize:11,color:'#888',fontWeight:600,minWidth:84,textAlign:'right'}}>{stat.success}/{total}회</span>
             </div>
           </div>);
         })}
       </div>)}
 
       {/* 카테고리별 사용량 */}
-      {Object.keys(data.byCategory).length>0&&(<div style={{background:'white',borderRadius:12,padding:14,border:'1px solid #e1bee7',marginBottom:12}}>
-        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10}}>
-          <div style={{width:3,height:11,background:c,borderRadius:2}}/>
-          <span style={{fontSize:11,fontWeight:700,color:c}}>카테고리별 사용량</span>
+      {Object.keys(data.byCategory).length>0&&(<div style={{background:'white',borderRadius:14,padding:16,border:'1px solid #e1bee7',marginBottom:14}}>
+        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
+          <div style={{width:4,height:14,background:c,borderRadius:2}}/>
+          <span style={{fontSize:13,fontWeight:800,color:c}}>카테고리별 사용량</span>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
           {Object.entries(data.byCategory).sort(([,a],[,b])=>(b.success+b.fail)-(a.success+a.fail)).map(([cat,stat])=>{
             const total=stat.success+stat.fail;
             const rate=total>0?Math.round(stat.success/total*100):0;
-            return(<div key={cat} style={{background:'#faf7fc',borderRadius:6,padding:'8px 10px'}}>
-              <p style={{fontSize:10,color:'#888',margin:'0 0 3px',fontWeight:600}}>{cat}</p>
+            return(<div key={cat} style={{background:'#faf7fc',borderRadius:8,padding:'10px 12px'}}>
+              <p style={{fontSize:12,color:'#666',margin:'0 0 4px',fontWeight:700}}>{cat}</p>
               <div style={{display:'flex',alignItems:'baseline',gap:5}}>
-                <span style={{fontSize:14,fontWeight:900,color:'#1a1a2e'}}>{total}</span>
-                <span style={{fontSize:9,color:'#999'}}>건</span>
-                <span style={{fontSize:9,color:rate>=90?'#2e7d32':'#c2185b',fontWeight:700,marginLeft:'auto'}}>{rate}%</span>
+                <span style={{fontSize:18,fontWeight:900,color:'#1a1a2e'}}>{total}</span>
+                <span style={{fontSize:10,color:'#888'}}>건</span>
+                <span style={{fontSize:11,color:rate>=90?'#2e7d32':'#c2185b',fontWeight:800,marginLeft:'auto'}}>{rate}%</span>
               </div>
             </div>);
           })}
         </div>
       </div>)}
 
-      {/* 교사별 사용량 TOP 10 */}
-      {data.byTeacher.length>0&&(<div style={{background:'white',borderRadius:12,padding:14,border:'1px solid #e1bee7',marginBottom:12}}>
-        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10}}>
-          <div style={{width:3,height:11,background:c,borderRadius:2}}/>
-          <span style={{fontSize:11,fontWeight:700,color:c}}>교사별 사용량 TOP 10</span>
+      {/* 교사별 사용량 전체 */}
+      {data.byTeacher.length>0&&(<div style={{background:'white',borderRadius:14,padding:16,border:'1px solid #e1bee7',marginBottom:14}}>
+        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
+          <div style={{width:4,height:14,background:c,borderRadius:2}}/>
+          <span style={{fontSize:13,fontWeight:800,color:c}}>교사별 사용량 ({data.byTeacher.length}명)</span>
         </div>
         {data.byTeacher.map((t,i)=>{
           const total=t.success+t.fail;
           const rate=total>0?Math.round(t.success/total*100):0;
-          return(<div key={t.teacherId} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderTop:i>0?'0.5px solid #f5f5f5':'none'}}>
-            <span style={{fontSize:10,color:'#bbb',fontWeight:700,width:18,flexShrink:0}}>{i+1}</span>
-            <div style={{width:22,height:22,background:'linear-gradient(135deg,#f4f0f9,#e1bee7)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:900,color:c,flexShrink:0}}>{(t.teacherName||'?')[0]}</div>
-            <span style={{fontSize:11,fontWeight:700,color:'#333',flex:1}}>{t.teacherName||t.teacherId}</span>
-            <span style={{fontSize:10,color:'#999',fontWeight:600}}>{total}건</span>
-            <span style={{fontSize:10,color:rate>=90?'#2e7d32':'#c2185b',fontWeight:700,width:32,textAlign:'right'}}>{rate}%</span>
+          const rankBg=i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'#f5f5f5';
+          const rankColor=i<=2?'white':'#bbb';
+          return(<div key={t.teacherId} style={{display:'flex',alignItems:'center',gap:9,padding:'9px 0',borderTop:i>0?'0.5px solid #f5f5f5':'none'}}>
+            <div style={{width:22,height:22,background:rankBg,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:900,color:rankColor,flexShrink:0,boxShadow:i<=2?'0 1px 3px rgba(0,0,0,0.15)':'none'}}>{i+1}</div>
+            <div style={{width:28,height:28,background:'linear-gradient(135deg,#f4f0f9,#e1bee7)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:c,flexShrink:0}}>{(t.teacherName||'?')[0]}</div>
+            <span style={{fontSize:13,fontWeight:700,color:'#333',flex:1}}>{t.teacherName||t.teacherId}</span>
+            <span style={{fontSize:12,color:'#555',fontWeight:700}}>{total}건</span>
+            <span style={{fontSize:12,color:rate>=90?'#2e7d32':rate>=70?'#ef6c00':'#c2185b',fontWeight:800,width:42,textAlign:'right'}}>{rate}%</span>
           </div>);
         })}
       </div>)}
 
       {/* 실패 사유별 분석 */}
-      {Object.keys(data.byReason).length>0&&(<div style={{background:'#fff5f5',borderRadius:12,padding:14,border:'1px solid #ffcdd2'}}>
-        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10}}>
-          <div style={{width:3,height:11,background:'#c62828',borderRadius:2}}/>
-          <span style={{fontSize:11,fontWeight:700,color:'#c62828'}}>실패 사유별 분석</span>
+      {Object.keys(data.byReason).length>0&&(<div style={{background:'#fff5f5',borderRadius:14,padding:16,border:'1px solid #ffcdd2'}}>
+        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
+          <div style={{width:4,height:14,background:'#c62828',borderRadius:2}}/>
+          <span style={{fontSize:13,fontWeight:800,color:'#c62828'}}>실패 사유별 분석</span>
         </div>
         {Object.entries(data.byReason).sort(([,a],[,b])=>b-a).map(([reason,count])=>(
-          <div key={reason} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
-            <span style={{fontSize:10,color:'#c62828'}}>▸</span>
-            <span style={{fontSize:11,color:'#555',flex:1}}>{reasonNames[reason]||reason}</span>
-            <span style={{fontSize:11,fontWeight:900,color:'#c62828'}}>{count}회</span>
+          <div key={reason} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 0'}}>
+            <span style={{fontSize:12,color:'#c62828'}}>▸</span>
+            <span style={{fontSize:12,color:'#555',flex:1}}>{reasonNames[reason]||reason}</span>
+            <span style={{fontSize:13,fontWeight:900,color:'#c62828'}}>{count}회</span>
           </div>
         ))}
       </div>)}
