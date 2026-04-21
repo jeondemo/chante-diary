@@ -562,25 +562,36 @@ function AdminAIStats({onBack,onLogout}){
       </div>)}
 
       {/* 교사별 사용량 전체 */}
-      {data.byTeacher.length>0&&(<div style={{background:'white',borderRadius:14,padding:16,border:'1px solid #e1bee7',marginBottom:14}}>
+      {data.byTeacher.length>0&&(()=>{
+        const activeCount=data.byTeacher.filter(t=>t.success+t.fail>0).length;
+        return(<div style={{background:'white',borderRadius:14,padding:16,border:'1px solid #e1bee7',marginBottom:14}}>
         <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
           <div style={{width:4,height:14,background:c,borderRadius:2}}/>
-          <span style={{fontSize:13,fontWeight:800,color:c}}>교사별 사용량 ({data.byTeacher.length}명)</span>
+          <span style={{fontSize:13,fontWeight:800,color:c}}>교사별 사용량</span>
+          <span style={{fontSize:10,color:'#999',marginLeft:'auto',fontWeight:600}}>활용 {activeCount}명 / 전체 {data.byTeacher.length}명</span>
         </div>
         {data.byTeacher.map((t,i)=>{
           const total=t.success+t.fail;
           const rate=total>0?Math.round(t.success/total*100):0;
-          const rankBg=i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'#f5f5f5';
-          const rankColor=i<=2?'white':'#bbb';
-          return(<div key={t.teacherId} style={{display:'flex',alignItems:'center',gap:9,padding:'9px 0',borderTop:i>0?'0.5px solid #f5f5f5':'none'}}>
-            <div style={{width:22,height:22,background:rankBg,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:900,color:rankColor,flexShrink:0,boxShadow:i<=2?'0 1px 3px rgba(0,0,0,0.15)':'none'}}>{i+1}</div>
-            <div style={{width:28,height:28,background:'linear-gradient(135deg,#f4f0f9,#e1bee7)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:c,flexShrink:0}}>{(t.teacherName||'?')[0]}</div>
-            <span style={{fontSize:13,fontWeight:700,color:'#333',flex:1}}>{t.teacherName||t.teacherId}</span>
-            <span style={{fontSize:12,color:'#555',fontWeight:700}}>{total}건</span>
-            <span style={{fontSize:12,color:rate>=90?'#2e7d32':rate>=70?'#ef6c00':'#c2185b',fontWeight:800,width:42,textAlign:'right'}}>{rate}%</span>
+          const isUnused=total===0;
+          // 사용한 교사만 메달 부여 (0건은 회색 숫자)
+          const activeRank=i<activeCount?i:-1;
+          const rankBg=activeRank===0?'#ffd700':activeRank===1?'#c0c0c0':activeRank===2?'#cd7f32':'#f5f5f5';
+          const rankColor=activeRank>=0&&activeRank<=2?'white':'#bbb';
+          return(<div key={t.teacherId} style={{display:'flex',alignItems:'center',gap:9,padding:'9px 0',borderTop:i>0?'0.5px solid #f5f5f5':'none',opacity:isUnused?0.45:1}}>
+            <div style={{width:22,height:22,background:rankBg,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:900,color:rankColor,flexShrink:0,boxShadow:activeRank>=0&&activeRank<=2?'0 1px 3px rgba(0,0,0,0.15)':'none'}}>{i+1}</div>
+            <div style={{width:28,height:28,background:isUnused?'#f5f5f5':'linear-gradient(135deg,#f4f0f9,#e1bee7)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:isUnused?'#bbb':c,flexShrink:0}}>{(t.teacherName||'?')[0]}</div>
+            <span style={{fontSize:13,fontWeight:700,color:isUnused?'#999':'#333',flex:1}}>{t.teacherName||t.teacherId}</span>
+            {isUnused
+              ?<span style={{fontSize:10,color:'#bbb',fontWeight:600,background:'#fafafa',padding:'2px 8px',borderRadius:10}}>미사용</span>
+              :<>
+                <span style={{fontSize:12,color:'#555',fontWeight:700}}>{total}건</span>
+                <span style={{fontSize:12,color:rate>=90?'#2e7d32':rate>=70?'#ef6c00':'#c2185b',fontWeight:800,width:42,textAlign:'right'}}>{rate}%</span>
+              </>
+            }
           </div>);
         })}
-      </div>)}
+      </div>);})()}
 
       {/* 실패 사유별 분석 */}
       {Object.keys(data.byReason).length>0&&(<div style={{background:'#fff5f5',borderRadius:14,padding:16,border:'1px solid #ffcdd2'}}>
