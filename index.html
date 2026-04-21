@@ -211,14 +211,6 @@ function AdminUnregistered({onBack,onLogout}){
   const [gradeFilter,setGradeFilter]=useState('');
   const [classFilter,setClassFilter]=useState('');
 
-/* ── 관리자: 가입 안 한 학생 조회 ── */
-function AdminUnregistered({onBack,onLogout}){
-  const c='#4a148c';
-  const phoneBg='#f4f0f9';
-  const [data,setData]=useState(null),[loading,setLoading]=useState(true);
-  const [gradeFilter,setGradeFilter]=useState('');
-  const [classFilter,setClassFilter]=useState('');
-
   useEffect(()=>{
     callAPI({action:'getUnregisteredStudents'}).then(r=>{
       if(r.success)setData(r);
@@ -1981,6 +1973,7 @@ function App() {
       {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered onBack={()=>setView('home')} onLogout={logout}/>}
+      {isAdmin&&view==='adminClassStats'&&<AdminClassStats onBack={()=>setView('home')} onLogout={logout}/>}
       {(isTeacher||isCareer)&&view==='students'&&!selStudent&&!teacherWriteStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherWrite');}} onBack={()=>setView('home')}/>}
       {(isTeacher||isCareer)&&view==='ai'&&selStudent&&<AIReport student={selStudent} user={user} refreshKey={aiRefreshKey} onEdit={(r)=>{setTeacherWriteStudent(selStudent);setTeacherWriteEditing(r);setView('teacherWrite');}} onDelete={async(id)=>{if(!confirm('삭제할까요?'))return;try{await callAPI({action:'deleteRecord',recordId:id,studentId:selStudent.id});setAiRefreshKey(k=>k+1);fetchRecords(user);}catch(e){alert('삭제 실패');}}} onBack={()=>{setSelStudent(null);setView('students');}}/>}
       {(isTeacher||isCareer)&&view==='teacherWrite'&&teacherWriteStudent&&<TeacherWriteForm student={teacherWriteStudent} editing={teacherWriteEditing} onSave={async(data)=>{try{const payload={...data,studentId:teacherWriteStudent.id,name:teacherWriteStudent.name};const action=teacherWriteEditing?'updateRecord':'saveRecord';const r=await callAPI({action,record:payload});if(r.success){await fetchRecords(user);setAiRefreshKey(k=>k+1);setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'ai':'students');}else alert(r.message);}catch(e){alert('저장 실패');}}} onCancel={()=>{setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'ai':'students');}}/>}
