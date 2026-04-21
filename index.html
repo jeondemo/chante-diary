@@ -81,12 +81,12 @@ function callAPI(payload){
 
 async function callAIWithRetry(text,onProgress,logContext){
   const MAX=4, DELAYS=[0,4000,8000,12000];
-  const MODEL_KEYS=['gemini-2.5-pro','gemini-2.5-flash','gemini-flash-latest','gpt-4o-mini'];
+  const MODEL_KEYS=['gemini-2.5-flash','gemini-flash-latest','gpt-4o-mini','gemini-2.5-pro'];
   const ENGINE_MSGS=[
-    '🚀 Gemini 2.5 Pro 시도 중...',
-    'Gemini 2.5 Flash로 재시도 중...',
-    'Flash Latest로 전환 중...',
-    'GPT-4o Mini로 최종 시도 중...'
+    '⚡ Gemini 2.5 Flash 시도 중...',
+    'Flash Latest로 재시도 중...',
+    'GPT-4o Mini로 전환 중...',
+    '🚀 Gemini 2.5 Pro로 최종 고품질 생성 중...'
   ];
   // AI 진행 화면 시작 (GAS 내부 타임아웃 고려: 0~15초 정상, 15~40초 재시도/폴백, 40초+ OpenAI)
   const _startTime=Date.now();
@@ -197,39 +197,39 @@ function AdminHome({user,onUnregistered,onClassStats,onAIStats,onBack,onLogout})
     <div style={{padding:'16px 14px'}}>
       {/* AI 엔진 상태 카드 */}
       <div style={{background:'linear-gradient(135deg,#fff 0%,#faf7fc 100%)',borderRadius:12,padding:14,border:'1.5px solid #e1bee7',marginBottom:14,position:'relative',overflow:'hidden'}}>
-        <div style={{position:'absolute',top:-10,right:-10,width:60,height:60,background:'rgba(194,24,91,0.08)',borderRadius:'50%'}}/>
+        <div style={{position:'absolute',top:-10,right:-10,width:60,height:60,background:'rgba(57,73,171,0.08)',borderRadius:'50%'}}/>
         <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10,position:'relative'}}>
           <svg width="14" height="14" fill="none" stroke={c} strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           <span style={{fontSize:12,fontWeight:900,color:c}}>AI 엔진 현황</span>
           <span style={{fontSize:9,background:'#e8f5e9',color:'#2e7d32',padding:'2px 7px',borderRadius:20,fontWeight:700,marginLeft:'auto'}}>● 정상 운영</span>
         </div>
         <div style={{display:'flex',flexDirection:'column',gap:5,position:'relative'}}>
-          <div style={{display:'flex',alignItems:'center',gap:7,padding:'5px 8px',background:'#fce4ec',borderRadius:7}}>
-            <span style={{fontSize:12}}>🚀</span>
+          <div style={{display:'flex',alignItems:'center',gap:7,padding:'5px 8px',background:'#e8eaf6',borderRadius:7}}>
+            <span style={{fontSize:12}}>⚡</span>
             <div style={{flex:1}}>
               <p style={{fontSize:10,color:'#888',margin:'0 0 1px',fontWeight:600}}>주 엔진</p>
-              <p style={{fontSize:11,color:'#c2185b',margin:0,fontWeight:800}}>Gemini 2.5 Pro <span style={{fontSize:8,background:'#c2185b',color:'white',padding:'1px 5px',borderRadius:3,marginLeft:3}}>최신</span></p>
-            </div>
-          </div>
-          <div style={{display:'flex',alignItems:'center',gap:7,padding:'5px 8px',background:'#e8eaf6',borderRadius:7}}>
-            <span style={{fontSize:12}}>🔄</span>
-            <div style={{flex:1}}>
-              <p style={{fontSize:10,color:'#888',margin:'0 0 1px',fontWeight:600}}>백업 1</p>
-              <p style={{fontSize:11,color:'#3949ab',margin:0,fontWeight:800}}>Gemini 2.5 Flash</p>
+              <p style={{fontSize:11,color:'#3949ab',margin:0,fontWeight:800}}>Gemini 2.5 Flash <span style={{fontSize:8,background:'#3949ab',color:'white',padding:'1px 5px',borderRadius:3,marginLeft:3}}>고속</span></p>
             </div>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:7,padding:'5px 8px',background:'#ede7f6',borderRadius:7}}>
             <span style={{fontSize:12}}>🔄</span>
             <div style={{flex:1}}>
-              <p style={{fontSize:10,color:'#888',margin:'0 0 1px',fontWeight:600}}>백업 2</p>
-              <p style={{fontSize:11,color:'#7b1fa2',margin:0,fontWeight:800}}>Flash Latest</p>
+              <p style={{fontSize:10,color:'#888',margin:'0 0 1px',fontWeight:600}}>백업 1</p>
+              <p style={{fontSize:11,color:'#7b1fa2',margin:0,fontWeight:800}}>Gemini Flash Latest</p>
             </div>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:7,padding:'5px 8px',background:'#e0f2f1',borderRadius:7}}>
             <span style={{fontSize:12}}>🛟</span>
             <div style={{flex:1}}>
-              <p style={{fontSize:10,color:'#888',margin:'0 0 1px',fontWeight:600}}>최종 백업</p>
+              <p style={{fontSize:10,color:'#888',margin:'0 0 1px',fontWeight:600}}>백업 2</p>
               <p style={{fontSize:11,color:'#00695c',margin:0,fontWeight:800}}>GPT-4o Mini <span style={{fontSize:9,color:'#888',fontWeight:600,marginLeft:3}}>(OpenAI)</span></p>
+            </div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:7,padding:'5px 8px',background:'#fce4ec',borderRadius:7}}>
+            <span style={{fontSize:12}}>🚀</span>
+            <div style={{flex:1}}>
+              <p style={{fontSize:10,color:'#888',margin:'0 0 1px',fontWeight:600}}>최종 보강 엔진</p>
+              <p style={{fontSize:11,color:'#c2185b',margin:0,fontWeight:800}}>Gemini 2.5 Pro <span style={{fontSize:8,background:'#c2185b',color:'white',padding:'1px 5px',borderRadius:3,marginLeft:3}}>최고품질</span></p>
             </div>
           </div>
         </div>
@@ -2177,8 +2177,8 @@ function AIProgressOverlay() {
   const copy = {
     running: {
       title: 'AI가 생기부를 작성하고 있어요',
-      message: '🚀 최신 Gemini 2.5 Pro 엔진이 학생의 활동 기록을 분석하여 생기부 초안을 만들고 있어요',
-      tip: '💡 Gemini 2.5 Pro는 더 정교하게 분석해서 조금 더 시간이 걸려요. 화면을 닫지 말고 잠시만 기다려 주세요.',
+      message: '⚡ Gemini 2.5 Flash 엔진이 학생의 활동 기록을 분석하여 생기부 초안을 만들고 있어요',
+      tip: '💡 보통 20~30초 정도 걸려요. 필요 시 자동으로 더 정교한 엔진(Pro)으로 재시도합니다. 화면을 닫지 말고 잠시만 기다려 주세요.',
     },
     fallback: {
       title: 'AI가 다른 방법으로 시도 중이에요',
@@ -2197,13 +2197,13 @@ function AIProgressOverlay() {
   logs.push({ icon: '✅', text: '프롬프트 조립 완료', time: '0.1s', done: true });
 
   if (phase === 'running') {
-    logs.push({ icon: '🚀', text: 'Gemini 2.5 Pro 응답 대기 중...', time: `${elapsed}s`, animated: true });
+    logs.push({ icon: '⚡', text: 'Gemini 2.5 Flash 응답 대기 중...', time: `${elapsed}s`, animated: true });
     logs.push({ icon: '⏸️', text: '결과 검증 대기', time: '', pending: true });
     logs.push({ icon: '⏸️', text: '화면 표시 대기', time: '', pending: true });
   } else if (phase === 'fallback') {
-    logs.push({ icon: '⚠️', text: 'Gemini 2.5 Pro 응답 지연 (서버 혼잡)', time: '~40s', warn: true });
+    logs.push({ icon: '⚠️', text: 'Gemini 2.5 Flash 응답 지연 (서버 혼잡)', time: '~30s', warn: true });
     logs.push({ icon: '🔄', text: '대체 모델로 자동 전환 중...', time: `${elapsed}s`, animated: true });
-    logs.push({ icon: '💡', text: 'Flash → Flash Latest → GPT-4o Mini 순으로 시도', time: '', pending: true });
+    logs.push({ icon: '💡', text: 'Flash Latest → GPT → Pro 순으로 고품질 보장', time: '', pending: true });
   } else {
     logs.push({ icon: '✅', text: 'AI 응답 수신 완료', time: `${elapsed}s`, done: true });
     logs.push({ icon: '⏳', text: '1,400~1,500byte 분량 검증 중', time: '', animated: true });
