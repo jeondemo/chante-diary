@@ -81,6 +81,7 @@ function callAPI(payload){
 
 async function callAIWithRetry(text,onProgress,logContext){
   const MAX=3, DELAYS=[0,4000,8000];
+  const MODEL_KEYS=['gemini-2.5-flash','gemini-flash-latest','gpt-4o-mini'];
   const ENGINE_MSGS=[
     'Gemini 2.5 Flash 시도 중...',
     'Gemini Flash Latest 재시도 중...',
@@ -91,20 +92,27 @@ async function callAIWithRetry(text,onProgress,logContext){
   let _currentPhase='running';
   const _timer=setInterval(()=>{
     const elapsed=Math.floor((Date.now()-_startTime)/1000);
-    // 40초 넘어가면 폴백 phase로 전환
     if(elapsed>=40 && _currentPhase==='running') _currentPhase='fallback';
     emitAIProgress({elapsed,phase:_currentPhase,visible:true});
   },1000);
   emitAIProgress({elapsed:0,phase:'running',visible:true});
   const _cleanup=()=>{clearInterval(_timer);emitAIProgress({visible:false});};
-  // onProgress 래핑: 프론트 재시도 시에도 phase 반영
   const _origProgress=onProgress;
   onProgress=(msg)=>{
     if(_origProgress)_origProgress(msg);
-    // 프론트가 2번째/3번째 엔진으로 넘어가면 바로 fallback phase로
     if(msg&&(msg.includes('Flash Latest')||msg.includes('GPT-4o')||msg.includes('대체'))){
       _currentPhase='fallback';
     }
+  };
+  // 요청 ID: 같은 요청의 시도들을 묶기 위한 고유 ID
+  const _requestId='REQ-'+Date.now()+'-'+Math.random().toString(36).substr(2,6);
+  const _logAttempt=(modelKey,success,failReason)=>{
+    if(!logContext)return;
+    try{callAPI({action:'logAIRequest',teacherId:logContext.teacherId||'',teacherName:logContext.teacherName||'',category:logContext.category||'',model:modelKey,success,failReason:failReason||'',elapsed:Math.floor((Date.now()-_startTime)/1000),logType:'attempt',requestId:_requestId});}catch(e){}
+  };
+  const _logFinal=(modelKey,success,failReason)=>{
+    if(!logContext)return;
+    try{callAPI({action:'logAIRequest',teacherId:logContext.teacherId||'',teacherName:logContext.teacherName||'',category:logContext.category||'',model:modelKey||'',success,failReason:failReason||'',elapsed:Math.floor((Date.now()-_startTime)/1000),logType:'final',requestId:_requestId});}catch(e){}
   };
   try{
   for(let i=0;i<MAX;i++){
@@ -119,24 +127,31 @@ async function callAIWithRetry(text,onProgress,logContext){
       if(res.success&&res.content){
         const modelLabel=res.model==='gpt-4o-mini'?'GPT-4o Mini':res.model||'AI';
         if(onProgress)onProgress(`✓ ${modelLabel} 생성 완료!`);
-        if(logContext){try{callAPI({action:'logAIRequest',teacherId:logContext.teacherId||'',teacherName:logContext.teacherName||'',category:logContext.category||'',model:res.model||'',success:true,failReason:'',elapsed:Math.floor((Date.now()-_startTime)/1000)});}catch(e){}}
+        _logAttempt(res.model||MODEL_KEYS[i],true,'');
+        _logFinal(res.model||MODEL_KEYS[i],true,'');
         return res;
       }
       if(res.errorType==='overloaded'&&i<MAX-1){
+        _logAttempt(MODEL_KEYS[i],false,res.errorType||'overloaded');
         if(onProgress)onProgress(`${ENGINE_MSGS[i]} 실패 → 다음 엔진으로...`);
         continue;
       }
+      // 마지막 시도에서 최종 실패
+      _logAttempt(MODEL_KEYS[i],false,res.errorType||'unknown');
+      _logFinal(MODEL_KEYS[i],false,res.errorType||'unknown');
       return res;
     }catch(e){
+      _logAttempt(MODEL_KEYS[i],false,'exception:'+(e.message||'error'));
       if(i<MAX-1){if(onProgress)onProgress(`${ENGINE_MSGS[i]} 오류 → 다음 엔진으로...`);continue;}
+      _logFinal(MODEL_KEYS[i],false,'exception:'+(e.message||'error'));
       throw e;
     }
   }
+  // 모든 시도 실패
   const _failResult={success:false,errorType:'overloaded',message:'선생님! 지금은 AI 요청이 많아 완성하지 못했습니다. 한번 더 시도해 주세요.'};
-  if(logContext){try{callAPI({action:'logAIRequest',teacherId:logContext.teacherId||'',teacherName:logContext.teacherName||'',category:logContext.category||'',model:'',success:false,failReason:'overloaded',elapsed:Math.floor((Date.now()-_startTime)/1000)});}catch(e){}}
+  _logFinal(MODEL_KEYS[MAX-1],false,'overloaded');
   return _failResult;
   }finally{
-    // 완료 직전 상태 잠깐 노출 후 숨김
     const finalElapsed=Math.floor((Date.now()-_startTime)/1000);
     emitAIProgress({elapsed:finalElapsed,phase:'finishing',visible:true});
     await new Promise(r=>setTimeout(r,800));
