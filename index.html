@@ -359,7 +359,7 @@ function AdminUnregistered({user,onBack,onLogout}){
 }
 
 /* ── 관리자: 반별 학생 입력 현황 ── */
-function AdminClassStats({onBack,onLogout}){
+function AdminClassStats({onStudentClick,onBack,onLogout}){
   const c='#4a148c';
   const phoneBg='#f4f0f9';
   const [classes,setClasses]=useState(null),[loading,setLoading]=useState(true);
@@ -402,16 +402,17 @@ function AdminClassStats({onBack,onLogout}){
           </div>
         </div>
         <div style={{background:'white',borderRadius:10,padding:4,border:'1px solid #e1bee7'}}>
-          {cd.students.map(s=>(<div key={s.studentId} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',borderBottom:'0.5px solid #f5f5f5'}}>
+          {cd.students.map(s=>(<div key={s.studentId} onClick={()=>onStudentClick&&onStudentClick({...s,grade:cd.grade,classNum:cd.classNum})} style={{display:'flex',alignItems:'center',gap:8,padding:'9px 10px',borderBottom:'0.5px solid #f5f5f5',cursor:'pointer'}} className="active-btn">
             <span style={{fontSize:10,color:'#bbb',fontWeight:700,width:22,flexShrink:0}}>{s.number}번</span>
-            <span style={{fontSize:12,color:'#1a1a2e',fontWeight:700,flex:1}}>{s.name}</span>
+            <span style={{fontSize:13,color:'#1a1a2e',fontWeight:700,flex:1}}>{s.name}</span>
             <div style={{display:'flex',gap:3}}>
               {s.career>0&&<span style={{fontSize:9,background:catColors.career+'22',color:catColors.career,padding:'2px 5px',borderRadius:5,fontWeight:700}}>진{s.career}</span>}
               {s.autonomy>0&&<span style={{fontSize:9,background:catColors.autonomy+'22',color:catColors.autonomy,padding:'2px 5px',borderRadius:5,fontWeight:700}}>자{s.autonomy}</span>}
               {s.club>0&&<span style={{fontSize:9,background:catColors.club+'22',color:catColors.club,padding:'2px 5px',borderRadius:5,fontWeight:700}}>동{s.club}</span>}
               {s.subject>0&&<span style={{fontSize:9,background:catColors.subject+'22',color:catColors.subject,padding:'2px 5px',borderRadius:5,fontWeight:700}}>교{s.subject}</span>}
             </div>
-            <span style={{fontSize:11,color:s.total>0?c:'#ccc',fontWeight:900,width:30,textAlign:'right',flexShrink:0}}>{s.total}</span>
+            <span style={{fontSize:12,color:s.total>0?c:'#ccc',fontWeight:900,width:30,textAlign:'right',flexShrink:0}}>{s.total}</span>
+            <svg width="10" height="10" fill="none" stroke="#ccc" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
           </div>))}
         </div>
       </div>
@@ -448,6 +449,127 @@ function AdminClassStats({onBack,onLogout}){
           </div>);
         })
       }
+    </div>
+  </div>);
+}
+
+/* ── 관리자: 학생별 기록 상세 조회 (읽기 전용) ── */
+function AdminStudentRecords({student,onBack,onLogout}){
+  const c='#4a148c';
+  const phoneBg='#f4f0f9';
+  const [records,setRecords]=useState(null);
+  const [reports,setReports]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [tab,setTab]=useState('career');
+
+  useEffect(()=>{
+    Promise.all([
+      callAPI({action:'getRecords',studentId:student.studentId}),
+      callAPI({action:'getMyReports',teacherId:''}).catch(()=>({reports:[]}))
+    ]).then(([recRes,repRes])=>{
+      setRecords(recRes.records||[]);
+      // 이 학생의 모든 AI 생기부 필터
+      const myReports=(repRes.reports||[]).filter(r=>String(r.studentId)===String(student.studentId));
+      setReports(myReports);
+      setLoading(false);
+    }).catch(()=>{setLoading(false);});
+  },[]);
+
+  if(loading)return(<div style={{background:phoneBg,minHeight:'100%',display:'flex',alignItems:'center',justifyContent:'center',padding:40}}><Spin/></div>);
+  if(!records)return(<div style={{background:phoneBg,minHeight:'100%',padding:40,textAlign:'center',color:'#999'}}>데이터 없음</div>);
+
+  const careerRecs=records.filter(r=>r.categoryId==='career').sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const creativeRecs=records.filter(r=>r.categoryId==='creative').sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const clubRecs=records.filter(r=>r.categoryId==='club').sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const subjectRecs=records.filter(r=>r.categoryId==='subject').sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const behaviorRecs=records.filter(r=>r.categoryId==='behavior').sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const tabColors={
+    career:{main:'#c2185b',bg:'#fce4ec'},
+    creative:{main:'#00695c',bg:'#e0f2f1'},
+    club:{main:'#e64a19',bg:'#fbe9e7'},
+    subject:{main:'#5c2fa0',bg:'#ede7f6'},
+    behavior:{main:'#3949ab',bg:'#e8eaf6'},
+    reports:{main:'#7b1fa2',bg:'#f3e5f5'}
+  };
+
+  const tabs=[
+    {id:'career',label:'진로',count:careerRecs.length},
+    {id:'creative',label:'자율',count:creativeRecs.length},
+    {id:'club',label:'동아리',count:clubRecs.length},
+    {id:'subject',label:'교과',count:subjectRecs.length},
+    {id:'behavior',label:'관찰',count:behaviorRecs.length},
+    {id:'reports',label:'AI생기부',count:reports.length}
+  ];
+
+  const currentRecs=tab==='career'?careerRecs:tab==='creative'?creativeRecs:tab==='club'?clubRecs:tab==='subject'?subjectRecs:tab==='behavior'?behaviorRecs:[];
+  const tabColor=tabColors[tab].main;
+  const tabBg=tabColors[tab].bg;
+
+  return(<div style={{background:phoneBg,minHeight:'100%',paddingBottom:30}}>
+    <div style={{background:`linear-gradient(135deg,${c},#6a1b9a)`,padding:'22px 20px 38px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>학생 목록</button>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{width:44,height:44,background:'rgba(255,255,255,0.25)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,fontWeight:900,color:'white'}}>{student.name[0]}</div>
+          <div>
+            <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 2px'}}>{student.name}</p>
+            <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>{student.grade}학년 {student.classNum}반 {student.number}번 · 학번 {student.studentId}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style={{padding:'0 0 12px'}}>
+      {/* 탭 */}
+      <div style={{display:'flex',overflowX:'auto',background:'white',borderBottom:'1px solid #e1bee7',padding:'0 6px'}} className="no-scrollbar">
+        {tabs.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:'0 0 auto',padding:'12px 12px',border:'none',borderBottom:`2px solid ${tab===t.id?tabColors[t.id].main:'transparent'}`,background:'white',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
+            <span style={{fontSize:12,fontWeight:900,color:tab===t.id?tabColors[t.id].main:'#bbb'}}>{t.label}</span>
+            <span style={{fontSize:10,fontWeight:700,background:tab===t.id?tabColors[t.id].main+'22':'#f5f5f5',color:tab===t.id?tabColors[t.id].main:'#ccc',padding:'2px 6px',borderRadius:20,marginLeft:5}}>{t.count}</span>
+          </button>
+        ))}
+      </div>
+      
+      <div style={{padding:'12px 14px'}}>
+        {/* AI 생기부 탭 */}
+        {tab==='reports'&&(<div>
+          {reports.length===0?<div style={{background:'white',borderRadius:12,padding:30,textAlign:'center',color:'#ccc',fontSize:12}}>저장된 AI 생기부가 없습니다</div>
+            :reports.map((r,i)=>(<div key={i} style={{background:'white',borderRadius:12,padding:'14px 16px',marginBottom:10,border:`1px solid ${tabBg}`}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                <span style={{fontSize:11,background:tabBg,color:tabColor,padding:'3px 9px',borderRadius:8,fontWeight:700}}>{r.subject||'(구분없음)'}</span>
+                <span style={{fontSize:10,color:'#999'}}>{new TextEncoder().encode(r.content||'').length} bytes</span>
+              </div>
+              <p style={{fontSize:12,color:'#444',margin:'0 0 8px',lineHeight:1.7}}>{r.content}</p>
+              <div style={{display:'flex',alignItems:'center',gap:6,paddingTop:8,borderTop:`0.5px solid ${tabBg}`}}>
+                <span style={{fontSize:10,color:'#bbb'}}>작성:</span>
+                <span style={{fontSize:10,color:'#888',fontWeight:700}}>{r.teacherName||r.teacherId||'?'}</span>
+                {r.savedAt&&<span style={{fontSize:9,color:'#ccc',marginLeft:'auto'}}>{r.savedAt}</span>}
+              </div>
+            </div>))
+          }
+        </div>)}
+
+        {/* 일반 기록 탭 */}
+        {tab!=='reports'&&(<div>
+          {currentRecs.length===0?<div style={{background:'white',borderRadius:12,padding:30,textAlign:'center',color:'#ccc',fontSize:12}}>기록이 없습니다</div>
+            :currentRecs.map(r=>{
+              const isTeacher=r.author==='teacher';
+              return(<div key={r.id} style={{background:'white',borderRadius:12,padding:'12px 14px',marginBottom:8,border:`1px solid ${tabBg}`}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                  <div style={{display:'flex',gap:4,alignItems:'center'}}>
+                    {(tab==='subject'||tab==='club')&&r.subject&&<span style={{fontSize:10,background:tabBg,color:tabColor,padding:'2px 7px',borderRadius:8,fontWeight:700}}>{r.subject}</span>}
+                    <span style={{fontSize:10,background:isTeacher?'#e8f5e9':'#e3f2fd',color:isTeacher?'#2e7d32':'#1565c0',padding:'2px 7px',borderRadius:8,fontWeight:700}}>{isTeacher?'👨‍🏫 교사':'👤 학생'}</span>
+                  </div>
+                  <span style={{fontSize:10,color:'#bbb'}}>{r.date}</span>
+                </div>
+                <p style={{fontSize:13,fontWeight:700,color:'#1a1a2e',margin:'0 0 4px'}}>{r.title||r.unit||'(제목없음)'}</p>
+                {(r.content||r.learned)&&<p style={{fontSize:12,color:'#666',margin:0,lineHeight:1.6}}>{r.content||r.learned}</p>}
+              </div>);
+            })
+          }
+        </div>)}
+      </div>
     </div>
   </div>);
 }
@@ -2236,7 +2358,8 @@ function App() {
       {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
-      {isAdmin&&view==='adminClassStats'&&<AdminClassStats onBack={()=>setView('home')} onLogout={logout}/>}
+      {isAdmin&&view==='adminClassStats'&&<AdminClassStats onStudentClick={s=>{setSelStudent(s);setView('adminStudentRecords');}} onBack={()=>setView('home')} onLogout={logout}/>}
+      {isAdmin&&view==='adminStudentRecords'&&selStudent&&<AdminStudentRecords student={selStudent} onBack={()=>{setSelStudent(null);setView('adminClassStats');}} onLogout={logout}/>}
       {isAdmin&&view==='adminAIStats'&&<AdminAIStats onBack={()=>setView('home')} onLogout={logout}/>}
       {(isTeacher||isCareer)&&view==='students'&&!selStudent&&!teacherWriteStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherWrite');}} onBack={()=>setView('home')}/>}
       {(isTeacher||isCareer)&&view==='ai'&&selStudent&&<AIReport student={selStudent} user={user} refreshKey={aiRefreshKey} onEdit={(r)=>{setTeacherWriteStudent(selStudent);setTeacherWriteEditing(r);setView('teacherWrite');}} onDelete={async(id)=>{if(!confirm('삭제할까요?'))return;try{await callAPI({action:'deleteRecord',recordId:id,studentId:selStudent.id});setAiRefreshKey(k=>k+1);fetchRecords(user);}catch(e){alert('삭제 실패');}}} onBack={()=>{setSelStudent(null);setView('students');}}/>}
