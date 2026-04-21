@@ -232,12 +232,13 @@ function AdminHome({user,onUnregistered,onClassStats,onAIStats,onBack,onLogout})
   </div>);
 }
 /* ── 관리자: 가입 안 한 학생 조회 ── */
-function AdminUnregistered({onBack,onLogout}){
+function AdminUnregistered({user,onBack,onLogout}){
   const c='#4a148c';
   const phoneBg='#f4f0f9';
   const [data,setData]=useState(null),[loading,setLoading]=useState(true);
   const [gradeFilter,setGradeFilter]=useState('');
   const [classFilter,setClassFilter]=useState('');
+  const [sending,setSending]=useState(false),[sendResult,setSendResult]=useState(null);
 
   useEffect(()=>{
     callAPI({action:'getUnregisteredStudents'}).then(r=>{
@@ -306,14 +307,51 @@ function AdminUnregistered({onBack,onLogout}){
         <button type="button" onClick={()=>setClassFilter('')} style={{padding:'4px 10px',borderRadius:14,border:'none',fontSize:10,fontWeight:700,cursor:'pointer',background:!classFilter?c:'white',color:!classFilter?'white':'#bbb',fontFamily:'inherit',boxShadow:!classFilter?'none':'0 0 0 0.5px rgba(0,0,0,0.1) inset'}}>전체 반</button>
         {classOptions.map(cls=>(<button key={cls} type="button" onClick={()=>setClassFilter(cls)} style={{padding:'4px 10px',borderRadius:14,border:'none',fontSize:10,fontWeight:700,cursor:'pointer',background:classFilter===cls?c:'white',color:classFilter===cls?'white':'#bbb',fontFamily:'inherit',boxShadow:classFilter===cls?'none':'0 0 0 0.5px rgba(0,0,0,0.1) inset'}}>{cls}반</button>))}
       </div>)}
+      {/* 일괄 발송 버튼 (필터된 학생 중 전화번호 있는 경우만) */}
+      {(()=>{
+        const sendable=filtered.filter(s=>s.phone&&s.phone.length>=10);
+        if(sendable.length===0)return null;
+        return(<button type="button" onClick={async()=>{
+          if(!confirm(`${sendable.length}명에게 카카오 알림톡을 일괄 발송할까요?\n\n(전화번호 없는 학생은 제외됨)`))return;
+          setSending(true);setSendResult(null);
+          try{
+            const r=await callAPI({action:'sendUnregisteredAlimtalk',students:sendable.map(s=>({studentId:s.studentId,name:s.name,phone:s.phone})),senderId:user?.studentId||'',senderName:user?.name||''});
+            if(r.success){
+              setSendResult({total:r.total,success:r.successCount,fail:r.failCount});
+              alert(`발송 완료!\n성공: ${r.successCount}건\n실패: ${r.failCount}건`);
+            }else alert(r.message||'발송 실패');
+          }catch(e){alert('서버 오류: '+e.message);}
+          setSending(false);
+        }} disabled={sending} style={{width:'100%',padding:'11px 0',marginBottom:10,borderRadius:10,border:'none',background:sending?'#ccc':'linear-gradient(135deg,#fee500,#ffcd00)',color:'#1a1a2e',fontSize:13,fontWeight:800,cursor:sending?'default':'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+          {sending?<><Spin/> 발송 중...</>:<>💬 {sendable.length}명에게 카카오 알림톡 일괄 발송</>}
+        </button>);
+      })()}
+      {sendResult&&(<div style={{background:'#e8f5e9',border:'1px solid #a5d6a7',borderRadius:10,padding:'10px 12px',marginBottom:10,fontSize:12,color:'#2e7d32',fontWeight:700}}>
+        ✅ 최근 발송 결과 — 성공 {sendResult.success}건 / 실패 {sendResult.fail}건 (전체 {sendResult.total}명)
+      </div>)}
       <div style={{background:'white',borderRadius:10,padding:4,border:'1px solid #e1bee7'}}>
         {filtered.length===0?<p style={{textAlign:'center',color:'#ccc',padding:20,fontSize:12,margin:0}}>해당하는 학생이 없습니다</p>
-          :filtered.map(s=>(<div key={s.studentId} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderBottom:'0.5px solid #f5f5f5'}}>
-            <div style={{width:28,height:28,background:'linear-gradient(135deg,#f4f0f9,#e1bee7)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:c,flexShrink:0}}>{s.name[0]}</div>
-            <span style={{fontSize:10,color:'#999',fontWeight:700,flexShrink:0}}>{s.grade}학년 {s.classNum}반</span>
-            <span style={{fontSize:12,color:'#1a1a2e',fontWeight:700,flex:1}}>{s.name}</span>
-            <span style={{fontSize:10,color:'#ccc',fontWeight:500}}>{s.studentId}</span>
-          </div>))
+          :filtered.map(s=>{
+            const hasPhone=s.phone&&s.phone.length>=10;
+            return(<div key={s.studentId} style={{display:'flex',alignItems:'center',gap:9,padding:'9px 10px',borderBottom:'0.5px solid #f5f5f5'}}>
+              <div style={{width:28,height:28,background:'linear-gradient(135deg,#f4f0f9,#e1bee7)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:c,flexShrink:0}}>{s.name[0]}</div>
+              <span style={{fontSize:10,color:'#999',fontWeight:700,flexShrink:0}}>{s.grade}학년 {s.classNum}반</span>
+              <span style={{fontSize:13,color:'#1a1a2e',fontWeight:700,flex:1}}>{s.name}</span>
+              {hasPhone
+                ?<button type="button" onClick={async(e)=>{
+                  e.stopPropagation();
+                  if(!confirm(`${s.name} 학생(${s.phone})에게 카카오 알림톡을 발송할까요?`))return;
+                  try{
+                    const r=await callAPI({action:'sendUnregisteredAlimtalk',students:[{studentId:s.studentId,name:s.name,phone:s.phone}],senderId:user?.studentId||'',senderName:user?.name||''});
+                    if(r.success&&r.successCount>0)alert(`✅ ${s.name} 학생에게 발송 완료!`);
+                    else alert(`❌ 발송 실패: ${r.results?.[0]?.reason||r.message||'알 수 없음'}`);
+                  }catch(e){alert('서버 오류');}
+                }} style={{background:'linear-gradient(135deg,#fee500,#ffcd00)',color:'#1a1a2e',border:'none',borderRadius:14,padding:'4px 10px',fontSize:10,fontWeight:800,cursor:'pointer',flexShrink:0,fontFamily:'inherit',display:'inline-flex',alignItems:'center',gap:3}}>💬 알림톡</button>
+                :<span style={{fontSize:9,color:'#ccc',fontWeight:600,padding:'4px 8px',flexShrink:0}}>번호없음</span>
+              }
+              <span style={{fontSize:10,color:'#ccc',fontWeight:500,flexShrink:0}}>{s.studentId}</span>
+            </div>);
+          })
         }
       </div>
     </div>
@@ -2197,7 +2235,7 @@ function App() {
 
       {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onBack={goBackToRole} onLogout={logout}/>}
-      {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered onBack={()=>setView('home')} onLogout={logout}/>}
+      {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminClassStats'&&<AdminClassStats onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminAIStats'&&<AdminAIStats onBack={()=>setView('home')} onLogout={logout}/>}
       {(isTeacher||isCareer)&&view==='students'&&!selStudent&&!teacherWriteStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherWrite');}} onBack={()=>setView('home')}/>}
