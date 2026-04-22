@@ -170,7 +170,7 @@ function loadSession(){try{const d=sessionStorage.getItem('diary_session');retur
 function clearSession(){try{sessionStorage.removeItem('diary_session');}catch(e){}}
 
 /* ── 관리자 홈 ── */
-function AdminHome({user,onUnregistered,onClassStats,onAIStats,onBack,onLogout}){
+function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,onBack,onLogout}){
   const c='#4a148c';
   const phoneBg='#f4f0f9';
   return(<div style={{paddingBottom:20}}>
@@ -195,7 +195,58 @@ function AdminHome({user,onUnregistered,onClassStats,onAIStats,onBack,onLogout})
       </div>
     </div>
     <div style={{padding:'16px 14px'}}>
-      {/* AI 엔진 상태 카드 */}
+      {/* 관리 메뉴 (상단으로 이동) */}
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+        <div style={{width:3,height:12,background:c,borderRadius:2}}/>
+        <span style={{fontSize:11,fontWeight:700,color:c}}>관리 메뉴</span>
+      </div>
+      <div onClick={onUnregistered} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#ab47bc,#8e24aa)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>가입 안 한 학생 조회</p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>학생명단에 있지만 앱 가입 안 한 학생</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      <div onClick={onClassStats} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#7e57c2,#5e35b1)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>반별 학생 입력 현황</p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>반별 기록 작성 상황 분석</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      <div onClick={onAIStats} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#3949ab,#1a237e)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>AI 생성 통계</p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>AI 사용량 · 성공률 · 모델별 분석</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      {/* 교사별 사용 현황 (NEW) */}
+      <div onClick={onTeacherRanking} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #c2185b',background:'linear-gradient(135deg,#fff 0%,#fce4ec 100%)',position:'relative'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#c2185b,#ad1457)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>교사별 사용 현황 <span style={{fontSize:9,background:'#c2185b',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:800,marginLeft:4}}>NEW</span></p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>선생님별 AI 생성 횟수 순위</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#c2185b" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+
+      {/* AI 엔진 상태 카드 (하단으로 이동) */}
+      <div style={{display:'flex',alignItems:'center',gap:8,margin:'20px 0 12px'}}>
+        <div style={{width:3,height:12,background:c,borderRadius:2}}/>
+        <span style={{fontSize:11,fontWeight:700,color:c}}>시스템 정보</span>
+      </div>
       <div style={{background:'linear-gradient(135deg,#fff 0%,#faf7fc 100%)',borderRadius:12,padding:14,border:'1.5px solid #e1bee7',marginBottom:14,position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:-10,right:-10,width:60,height:60,background:'rgba(57,73,171,0.08)',borderRadius:'50%'}}/>
         <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10,position:'relative'}}>
@@ -234,40 +285,98 @@ function AdminHome({user,onUnregistered,onClassStats,onAIStats,onBack,onLogout})
           </div>
         </div>
       </div>
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-        <div style={{width:3,height:12,background:c,borderRadius:2}}/>
-        <span style={{fontSize:11,fontWeight:700,color:c}}>관리 메뉴</span>
+    </div>
+  </div>);
+}
+/* ── 관리자: 교사별 사용 현황 리더보드 ── */
+function AdminTeacherRanking({onBack,onLogout}){
+  const c='#4a148c';
+  const phoneBg='#f4f0f9';
+  const [data,setData]=useState(null);
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+    callAPI({action:'getAIStats'}).then(r=>{
+      setData(r);
+      setLoading(false);
+    }).catch(()=>setLoading(false));
+  },[]);
+
+  if(loading)return(<div style={{background:phoneBg,minHeight:'100%',display:'flex',alignItems:'center',justifyContent:'center',padding:40}}><Spin/></div>);
+  if(!data||!data.byTeacher)return(<div style={{background:phoneBg,minHeight:'100%',padding:40,textAlign:'center',color:'#999'}}>데이터 없음</div>);
+
+  const byTeacher=data.byTeacher||[];
+  const activeList=byTeacher.filter(t=>(t.success+t.fail)>0).sort((a,b)=>(b.success+b.fail)-(a.success+a.fail));
+  const unusedList=byTeacher.filter(t=>(t.success+t.fail)===0);
+  const totalGenerated=activeList.reduce((sum,t)=>sum+t.success+t.fail,0);
+
+  return(<div style={{background:phoneBg,minHeight:'100%',paddingBottom:30}}>
+    <div style={{background:`linear-gradient(135deg,${c},#6a1b9a)`,padding:'22px 20px 38px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>관리자 홈</button>
+        <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 3px'}}>👨‍🏫 교사별 사용 현황</p>
+        <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>선생님별 AI 생성 횟수 리더보드</p>
       </div>
-      <div onClick={onUnregistered} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
-        <div style={{width:42,height:42,background:'linear-gradient(135deg,#ab47bc,#8e24aa)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+    </div>
+
+    <div style={{padding:'14px'}}>
+      {/* 전체 통계 */}
+      <div style={{background:'white',borderRadius:12,padding:14,border:'1px solid #e1bee7',marginBottom:14}}>
+        <p style={{fontSize:10,color:'#888',margin:'0 0 8px',fontWeight:700}}>전체 통계</p>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+          <div style={{textAlign:'center',padding:'10px 4px',background:'#faf7fc',borderRadius:8}}>
+            <p style={{fontSize:20,fontWeight:900,color:c,margin:'0 0 2px',lineHeight:1}}>{activeList.length}</p>
+            <p style={{fontSize:9,color:'#888',margin:0,fontWeight:600}}>사용 교사</p>
+          </div>
+          <div style={{textAlign:'center',padding:'10px 4px',background:'#faf7fc',borderRadius:8}}>
+            <p style={{fontSize:20,fontWeight:900,color:'#999',margin:'0 0 2px',lineHeight:1}}>{unusedList.length}</p>
+            <p style={{fontSize:9,color:'#888',margin:0,fontWeight:600}}>미사용</p>
+          </div>
+          <div style={{textAlign:'center',padding:'10px 4px',background:'#faf7fc',borderRadius:8}}>
+            <p style={{fontSize:20,fontWeight:900,color:c,margin:'0 0 2px',lineHeight:1}}>{totalGenerated}</p>
+            <p style={{fontSize:9,color:'#888',margin:0,fontWeight:600}}>총 생성</p>
+          </div>
         </div>
-        <div style={{flex:1}}>
-          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>가입 안 한 학생 조회</p>
-          <p style={{fontSize:11,color:'#999',margin:0}}>학생명단에 있지만 앱 가입 안 한 학생</p>
-        </div>
-        <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
       </div>
-      <div onClick={onClassStats} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
-        <div style={{width:42,height:42,background:'linear-gradient(135deg,#7e57c2,#5e35b1)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        </div>
-        <div style={{flex:1}}>
-          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>반별 학생 입력 현황</p>
-          <p style={{fontSize:11,color:'#999',margin:0}}>반별 기록 작성 상황 분석</p>
-        </div>
-        <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-      </div>
-      <div onClick={onAIStats} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
-        <div style={{width:42,height:42,background:'linear-gradient(135deg,#3949ab,#1a237e)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        </div>
-        <div style={{flex:1}}>
-          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>AI 생성 통계</p>
-          <p style={{fontSize:11,color:'#999',margin:0}}>AI 사용량 · 성공률 · 모델별 분석</p>
-        </div>
-        <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-      </div>
+
+      {/* 사용 순위 */}
+      {activeList.length>0&&(<div style={{background:'white',borderRadius:12,padding:14,border:'1px solid #e1bee7',marginBottom:14}}>
+        <p style={{fontSize:11,color:'#888',margin:'0 0 10px',fontWeight:700}}>🏆 사용 순위 (많이 사용한 순)</p>
+        {activeList.map((t,i)=>{
+          const total=t.success+t.fail;
+          const rate=total>0?Math.round(t.success/total*100):0;
+          const isTop3=i<=2;
+          const rankBg=i===0?'linear-gradient(135deg,#ffd700,#ffa000)':i===1?'linear-gradient(135deg,#c0c0c0,#808080)':i===2?'linear-gradient(135deg,#cd7f32,#8b4513)':'#e0e0e0';
+          const rankColor=isTop3?'white':'#666';
+          const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+          const rowBg=i===0?'linear-gradient(135deg,#fff9e6,#fff3cd)':i===1?'linear-gradient(135deg,#f5f5f5,#e8e8e8)':i===2?'linear-gradient(135deg,#fff3e0,#ffe0b2)':'white';
+          const rowBorder=i===0?'1.5px solid #ffc107':i===1?'1.5px solid #9e9e9e':i===2?'1.5px solid #ff9800':'0.5px solid #f0e8f5';
+          return(<div key={t.teacherId} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',marginBottom:6,background:rowBg,border:rowBorder,borderRadius:10}}>
+            <div style={{width:28,height:28,background:rankBg,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:isTop3?16:12,fontWeight:900,color:rankColor,flexShrink:0,boxShadow:isTop3?'0 2px 6px rgba(0,0,0,0.15)':'none'}}>{isTop3?medal:i+1}</div>
+            <div style={{width:32,height:32,background:'linear-gradient(135deg,#f4f0f9,#e1bee7)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:900,color:c,flexShrink:0}}>{(t.teacherName||'?')[0]}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:13,fontWeight:800,color:'#1a1a2e',margin:'0 0 2px'}}>{t.teacherName||t.teacherId} 선생님</p>
+              <p style={{fontSize:10,color:'#888',margin:0}}>성공 {t.success}건 · 실패 {t.fail}건 · 성공률 {rate}%</p>
+            </div>
+            <div style={{textAlign:'right',flexShrink:0}}>
+              <p style={{fontSize:18,fontWeight:900,color:c,margin:'0 0 1px',lineHeight:1}}>{total}</p>
+              <p style={{fontSize:9,color:'#888',margin:0,fontWeight:600}}>건 생성</p>
+            </div>
+          </div>);
+        })}
+      </div>)}
+
+      {/* 미사용 교사 */}
+      {unusedList.length>0&&(<div style={{background:'white',borderRadius:12,padding:14,border:'1px solid #e1bee7'}}>
+        <p style={{fontSize:11,color:'#888',margin:'0 0 10px',fontWeight:700}}>💤 미사용 교사 ({unusedList.length}명)</p>
+        {unusedList.map((t,i)=>(<div key={t.teacherId} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 10px',marginBottom:5,background:'#fafafa',borderRadius:8,opacity:0.7}}>
+          <div style={{width:26,height:26,background:'#e0e0e0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:900,color:'#999',flexShrink:0}}>—</div>
+          <div style={{width:28,height:28,background:'#f5f5f5',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:'#bbb',flexShrink:0}}>{(t.teacherName||'?')[0]}</div>
+          <span style={{fontSize:12,fontWeight:700,color:'#999',flex:1}}>{t.teacherName||t.teacherId} 선생님</span>
+          <span style={{fontSize:9,color:'#bbb',fontWeight:700,background:'#f5f5f5',padding:'2px 8px',borderRadius:10}}>미사용</span>
+        </div>))}
+      </div>)}
     </div>
   </div>);
 }
@@ -763,38 +872,7 @@ function AdminAIStats({onBack,onLogout}){
         </div>
       </div>)}
 
-      {/* 교사별 사용량 전체 */}
-      {data.byTeacher.length>0&&(()=>{
-        const activeCount=data.byTeacher.filter(t=>t.success+t.fail>0).length;
-        return(<div style={{background:'white',borderRadius:14,padding:16,border:'1px solid #e1bee7',marginBottom:14}}>
-        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
-          <div style={{width:4,height:14,background:c,borderRadius:2}}/>
-          <span style={{fontSize:13,fontWeight:800,color:c}}>교사별 사용량</span>
-          <span style={{fontSize:10,color:'#999',marginLeft:'auto',fontWeight:600}}>활용 {activeCount}명 / 전체 {data.byTeacher.length}명</span>
-        </div>
-        {data.byTeacher.map((t,i)=>{
-          const total=t.success+t.fail;
-          const rate=total>0?Math.round(t.success/total*100):0;
-          const isUnused=total===0;
-          // 사용한 교사만 메달 부여 (0건은 회색 숫자)
-          const activeRank=i<activeCount?i:-1;
-          const rankBg=activeRank===0?'#ffd700':activeRank===1?'#c0c0c0':activeRank===2?'#cd7f32':'#f5f5f5';
-          const rankColor=activeRank>=0&&activeRank<=2?'white':'#bbb';
-          return(<div key={t.teacherId} style={{display:'flex',alignItems:'center',gap:9,padding:'9px 0',borderTop:i>0?'0.5px solid #f5f5f5':'none',opacity:isUnused?0.45:1}}>
-            <div style={{width:22,height:22,background:rankBg,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:900,color:rankColor,flexShrink:0,boxShadow:activeRank>=0&&activeRank<=2?'0 1px 3px rgba(0,0,0,0.15)':'none'}}>{i+1}</div>
-            <div style={{width:28,height:28,background:isUnused?'#f5f5f5':'linear-gradient(135deg,#f4f0f9,#e1bee7)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:isUnused?'#bbb':c,flexShrink:0}}>{(t.teacherName||'?')[0]}</div>
-            <span style={{fontSize:13,fontWeight:700,color:isUnused?'#999':'#333',flex:1}}>{t.teacherName||t.teacherId}</span>
-            {isUnused
-              ?<span style={{fontSize:10,color:'#bbb',fontWeight:600,background:'#fafafa',padding:'2px 8px',borderRadius:10}}>미사용</span>
-              :<>
-                <span style={{fontSize:12,color:'#555',fontWeight:700}}>{total}건</span>
-                <span style={{fontSize:12,color:rate>=90?'#2e7d32':rate>=70?'#ef6c00':'#c2185b',fontWeight:800,width:42,textAlign:'right'}}>{rate}%</span>
-              </>
-            }
-          </div>);
-        })}
-      </div>);})()}
-
+      
       {/* 실패 사유별 분석 */}
       {Object.keys(data.byReason).length>0&&(<div style={{background:'#fff5f5',borderRadius:14,padding:16,border:'1px solid #ffcdd2'}}>
         <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
@@ -2421,7 +2499,8 @@ function App() {
       {isStudent&&view==='cat'&&catId==='club'&&subject&&writing&&<ClubForm club={subject} editing={editing} onSave={editing?updateRec:saveRec} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
 
       {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
-      {isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onBack={goBackToRole} onLogout={logout}/>}
+      {isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onBack={()=>setView('role')} onLogout={logout}/>}
+      {isAdmin&&view==='adminTeacherRanking'&&<AdminTeacherRanking onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminClassStats'&&<AdminClassStats onStudentClick={s=>{setSelStudent(s);setView('adminStudentRecords');}} onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminStudentRecords'&&selStudent&&<AdminStudentRecords student={selStudent} onBack={()=>{setSelStudent(null);setView('adminClassStats');}} onLogout={logout}/>}
