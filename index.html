@@ -10,6 +10,8 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/recharts@2/umd/Recharts.js"></script>
+<script src="https://unpkg.com/recharts@2/umd/Recharts.js"></script>
 <style>
 html{font-size:16px !important;-webkit-text-size-adjust:none !important;text-size-adjust:none !important}
 body{font-family:'Apple SD Gothic Neo',-apple-system,sans-serif;margin:0;padding:0;background:linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%);min-height:100vh;font-size:16px !important;-webkit-text-size-adjust:none !important;text-size-adjust:none !important;overscroll-behavior-y:contain}
@@ -197,8 +199,345 @@ function LoadingSpin({text}){
     <p style={{fontSize:14,fontWeight:800,color:'#4a148c',margin:0,animation:'loadingspin-text-pulse 1.4s ease-in-out infinite'}}>{text||'불러오는 중...'}</p>
   </div>);
 }
+/**
+ * ═══════════════════════════════════════════════════════════════
+ * 창체 다이어리 - 관리자 API 사용량 페이지
+ * ═══════════════════════════════════════════════════════════════
+ * 기존 AdminHome, AdminAIStats 등과 동일한 디자인 톤으로 작성
+ * - 메인 컬러: #4a148c (다크 퍼플)
+ * - 배경: #f4f0f9 (파스텔 퍼플)
+ * - 악센트: #c2185b (핫 핑크, NEW 뱃지 색)
+ * ═══════════════════════════════════════════════════════════════
+ */
 
-function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,onBack,onLogout}){
+function AdminApiUsage({onBack,onLogout}){
+  const c='#4a148c';
+  const phoneBg='#f4f0f9';
+  const [loading,setLoading]=React.useState(true);
+  const [summary,setSummary]=React.useState(null);
+  const [logs,setLogs]=React.useState([]);
+  const [logTotal,setLogTotal]=React.useState(0);
+  const [page,setPage]=React.useState(0);
+  const [days,setDays]=React.useState(30);
+  const [filter,setFilter]=React.useState({model:'',purpose:''});
+  const [deleting,setDeleting]=React.useState(false);
+  const PAGE_SIZE=30;
+
+  // 데이터 로드
+  React.useEffect(()=>{
+    setLoading(true);
+    Promise.all([
+      callAPI({action:'getApiLogSummary',days:days}).then(r=>{if(r.success)setSummary(r);}),
+      callAPI({action:'getApiLogList',limit:PAGE_SIZE,offset:page*PAGE_SIZE,model:filter.model,purpose:filter.purpose}).then(r=>{if(r.success){setLogs(r.rows);setLogTotal(r.total);}})
+    ]).finally(()=>setLoading(false));
+  },[days,page,filter]);
+
+  const handleDelete=async()=>{
+    if(!confirm('90일 이전의 로그를 모두 삭제합니다. 계속하시겠습니까?'))return;
+    setDeleting(true);
+    try{
+      const r=await callAPI({action:'deleteOldApiLogs',daysToKeep:90});
+      if(r.success){
+        alert(r.deleted+'건이 삭제되었습니다.');
+        setPage(0);
+        // 재로드 트리거
+        setFilter({...filter});
+      }
+    }catch(e){alert('삭제 실패: '+e.message);}
+    finally{setDeleting(false);}
+  };
+
+  const kpi=summary?.kpi||{todayCost:0,monthCost:0,monthCalls:0,avgCostPerCall:0};
+  const usdKrwRate=summary?.usdKrwRate||1430;
+
+  // 모델별 색상 매핑 (AdminHome의 AI 엔진 카드 색상과 일치)
+  const MODEL_COLORS={
+    'gemini-2.5-flash':'#3949ab',
+    'gemini-flash-latest':'#7b1fa2',
+    'gemini-2.5-pro':'#c2185b',
+    'gpt-4o-mini':'#00695c'
+  };
+  const getColor=(m)=>MODEL_COLORS[m]||'#888';
+
+  // 용도 한글화
+  const PURPOSE_LABEL={
+    behavior:'행동특성',career:'진로',autonomous:'자율',
+    club:'동아리/창체',subject:'교과/세특',default:'기타'
+  };
+
+  return(<div style={{paddingBottom:30}}>
+    {/* ━━━ 상단 헤더 (AdminHome과 동일 톤) ━━━ */}
+    <div style={{background:`linear-gradient(135deg,${c},#6a1b9a)`,padding:'10px 20px 40px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',top:-30,right:-30,width:90,height:90,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}>
+        <svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}>
+          <path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/>
+        </svg>
+      </div>
+      <div style={{position:'relative',zIndex:3}}>
+        <TopBar onLogout={onLogout}/>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>
+            <svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>관리자 홈
+          </button>
+          <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>API USAGE</span>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+          <div style={{width:44,height:44,borderRadius:12,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <svg width="22" height="22" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+          <div>
+            <p style={{fontSize:22,fontWeight:900,color:'white',margin:'0 0 2px',lineHeight:1.1}}>API 사용량</p>
+            <p style={{fontSize:11,color:'rgba(255,255,255,0.75)',margin:0,fontWeight:600}}>토큰 · 비용 · 호출 이력</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style={{padding:'16px 14px'}}>
+      {loading&&!summary?(
+        <div style={{textAlign:'center',padding:'60px 0'}}>
+          <div className="pulse-dot" style={{display:'inline-block',width:10,height:10,borderRadius:'50%',background:c,marginRight:8}}/>
+          <span style={{fontSize:13,color:'#666',fontWeight:600}}>데이터 불러오는 중...</span>
+        </div>
+      ):(
+      <>
+        {/* ━━━ 기간 선택 ━━━ */}
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+          <div style={{width:3,height:12,background:c,borderRadius:2}}/>
+          <span style={{fontSize:11,fontWeight:700,color:c}}>조회 기간</span>
+          <div style={{marginLeft:'auto',display:'flex',gap:4}}>
+            {[7,30,90].map(d=>(
+              <button key={d} onClick={()=>{setDays(d);setPage(0);}}
+                style={{padding:'4px 10px',fontSize:11,fontWeight:700,borderRadius:12,border:'none',cursor:'pointer',fontFamily:'inherit',
+                  background:days===d?c:'#fff',color:days===d?'#fff':'#888',
+                  boxShadow:days===d?'0 2px 6px rgba(74,20,140,0.3)':'0 1px 3px rgba(0,0,0,0.05)'}}>
+                {d}일
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ━━━ KPI 카드 4개 ━━━ */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:18}}>
+          <KpiCard label="오늘 비용" value={kpi.todayCost.toLocaleString()+'원'} color="#c2185b" bg="#fce4ec"/>
+          <KpiCard label="이번달 누적" value={kpi.monthCost.toLocaleString()+'원'} color="#4a148c" bg="#ede7f6"/>
+          <KpiCard label="이번달 호출" value={kpi.monthCalls.toLocaleString()+'건'} color="#3949ab" bg="#e8eaf6"/>
+          <KpiCard label="건당 평균" value={kpi.avgCostPerCall.toLocaleString()+'원'} color="#00695c" bg="#e0f2f1"/>
+        </div>
+
+        {/* ━━━ 일별 추이 ━━━ */}
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+          <div style={{width:3,height:12,background:c,borderRadius:2}}/>
+          <span style={{fontSize:11,fontWeight:700,color:c}}>일별 비용 추이</span>
+          <span style={{fontSize:9,color:'#999',marginLeft:4}}>최근 {days}일 · 1USD={usdKrwRate.toLocaleString()}원</span>
+        </div>
+        <div className="card" style={{padding:14,marginBottom:16,border:'1.5px solid #e1bee7'}}>
+          <div style={{height:180}}>
+            {typeof Recharts!=='undefined'?(
+              <Recharts.ResponsiveContainer width="100%" height="100%">
+                <Recharts.AreaChart data={summary?.daily||[]} margin={{top:5,right:10,left:-15,bottom:0}}>
+                  <defs>
+                    <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={c} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={c} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Recharts.CartesianGrid strokeDasharray="3 3" stroke="#f0e6f5"/>
+                  <Recharts.XAxis dataKey="date" tick={{fontSize:9,fill:'#888'}} tickFormatter={v=>v.slice(5)} interval={Math.ceil((summary?.daily?.length||1)/7)}/>
+                  <Recharts.YAxis tick={{fontSize:9,fill:'#888'}}/>
+                  <Recharts.Tooltip
+                    contentStyle={{background:'#fff',border:`1px solid ${c}`,borderRadius:8,fontSize:11}}
+                    formatter={(v,n)=>n==='cost'?[v.toLocaleString()+'원','비용']:[v+'건','호출']}
+                  />
+                  <Recharts.Area type="monotone" dataKey="cost" stroke={c} strokeWidth={2} fill="url(#colorCost)"/>
+                </Recharts.AreaChart>
+              </Recharts.ResponsiveContainer>
+            ):(
+              <div style={{textAlign:'center',padding:'60px 20px',color:'#999',fontSize:12}}>차트 라이브러리 로딩 중...</div>
+            )}
+          </div>
+        </div>
+
+        {/* ━━━ 모델별 비용 ━━━ */}
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+          <div style={{width:3,height:12,background:c,borderRadius:2}}/>
+          <span style={{fontSize:11,fontWeight:700,color:c}}>모델별 비용</span>
+        </div>
+        <div className="card" style={{padding:14,marginBottom:16,border:'1.5px solid #e1bee7'}}>
+          {(summary?.byModel||[]).length===0?(
+            <p style={{textAlign:'center',color:'#999',fontSize:12,margin:'20px 0'}}>데이터 없음</p>
+          ):(summary?.byModel||[]).map((m,idx)=>{
+            const totalCost=(summary?.byModel||[]).reduce((s,x)=>s+x.cost,0)||1;
+            const pct=(m.cost/totalCost*100).toFixed(1);
+            return(
+              <div key={m.model} style={{marginBottom:idx===summary.byModel.length-1?0:10}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <div style={{width:8,height:8,borderRadius:2,background:getColor(m.model)}}/>
+                    <span style={{fontSize:11,fontWeight:700,color:'#333'}}>{m.model}</span>
+                    <span style={{fontSize:9,color:'#999',fontWeight:500}}>({m.calls}건)</span>
+                  </div>
+                  <div style={{textAlign:'right'}}>
+                    <span style={{fontSize:12,fontWeight:800,color:getColor(m.model)}}>{m.cost.toLocaleString()}원</span>
+                    <span style={{fontSize:9,color:'#999',marginLeft:5}}>{pct}%</span>
+                  </div>
+                </div>
+                <div style={{height:6,background:'#f0e6f5',borderRadius:3,overflow:'hidden'}}>
+                  <div style={{height:'100%',width:pct+'%',background:getColor(m.model),borderRadius:3,transition:'width 0.5s'}}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ━━━ 사용자별 Top 10 ━━━ */}
+        {(summary?.byUser||[]).length>0&&(
+          <>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+              <div style={{width:3,height:12,background:c,borderRadius:2}}/>
+              <span style={{fontSize:11,fontWeight:700,color:c}}>사용자별 Top 10</span>
+            </div>
+            <div className="card" style={{padding:14,marginBottom:16,border:'1.5px solid #e1bee7'}}>
+              {summary.byUser.map((u,idx)=>{
+                const maxCost=summary.byUser[0].cost||1;
+                const pct=(u.cost/maxCost*100).toFixed(1);
+                return(
+                  <div key={u.user+idx} style={{marginBottom:idx===summary.byUser.length-1?0:8}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:3}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6}}>
+                        <span style={{fontSize:10,fontWeight:800,color:'#c2185b',width:18}}>#{idx+1}</span>
+                        <span style={{fontSize:11,fontWeight:700,color:'#333'}}>{u.user}</span>
+                        <span style={{fontSize:9,color:'#999'}}>({u.calls}건)</span>
+                      </div>
+                      <span style={{fontSize:11,fontWeight:800,color:'#c2185b'}}>{u.cost.toLocaleString()}원</span>
+                    </div>
+                    <div style={{height:5,background:'#fce4ec',borderRadius:3,overflow:'hidden'}}>
+                      <div style={{height:'100%',width:pct+'%',background:'linear-gradient(90deg,#c2185b,#ad1457)',borderRadius:3}}/>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* ━━━ 상세 로그 ━━━ */}
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+          <div style={{width:3,height:12,background:c,borderRadius:2}}/>
+          <span style={{fontSize:11,fontWeight:700,color:c}}>호출 상세</span>
+          <span style={{fontSize:9,color:'#999',marginLeft:4}}>총 {logTotal.toLocaleString()}건</span>
+        </div>
+
+        {/* 필터 */}
+        <div style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap'}}>
+          <select value={filter.model} onChange={e=>{setFilter({...filter,model:e.target.value});setPage(0);}}
+            style={{flex:1,minWidth:110,padding:'6px 8px',fontSize:11,borderRadius:8,border:'1.5px solid #e1bee7',background:'#fff',fontFamily:'inherit',color:'#333'}}>
+            <option value="">모든 모델</option>
+            <option value="gemini-2.5-flash">2.5 Flash</option>
+            <option value="gemini-flash-latest">Flash Latest</option>
+            <option value="gemini-2.5-pro">2.5 Pro</option>
+            <option value="gpt-4o-mini">GPT-4o-mini</option>
+          </select>
+          <select value={filter.purpose} onChange={e=>{setFilter({...filter,purpose:e.target.value});setPage(0);}}
+            style={{flex:1,minWidth:110,padding:'6px 8px',fontSize:11,borderRadius:8,border:'1.5px solid #e1bee7',background:'#fff',fontFamily:'inherit',color:'#333'}}>
+            <option value="">모든 용도</option>
+            <option value="behavior">행동특성</option>
+            <option value="career">진로</option>
+            <option value="autonomous">자율</option>
+            <option value="club">동아리/창체</option>
+            <option value="subject">교과/세특</option>
+            <option value="default">기타</option>
+          </select>
+        </div>
+
+        {/* 로그 카드 목록 */}
+        {logs.length===0?(
+          <div className="card" style={{padding:'30px 14px',textAlign:'center',border:'1.5px solid #e1bee7',marginBottom:16}}>
+            <span style={{fontSize:12,color:'#999'}}>기록된 로그가 없습니다</span>
+          </div>
+        ):logs.map((log,idx)=>(
+          <div key={idx} className="card" style={{padding:'10px 12px',marginBottom:6,border:'1px solid #eee',fontSize:11}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:5}}>
+              <div style={{display:'flex',alignItems:'center',gap:5}}>
+                <span style={{fontSize:10,color:'#666',fontWeight:600}}>{log.time}</span>
+                <span style={{fontSize:9,padding:'1px 5px',borderRadius:8,background:'#f3e5f5',color:'#7b1fa2',fontWeight:700}}>{log.stage}</span>
+                {log.success==='O'?
+                  <span style={{fontSize:9}}>✅</span>:
+                  <span style={{fontSize:9}}>❌</span>}
+              </div>
+              <span style={{fontSize:12,fontWeight:800,color:getColor(log.model)}}>{Number(log.costKrw).toLocaleString()}원</span>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4,flexWrap:'wrap'}}>
+              <span style={{fontSize:10,color:'#333',fontWeight:700}}>{log.userName||'(비로그인)'}</span>
+              <span style={{fontSize:9,color:'#999'}}>·</span>
+              <span style={{fontSize:10,color:'#666'}}>{PURPOSE_LABEL[log.purpose]||log.purpose}</span>
+              <span style={{fontSize:9,color:'#999'}}>·</span>
+              <span style={{fontSize:10,color:getColor(log.model),fontWeight:600}}>{log.model}</span>
+            </div>
+            <div style={{display:'flex',gap:8,fontSize:9,color:'#888'}}>
+              <span>입력 <b style={{color:'#555'}}>{Number(log.inputTokens).toLocaleString()}</b></span>
+              <span>출력 <b style={{color:'#555'}}>{Number(log.outputTokens).toLocaleString()}</b></span>
+              {log.thinkingTokens>0&&<span style={{color:'#c2185b'}}>thinking <b>{Number(log.thinkingTokens).toLocaleString()}</b></span>}
+              <span style={{marginLeft:'auto'}}>{log.durationMs}ms</span>
+            </div>
+            {log.note&&<div style={{marginTop:4,fontSize:9,color:'#999',fontStyle:'italic'}}>{log.note}</div>}
+          </div>
+        ))}
+
+        {/* 페이지네이션 */}
+        {logTotal>PAGE_SIZE&&(
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 4px',marginBottom:16}}>
+            <span style={{fontSize:10,color:'#888'}}>
+              {page*PAGE_SIZE+1}-{Math.min((page+1)*PAGE_SIZE,logTotal)} / {logTotal.toLocaleString()}
+            </span>
+            <div style={{display:'flex',gap:6}}>
+              <button onClick={()=>setPage(Math.max(0,page-1))} disabled={page===0}
+                style={{padding:'4px 12px',fontSize:11,fontWeight:700,borderRadius:8,border:'1.5px solid #e1bee7',background:'#fff',color:page===0?'#ccc':c,cursor:page===0?'default':'pointer',fontFamily:'inherit'}}>
+                이전
+              </button>
+              <button onClick={()=>setPage(page+1)} disabled={(page+1)*PAGE_SIZE>=logTotal}
+                style={{padding:'4px 12px',fontSize:11,fontWeight:700,borderRadius:8,border:'1.5px solid #e1bee7',background:'#fff',color:(page+1)*PAGE_SIZE>=logTotal?'#ccc':c,cursor:(page+1)*PAGE_SIZE>=logTotal?'default':'pointer',fontFamily:'inherit'}}>
+                다음
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 로그 정리 */}
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10,marginTop:20}}>
+          <div style={{width:3,height:12,background:c,borderRadius:2}}/>
+          <span style={{fontSize:11,fontWeight:700,color:c}}>로그 관리</span>
+        </div>
+        <div className="card" style={{padding:14,border:'1.5px solid #e1bee7',marginBottom:10}}>
+          <p style={{fontSize:11,color:'#666',margin:'0 0 10px',lineHeight:1.5}}>
+            로그가 너무 많이 쌓이면 시트가 무거워집니다. 3개월 이상 된 로그는 정기적으로 정리하세요.
+          </p>
+          <button onClick={handleDelete} disabled={deleting}
+            style={{width:'100%',padding:'10px',fontSize:12,fontWeight:800,borderRadius:10,border:'none',background:deleting?'#ccc':'linear-gradient(135deg,#c2185b,#ad1457)',color:'#fff',cursor:deleting?'default':'pointer',fontFamily:'inherit'}}>
+            {deleting?'삭제 중...':'🧹 90일 이전 로그 삭제'}
+          </button>
+        </div>
+      </>
+      )}
+    </div>
+  </div>);
+}
+
+// ━━━ KPI 카드 (작은 헬퍼 컴포넌트) ━━━
+function KpiCard({label,value,color,bg}){
+  return(
+    <div style={{background:bg,borderRadius:12,padding:'10px 12px',borderLeft:`3px solid ${color}`}}>
+      <p style={{fontSize:9,color:'#888',margin:'0 0 3px',fontWeight:700,letterSpacing:0.3}}>{label}</p>
+      <p style={{fontSize:16,color:color,margin:0,fontWeight:900}}>{value}</p>
+    </div>
+  );
+}
+function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onBack,onLogout}){
   const c='#4a148c';
   const phoneBg='#f4f0f9';
   return(<div style={{paddingBottom:20}}>
@@ -269,7 +608,16 @@ function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,
         </div>
         <svg width="14" height="14" fill="none" stroke="#c2185b" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
       </div>
-
+      <div onClick={onApiUsage} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #4a148c',background:'linear-gradient(135deg,#fff 0%,#ede7f6 100%)',position:'relative'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#4a148c,#6a1b9a)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>API 사용량 분석 <span style={{fontSize:9,background:'#4a148c',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:800,marginLeft:4}}>NEW</span></p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>토큰 · 비용 · 모델별 호출 이력</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#4a148c" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
       {/* AI 엔진 상태 카드 (하단으로 이동) */}
       <div style={{display:'flex',alignItems:'center',gap:8,margin:'20px 0 12px'}}>
         <div style={{width:3,height:12,background:c,borderRadius:2}}/>
@@ -2527,12 +2875,13 @@ function App() {
       {isStudent&&view==='cat'&&catId==='club'&&subject&&writing&&<ClubForm club={subject} editing={editing} onSave={editing?updateRec:saveRec} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
 
       {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
-      {isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onBack={goBackToRole} onLogout={logout}/>}
+      {isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onBack={goBackToRole} onLogout={logout}/>} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='adminTeacherRanking'&&<AdminTeacherRanking onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminClassStats'&&<AdminClassStats onStudentClick={s=>{setSelStudent(s);setView('adminStudentRecords');}} onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminStudentRecords'&&selStudent&&<AdminStudentRecords student={selStudent} onBack={()=>{setSelStudent(null);setView('adminClassStats');}} onLogout={logout}/>}
       {isAdmin&&view==='adminAIStats'&&<AdminAIStats onBack={()=>setView('home')} onLogout={logout}/>}
+      {isAdmin&&view==='adminApiUsage'&&<AdminApiUsage onBack={()=>setView('home')} onLogout={logout}/>}
       {(isTeacher||isCareer)&&view==='students'&&!selStudent&&!teacherWriteStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherWrite');}} onBack={()=>setView('home')}/>}
       {(isTeacher||isCareer)&&view==='ai'&&selStudent&&<AIReport student={selStudent} user={user} refreshKey={aiRefreshKey} onEdit={(r)=>{setTeacherWriteStudent(selStudent);setTeacherWriteEditing(r);setView('teacherWrite');}} onDelete={async(id)=>{if(!confirm('삭제할까요?'))return;try{await callAPI({action:'deleteRecord',recordId:id,studentId:selStudent.id});setAiRefreshKey(k=>k+1);fetchRecords(user);}catch(e){alert('삭제 실패');}}} onBack={()=>{setSelStudent(null);setView('students');}}/>}
       {(isTeacher||isCareer)&&view==='teacherWrite'&&teacherWriteStudent&&<TeacherWriteForm student={teacherWriteStudent} editing={teacherWriteEditing} onSave={async(data)=>{try{const payload={...data,studentId:teacherWriteStudent.id,name:teacherWriteStudent.name};const action=teacherWriteEditing?'updateRecord':'saveRecord';const r=await callAPI({action,record:payload});if(r.success){await fetchRecords(user);setAiRefreshKey(k=>k+1);setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'ai':'students');}else alert(r.message);}catch(e){alert('저장 실패');}}} onCancel={()=>{setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'ai':'students');}}/>}
