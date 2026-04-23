@@ -3276,3 +3276,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
+if (typeof window !== 'undefined') {
+  window.STRUCTURED_FIELDS = STRUCTURED_FIELDS;
+  window.CATEGORY_META = CATEGORY_META;
+  window.buildIntegratedText = buildIntegratedText;
+  window.buildStructuredAIText = buildStructuredAIText;
+  window.countMaterials = countMaterials;
+}
