@@ -544,7 +544,7 @@ function AdminABTest({onBack,onLogout}){
 === 3-1. AdminHome 파라미터에 onABTest 추가 ===
 
 기존:
-function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onBack,onLogout}){
+function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onABTest,onBack,onLogout}){
 
 변경:
 function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onABTest,onBack,onLogout}){
@@ -566,7 +566,7 @@ function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,
       </div>
 
 
-=== 3-3. 라우팅 2곳 수정 ===
+
 
 [수정 1] AdminHome 호출하는 줄 찾기:
 
@@ -993,6 +993,16 @@ function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,
           <p style={{fontSize:11,color:'#999',margin:0}}>토큰 · 비용 · 모델별 호출 이력</p>
         </div>
         <svg width="14" height="14" fill="none" stroke="#4a148c" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      <div onClick={onABTest} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #00695c',background:'linear-gradient(135deg,#fff 0%,#e0f2f1 100%)',position:'relative'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#00695c,#004d40)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>A/B 테스트 <span style={{fontSize:9,background:'#00695c',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:800,marginLeft:4}}>NEW</span></p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>Thinking ON vs OFF 품질·비용 비교</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#00695c" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
       </div>
       {/* AI 엔진 상태 카드 (하단으로 이동) */}
       <div style={{display:'flex',alignItems:'center',gap:8,margin:'20px 0 12px'}}>
@@ -3251,7 +3261,8 @@ function App() {
       {isStudent&&view==='cat'&&catId==='club'&&subject&&writing&&<ClubForm club={subject} editing={editing} onSave={editing?updateRec:saveRec} onCancel={()=>{setWriting(false);setEditing(null);}}/>}
 
       {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
-      {isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onBack={goBackToRole} onLogout={logout}/>} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onBack={goBackToRole} onLogout={logout}/>}
+      {isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onABTest={()=>setView('adminABTest')} onBack={goBackToRole} onLogout={logout}/>}
+      {isAdmin&&view==='adminABTest'&&<AdminABTest onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminTeacherRanking'&&<AdminTeacherRanking onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminClassStats'&&<AdminClassStats onStudentClick={s=>{setSelStudent(s);setView('adminStudentRecords');}} onBack={()=>setView('home')} onLogout={logout}/>}
