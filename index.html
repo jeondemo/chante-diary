@@ -241,350 +241,221 @@ function LoadingSpin({text}){
 // (AdminApiUsage 옆에 붙여넣으세요)
 // ═══════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════
+// AdminABTest v2 - 6방향 비교 테스트
+// ═══════════════════════════════════════════════════════════════
+// 기존 AdminABTest 함수를 이것으로 통째로 교체하세요
+// ═══════════════════════════════════════════════════════════════
+
 function AdminABTest({onBack,onLogout}){
-  const c='#4a148c';
+  const c='#00695c';
   const phoneBg='#f4f0f9';
-  const [category,setCategory]=React.useState('behavior');
   const [text,setText]=React.useState('');
-  const [loadingOn,setLoadingOn]=React.useState(false);
-  const [loadingOff,setLoadingOff]=React.useState(false);
-  const [resultOn,setResultOn]=React.useState(null);
-  const [resultOff,setResultOff]=React.useState(null);
+  const [running,setRunning]=React.useState(false);
+  const [results,setResults]=React.useState([]);
+  const [progress,setProgress]=React.useState('');
+  const [currentIdx,setCurrentIdx]=React.useState(-1);
 
-  // 카테고리 → 프리픽스 매핑
-  const PREFIX={
-    behavior:'[행동특성]',
-    career:'[진로]',
-    autonomous:'[자율]',
-    club:'[동아리]',
-    subject:'[교과]'
-  };
+  // 6가지 테스트 옵션 정의
+  const TESTS=[
+    {id:'flash-on',label:'Flash ON',sub:'동적 사고',model:'gemini-2.5-flash',budget:null,color:'#1976d2'},
+    {id:'flash-off',label:'Flash OFF',sub:'사고 없음',model:'gemini-2.5-flash',budget:0,color:'#616161'},
+    {id:'flash-low',label:'Flash 조금',sub:'512 토큰',model:'gemini-2.5-flash',budget:512,color:'#00897b'},
+    {id:'pro-min',label:'Pro 최소',sub:'128 토큰',model:'gemini-2.5-pro',budget:128,color:'#7b1fa2'},
+    {id:'pro-mid',label:'Pro 중간',sub:'4096 토큰',model:'gemini-2.5-pro',budget:4096,color:'#6a1b9a'},
+    {id:'pro-high',label:'Pro 최고',sub:'8192 토큰',model:'gemini-2.5-pro',budget:8192,color:'#4a148c'}
+  ];
 
-  const CATEGORY_LABEL={
-    behavior:'행동특성',
-    career:'진로활동',
-    autonomous:'자율활동',
-    club:'동아리/창체',
-    subject:'교과 세특'
-  };
-
-  // 모델별 요금
-  const PRICING={
-    'gemini-2.5-flash':{input:0.30,output:2.50},
-    'gemini-flash-latest':{input:0.30,output:2.50},
-    'gemini-2.5-pro':{input:1.25,output:10.00},
-    'gpt-4o-mini':{input:0.15,output:0.60}
-  };
-  const USD_KRW=1430; // 대략 환율
-
-  const calcCost=(model,input,output,thinking)=>{
-    const p=PRICING[model];
-    if(!p)return 0;
-    const usd=(input*p.input+(output+thinking)*p.output)/1000000;
-    return Math.round(usd*USD_KRW*100)/100;
-  };
-
-  const generate=async(useThinking)=>{
-    if(!text.trim()){alert('학생 기록을 입력해주세요.');return;}
+  async function runTests(){
+    if(!text.trim()){alert('테스트할 기록을 입력해주세요');return;}
+    setRunning(true);
+    setResults([]);
     
-    const setLoading=useThinking?setLoadingOn:setLoadingOff;
-    const setResult=useThinking?setResultOn:setResultOff;
-    
-    setLoading(true);
-    setResult(null);
-    
-    try{
-      const prefixedText=PREFIX[category]+' '+text.trim();
-      const payload={
-        action:'generateAITest',
-        text:prefixedText,
-        userInfo:{userId:'admin-test',userName:'관리자(ABTest)',role:'admin'}
-      };
-      if(!useThinking) payload.thinkingBudget=0;
+    const newResults=[];
+    for(let i=0;i<TESTS.length;i++){
+      const t=TESTS[i];
+      setCurrentIdx(i);
+      setProgress('테스트 '+(i+1)+'/6: '+t.label+' 실행 중...');
+      const startTime=Date.now();
       
-      const r=await callAPI(payload);
-      
-      if(r.success){
-        setResult({
-          content:r.content,
-          model:r.model||'unknown',
-          bytes:r.bytes||0,
-          durationMs:r.durationMs||0,
-          inputTokens:r.inputTokens||0,
-          outputTokens:r.outputTokens||0,
-          thinkingTokens:r.thinkingTokens||0,
-          warning:r.warning
+      try{
+        const result=await new Promise((resolve,reject)=>{
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .generateAIResponseForABTest(text,{model:t.model,thinkingBudget:t.budget});
         });
-      }else{
-        setResult({error:r.message||'생성 실패'});
+        
+        const elapsed=Math.round((Date.now()-startTime)/1000);
+        const bytes=new Blob([result]).size;
+        const chars=result.length;
+        
+        newResults.push({
+          ...t,
+          result:result,
+          elapsed:elapsed,
+          bytes:bytes,
+          chars:chars,
+          error:null
+        });
+        setResults([...newResults]);
+      }catch(err){
+        const elapsed=Math.round((Date.now()-startTime)/1000);
+        newResults.push({
+          ...t,
+          result:null,
+          elapsed:elapsed,
+          bytes:0,
+          chars:0,
+          error:err.message||'오류 발생'
+        });
+        setResults([...newResults]);
       }
-    }catch(e){
-      setResult({error:e.message});
-    }finally{
-      setLoading(false);
     }
-  };
+    
+    setCurrentIdx(-1);
+    setProgress('6개 테스트 모두 완료!');
+    setRunning(false);
+  }
 
-  const generateBoth=async()=>{
-    if(!text.trim()){alert('학생 기록을 입력해주세요.');return;}
-    // 순차 실행 (GAS 동시 호출 제한 회피)
-    await generate(true);
-    await generate(false);
-  };
+  function copyResult(text){
+    const ta=document.createElement('textarea');
+    ta.value=text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('복사되었습니다!');
+  }
 
-  const renderResultCard=(result,label,labelColor)=>{
-    if(!result){
-      return(<div style={{background:'#fafafa',borderRadius:10,padding:20,textAlign:'center',color:'#ccc',fontSize:11,border:'1.5px dashed #e1bee7'}}>
-        아직 생성되지 않음
-      </div>);
-    }
-    if(result.error){
-      return(<div style={{background:'#ffebee',borderRadius:10,padding:14,border:'1.5px solid #ef9a9a'}}>
-        <p style={{fontSize:11,fontWeight:700,color:'#c62828',margin:'0 0 4px'}}>❌ 생성 실패</p>
-        <p style={{fontSize:10,color:'#666',margin:0}}>{result.error}</p>
-      </div>);
-    }
-    const cost=calcCost(result.model,result.inputTokens,result.outputTokens,result.thinkingTokens);
-    return(<div style={{background:'#fff',borderRadius:10,padding:14,border:`1.5px solid ${labelColor}`}}>
-      {/* 메타 정보 */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:10,paddingBottom:10,borderBottom:'1px solid #eee'}}>
-        <div style={{background:'#f3e5f5',padding:'6px 8px',borderRadius:6}}>
-          <p style={{fontSize:9,color:'#888',margin:'0 0 2px',fontWeight:600}}>모델</p>
-          <p style={{fontSize:10,color:'#4a148c',margin:0,fontWeight:800}}>{result.model}</p>
-        </div>
-        <div style={{background:'#e8f5e9',padding:'6px 8px',borderRadius:6}}>
-          <p style={{fontSize:9,color:'#888',margin:'0 0 2px',fontWeight:600}}>바이트</p>
-          <p style={{fontSize:10,color:'#2e7d32',margin:0,fontWeight:800}}>{result.bytes.toLocaleString()}B</p>
-        </div>
-        <div style={{background:'#fff3e0',padding:'6px 8px',borderRadius:6}}>
-          <p style={{fontSize:9,color:'#888',margin:'0 0 2px',fontWeight:600}}>소요시간</p>
-          <p style={{fontSize:10,color:'#e65100',margin:0,fontWeight:800}}>{(result.durationMs/1000).toFixed(1)}초</p>
-        </div>
-        <div style={{background:'#fce4ec',padding:'6px 8px',borderRadius:6}}>
-          <p style={{fontSize:9,color:'#888',margin:'0 0 2px',fontWeight:600}}>비용</p>
-          <p style={{fontSize:10,color:'#c2185b',margin:0,fontWeight:800}}>{cost.toLocaleString()}원</p>
-        </div>
-      </div>
-      
-      {/* 토큰 상세 */}
-      <div style={{display:'flex',gap:10,fontSize:9,color:'#666',marginBottom:10,flexWrap:'wrap'}}>
-        <span>입력 <b>{result.inputTokens.toLocaleString()}</b></span>
-        <span>출력 <b>{result.outputTokens.toLocaleString()}</b></span>
-        <span style={{color:result.thinkingTokens>0?'#c2185b':'#aaa'}}>
-          thinking <b>{result.thinkingTokens.toLocaleString()}</b>
-        </span>
-      </div>
-      
-      {/* 생성 결과 */}
-      <div style={{background:'#fafafa',padding:10,borderRadius:6,fontSize:11,lineHeight:1.6,color:'#333',maxHeight:280,overflowY:'auto'}}>
-        {result.content}
-      </div>
-      
-      {result.warning&&<p style={{fontSize:9,color:'#ff9800',margin:'6px 0 0',fontWeight:600}}>⚠ {result.warning}</p>}
-    </div>);
-  };
+  function shuffleAndLabel(){
+    // 블라인드 채점용: 결과를 랜덤 A~F로 라벨링한 텍스트 생성
+    const shuffled=[...results].sort(()=>Math.random()-0.5);
+    const labels=['A','B','C','D','E','F'];
+    let out='';
+    shuffled.forEach((r,i)=>{
+      out+='['+labels[i]+']\n'+(r.result||'(오류: '+r.error+')')+'\n\n';
+    });
+    const mapping=shuffled.map((r,i)=>labels[i]+'='+r.label+' ('+r.model.replace('gemini-2.5-','')+', '+(r.budget===null?'dynamic':r.budget)+')').join('\n');
+    out+='\n─── 정답 매핑 (블라인드 채점 후 확인용) ───\n'+mapping;
+    return out;
+  }
 
-  // 두 결과 비교값
-  const costDiff=(resultOn&&resultOff&&!resultOn.error&&!resultOff.error)?{
-    onCost:calcCost(resultOn.model,resultOn.inputTokens,resultOn.outputTokens,resultOn.thinkingTokens),
-    offCost:calcCost(resultOff.model,resultOff.inputTokens,resultOff.outputTokens,resultOff.thinkingTokens),
-    timeDiff:resultOn.durationMs-resultOff.durationMs
-  }:null;
-  const costSaving=costDiff?Math.round((1-costDiff.offCost/costDiff.onCost)*100):0;
-
-  return(<div style={{paddingBottom:30}}>
-    {/* ━━━ 헤더 ━━━ */}
-    <div style={{background:`linear-gradient(135deg,${c},#6a1b9a)`,padding:'10px 20px 40px',position:'relative',overflow:'hidden'}}>
-      <div style={{position:'absolute',top:-30,right:-30,width:90,height:90,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
-      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}>
-        <svg viewBox="0 0 390 40" preserveAspectRatio="none" style={{display:'block',width:'100%'}}>
-          <path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/>
-        </svg>
-      </div>
+  return(<div style={{paddingBottom:20}}>
+    <div style={{background:`linear-gradient(135deg,${c},#004d40)`,padding:'10px 20px 40px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
       <div style={{position:'relative',zIndex:3}}>
         <TopBar onLogout={onLogout}/>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
-          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>
-            <svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
-            </svg>관리자 홈
-          </button>
-          <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>A/B TEST</span>
+          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>관리자</button>
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
-          <div style={{width:44,height:44,borderRadius:12,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-            <svg width="22" height="22" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
-            </svg>
-          </div>
-          <div>
-            <p style={{fontSize:22,fontWeight:900,color:'white',margin:'0 0 2px',lineHeight:1.1}}>A/B 테스트</p>
-            <p style={{fontSize:11,color:'rgba(255,255,255,0.75)',margin:0,fontWeight:600}}>Thinking ON vs OFF 품질 비교</p>
-          </div>
-        </div>
+        <h2 style={{fontSize:22,fontWeight:800,color:'white',margin:'0 0 4px'}}>6방향 A/B 테스트</h2>
+        <p style={{fontSize:12,color:'rgba(255,255,255,0.85)',margin:0}}>Flash vs Pro × 사고 레벨 비교</p>
       </div>
     </div>
 
-    <div style={{padding:'16px 14px'}}>
-      
-      {/* ━━━ 입력 섹션 ━━━ */}
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-        <div style={{width:3,height:12,background:c,borderRadius:2}}/>
-        <span style={{fontSize:11,fontWeight:700,color:c}}>1. 입력</span>
+    <div style={{padding:'0 16px'}}>
+      {/* 입력 영역 */}
+      <div className="card" style={{padding:16,marginBottom:12}}>
+        <p style={{fontSize:13,fontWeight:700,color:'#1a1a2e',margin:'0 0 8px'}}>📝 테스트 기록 입력</p>
+        <p style={{fontSize:11,color:'#666',margin:'0 0 10px',lineHeight:1.5}}>카테고리 태그([행동특성], [진로] 등)를 앞에 붙여주세요. 6개 모델/설정으로 동시 생성됩니다.</p>
+        <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="[행동특성]&#10;학생의 관찰 기록을 입력하세요..." disabled={running} style={{width:'100%',minHeight:120,padding:10,border:'1px solid #ddd',borderRadius:8,fontSize:12,fontFamily:'inherit',lineHeight:1.5,resize:'vertical',boxSizing:'border-box'}}/>
+        <div style={{display:'flex',gap:8,marginTop:10,fontSize:10,color:'#999'}}>
+          <span>글자 수: {text.length}</span>
+          <span>·</span>
+          <span>바이트: {new Blob([text]).size}</span>
+        </div>
       </div>
-      
-      <div className="card" style={{padding:14,marginBottom:16,border:'1.5px solid #e1bee7'}}>
-        {/* 카테고리 선택 */}
-        <p style={{fontSize:11,fontWeight:700,color:'#555',margin:'0 0 6px'}}>항목 선택</p>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5,marginBottom:12}}>
-          {Object.keys(CATEGORY_LABEL).map(k=>(
-            <button key={k} onClick={()=>setCategory(k)}
-              style={{padding:'8px',fontSize:11,fontWeight:700,borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',
-                background:category===k?c:'#f3e5f5',color:category===k?'#fff':'#666'}}>
-              {CATEGORY_LABEL[k]}
-            </button>
+
+      {/* 테스트 옵션 설명 */}
+      <div className="card" style={{padding:12,marginBottom:12,background:'#f9f9fb'}}>
+        <p style={{fontSize:11,fontWeight:700,color:'#1a1a2e',margin:'0 0 6px'}}>🧪 테스트 설정 (6개 병렬 생성)</p>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+          {TESTS.map(t=>(
+            <div key={t.id} style={{display:'flex',alignItems:'center',gap:6,padding:'4px 6px',background:'white',borderRadius:6,border:'1px solid #eee'}}>
+              <div style={{width:6,height:6,borderRadius:'50%',background:t.color,flexShrink:0}}/>
+              <div style={{flex:1,minWidth:0}}>
+                <p style={{fontSize:10,fontWeight:700,color:'#333',margin:0}}>{t.label}</p>
+                <p style={{fontSize:9,color:'#999',margin:0}}>{t.sub}</p>
+              </div>
+            </div>
           ))}
         </div>
-        
-        {/* 학생 기록 입력 */}
-        <p style={{fontSize:11,fontWeight:700,color:'#555',margin:'0 0 6px'}}>학생 기록</p>
-        <textarea value={text} onChange={e=>setText(e.target.value)}
-          placeholder="학생 활동 기록을 입력하세요. 예: 학급 부반장으로서 또래 상담 활동을 자발적으로 진행하며..."
-          style={{width:'100%',minHeight:120,padding:10,fontSize:12,borderRadius:8,border:'1.5px solid #e1bee7',background:'#fafafa',fontFamily:'inherit',resize:'vertical',outline:'none',color:'#333',boxSizing:'border-box'}}/>
-        <p style={{fontSize:9,color:'#999',margin:'4px 0 0',textAlign:'right'}}>{text.length}자</p>
       </div>
 
-      {/* ━━━ 생성 버튼 ━━━ */}
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-        <div style={{width:3,height:12,background:c,borderRadius:2}}/>
-        <span style={{fontSize:11,fontWeight:700,color:c}}>2. 생성</span>
-      </div>
-      
-      <button onClick={generateBoth} disabled={loadingOn||loadingOff}
-        style={{width:'100%',padding:14,fontSize:13,fontWeight:800,borderRadius:12,border:'none',background:(loadingOn||loadingOff)?'#ccc':`linear-gradient(135deg,${c},#6a1b9a)`,color:'#fff',cursor:(loadingOn||loadingOff)?'default':'pointer',fontFamily:'inherit',marginBottom:8}}>
-        {(loadingOn||loadingOff)?'생성 중...':'🚀 ON / OFF 둘 다 생성 (동시 비교)'}
+      {/* 실행 버튼 */}
+      <button onClick={runTests} disabled={running||!text.trim()} style={{width:'100%',padding:'14px',background:running||!text.trim()?'#ccc':`linear-gradient(135deg,${c},#004d40)`,color:'white',border:'none',borderRadius:10,fontSize:14,fontWeight:700,cursor:running||!text.trim()?'not-allowed':'pointer',fontFamily:'inherit',marginBottom:12,boxShadow:running||!text.trim()?'none':'0 3px 10px rgba(0,105,92,0.3)'}}>
+        {running?'생성 중...':'🚀 6개 모두 실행'}
       </button>
-      
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
-        <button onClick={()=>generate(true)} disabled={loadingOn}
-          style={{padding:10,fontSize:11,fontWeight:700,borderRadius:8,border:`1.5px solid #3949ab`,background:loadingOn?'#e0e0e0':'#fff',color:loadingOn?'#999':'#3949ab',cursor:loadingOn?'default':'pointer',fontFamily:'inherit'}}>
-          {loadingOn?'생성 중...':'🧠 Thinking ON만'}
-        </button>
-        <button onClick={()=>generate(false)} disabled={loadingOff}
-          style={{padding:10,fontSize:11,fontWeight:700,borderRadius:8,border:`1.5px solid #00695c`,background:loadingOff?'#e0e0e0':'#fff',color:loadingOff?'#999':'#00695c',cursor:loadingOff?'default':'pointer',fontFamily:'inherit'}}>
-          {loadingOff?'생성 중...':'⚡ Thinking OFF만'}
-        </button>
-      </div>
 
-      {/* ━━━ 비용 절감 요약 (둘 다 있을 때) ━━━ */}
-      {costDiff&&(
-        <div style={{background:'linear-gradient(135deg,#e8f5e9,#c8e6c9)',borderRadius:12,padding:14,border:'1.5px solid #81c784',marginBottom:16}}>
-          <p style={{fontSize:11,fontWeight:800,color:'#2e7d32',margin:'0 0 8px'}}>💰 비용 절감 분석</p>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
-            <div style={{textAlign:'center'}}>
-              <p style={{fontSize:9,color:'#666',margin:'0 0 3px',fontWeight:600}}>ON 비용</p>
-              <p style={{fontSize:14,color:'#3949ab',margin:0,fontWeight:900}}>{costDiff.onCost.toLocaleString()}원</p>
-            </div>
-            <div style={{textAlign:'center'}}>
-              <p style={{fontSize:9,color:'#666',margin:'0 0 3px',fontWeight:600}}>OFF 비용</p>
-              <p style={{fontSize:14,color:'#00695c',margin:0,fontWeight:900}}>{costDiff.offCost.toLocaleString()}원</p>
-            </div>
-            <div style={{textAlign:'center'}}>
-              <p style={{fontSize:9,color:'#666',margin:'0 0 3px',fontWeight:600}}>절감율</p>
-              <p style={{fontSize:14,color:'#c2185b',margin:0,fontWeight:900}}>{costSaving}%</p>
-            </div>
-          </div>
-          <p style={{fontSize:9,color:'#666',margin:'8px 0 0',textAlign:'center'}}>
-            속도 차이: OFF가 {Math.abs(costDiff.timeDiff/1000).toFixed(1)}초 {costDiff.timeDiff>0?'더 빠름':'더 느림'}
+      {/* 진행 상태 */}
+      {progress&&(
+        <div className="card" style={{padding:10,marginBottom:12,background:running?'#e0f2f1':'#e8f5e9',border:`1px solid ${running?'#80cbc4':'#a5d6a7'}`}}>
+          <p style={{fontSize:11,color:running?'#00695c':'#2e7d32',margin:0,fontWeight:600}}>
+            {running?<LoadingSpin/>:'✅ '}{progress}
           </p>
+          {running&&currentIdx>=0&&(
+            <div style={{marginTop:6,display:'flex',gap:3}}>
+              {TESTS.map((t,i)=>(
+                <div key={t.id} style={{flex:1,height:4,borderRadius:2,background:i<currentIdx?'#4caf50':(i===currentIdx?t.color:'#e0e0e0'),transition:'background 0.3s'}}/>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* ━━━ 결과 비교 ━━━ */}
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-        <div style={{width:3,height:12,background:c,borderRadius:2}}/>
-        <span style={{fontSize:11,fontWeight:700,color:c}}>3. 결과 비교</span>
-      </div>
-      
-      {/* Thinking ON */}
-      <div style={{marginBottom:14}}>
-        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
-          <span style={{fontSize:11,fontWeight:800,color:'#3949ab'}}>🧠 Thinking ON (기본)</span>
-          <span style={{fontSize:9,padding:'2px 6px',background:'#e8eaf6',color:'#3949ab',borderRadius:10,fontWeight:600}}>고품질</span>
-        </div>
-        {renderResultCard(resultOn,'ON','#3949ab')}
-      </div>
-      
-      {/* Thinking OFF */}
-      <div style={{marginBottom:14}}>
-        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
-          <span style={{fontSize:11,fontWeight:800,color:'#00695c'}}>⚡ Thinking OFF</span>
-          <span style={{fontSize:9,padding:'2px 6px',background:'#e0f2f1',color:'#00695c',borderRadius:10,fontWeight:600}}>저비용·고속</span>
-        </div>
-        {renderResultCard(resultOff,'OFF','#00695c')}
-      </div>
+      {/* 결과 카드들 */}
+      {results.length>0&&(
+        <div style={{marginBottom:12}}>
+          {results.map((r,idx)=>(
+            <div key={r.id} className="card" style={{padding:14,marginBottom:10,border:`2px solid ${r.error?'#ef5350':r.color}`,background:r.error?'#ffebee':'white'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8,gap:8}}>
+                <div style={{display:'flex',alignItems:'center',gap:6,minWidth:0,flex:1}}>
+                  <span style={{background:r.color,color:'white',fontSize:9,fontWeight:800,padding:'2px 6px',borderRadius:4,flexShrink:0}}>{idx+1}</span>
+                  <p style={{fontSize:13,fontWeight:700,color:'#1a1a2e',margin:0}}>{r.label}</p>
+                  <span style={{fontSize:10,color:'#999'}}>· {r.sub}</span>
+                </div>
+                {!r.error&&(
+                  <button onClick={()=>copyResult(r.result)} style={{fontSize:10,padding:'3px 8px',background:'#f5f5f5',border:'1px solid #ddd',borderRadius:4,cursor:'pointer',fontFamily:'inherit',color:'#666',flexShrink:0}}>📋 복사</button>
+                )}
+              </div>
+              {r.error?(
+                <p style={{fontSize:11,color:'#c62828',margin:0,fontWeight:600}}>❌ {r.error}</p>
+              ):(
+                <>
+                  <p style={{fontSize:12,color:'#333',margin:'0 0 8px',lineHeight:1.6,whiteSpace:'pre-wrap',wordBreak:'break-word'}}>{r.result}</p>
+                  <div style={{display:'flex',gap:10,fontSize:10,color:'#666',paddingTop:8,borderTop:'1px solid #eee'}}>
+                    <span>⏱ {r.elapsed}초</span>
+                    <span>·</span>
+                    <span>📊 {r.bytes} bytes</span>
+                    <span>·</span>
+                    <span>📝 {r.chars}자</span>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
 
-      {/* 안내 문구 */}
-      <div style={{background:'#fff3e0',borderRadius:10,padding:12,border:'1px solid #ffcc80',fontSize:10,color:'#e65100',lineHeight:1.6,marginTop:16}}>
-        💡 <b>판단 기준</b>: 두 결과의 내용과 품질이 비슷하면 OFF가 월등히 유리합니다 (비용 80%+ 절감, 속도 3배 빠름). 
-        만약 OFF가 눈에 띄게 품질이 떨어지거나 규칙을 어기면 ON 유지하세요.
-        <br/><br/>
-        📝 테스트 결과도 모두 API로그 시트에 기록되며, 용도 컬럼에 <code style={{background:'#fff',padding:'1px 4px',borderRadius:3}}>[NOTHINK]behavior</code> 형태로 구분 표시됩니다.
-      </div>
+          {/* 블라인드 채점용 출력 버튼 */}
+          {results.filter(r=>!r.error).length>=2&&(
+            <button onClick={()=>{
+              const out=shuffleAndLabel();
+              const ta=document.createElement('textarea');
+              ta.value=out;
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              alert('블라인드 채점용 텍스트가 복사되었습니다!\n\nClaude에게 붙여넣으면 A~F 라벨 + 정답 매핑이 포함되어 있어서 편리합니다.');
+            }} style={{width:'100%',padding:'12px',background:'#fff',color:c,border:`2px solid ${c}`,borderRadius:10,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
+              🎲 블라인드 채점용 랜덤 배치 텍스트 복사
+            </button>
+          )}
+        </div>
+      )}
     </div>
   </div>);
 }
-
-
-// ═══════════════════════════════════════════════════════════════
-// STEP 3. AdminHome에 버튼 추가 + 라우팅 연결
-// ═══════════════════════════════════════════════════════════════
-
-/*
-=== 3-1. AdminHome 파라미터에 onABTest 추가 ===
-
-기존:
-function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onABTest,onBack,onLogout}){
-
-변경:
-function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onABTest,onBack,onLogout}){
-
-
-=== 3-2. AdminHome 안, "API 사용량 분석" 버튼 다음에 새 버튼 추가 ===
-
-"API 사용량 분석" 버튼 (아래 `</div>` 로 끝나는 카드) 바로 다음에 이 코드 추가:
-
-      <div onClick={onABTest} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #00695c',background:'linear-gradient(135deg,#fff 0%,#e0f2f1 100%)',position:'relative'}}>
-        <div style={{width:42,height:42,background:'linear-gradient(135deg,#00695c,#004d40)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
-        </div>
-        <div style={{flex:1}}>
-          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>A/B 테스트 <span style={{fontSize:9,background:'#00695c',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:800,marginLeft:4}}>NEW</span></p>
-          <p style={{fontSize:11,color:'#999',margin:0}}>Thinking ON vs OFF 품질·비용 비교</p>
-        </div>
-        <svg width="14" height="14" fill="none" stroke="#00695c" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-      </div>
-
-
-
-
-[수정 1] AdminHome 호출하는 줄 찾기:
-
-기존:
-{isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onBack={goBackToRole} onLogout={logout}/>}
-
-변경 (onABTest 추가):
-{isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onABTest={()=>setView('adminABTest')} onBack={goBackToRole} onLogout={logout}/>}
-
-
-[수정 2] adminApiUsage 라우팅 줄 찾기:
-
-기존:
-{isAdmin&&view==='adminApiUsage'&&<AdminApiUsage onBack={()=>setView('home')} onLogout={logout}/>}
-
-바로 아래에 이 한 줄 추가:
-{isAdmin&&view==='adminABTest'&&<AdminABTest onBack={()=>setView('home')} onLogout={logout}/>}
-*/
 
 function AdminApiUsage({onBack,onLogout}){
   const c='#4a148c';
