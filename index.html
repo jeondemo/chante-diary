@@ -268,6 +268,8 @@ function AdminABTest({onBack,onLogout}){
 
   async function runTests(){
     if(!text.trim()){alert('테스트할 기록을 입력해주세요');return;}
+    // 행동특성 태그 자동 추가 (이미 있으면 중복 방지)
+    const taggedText=text.trim().startsWith('[행동특성]')?text.trim():'[행동특성]\n'+text.trim();
     setRunning(true);
     setResults([]);
     
@@ -279,7 +281,7 @@ function AdminABTest({onBack,onLogout}){
       const startTime=Date.now();
       
       try{
-        const data=await callAPI({action:'generateAITest',text:text,userInfo:{},thinkingBudget:t.budget,model:t.model});
+        const data=await callAPI({action:'generateAITest',text:taggedText,userInfo:{},thinkingBudget:t.budget,model:t.model});
         const elapsed=Math.round((Date.now()-startTime)/1000);
         
         if(data&&data.success&&data.result){
@@ -348,9 +350,9 @@ function AdminABTest({onBack,onLogout}){
     <div style={{padding:'0 16px'}}>
       {/* 입력 영역 */}
       <div className="card" style={{padding:16,marginBottom:12}}>
-        <p style={{fontSize:13,fontWeight:700,color:'#1a1a2e',margin:'0 0 8px'}}>📝 테스트 기록 입력</p>
-        <p style={{fontSize:11,color:'#666',margin:'0 0 10px',lineHeight:1.5}}>카테고리 태그([행동특성], [진로] 등)를 앞에 붙여주세요. 6개 모델/설정으로 동시 생성됩니다.</p>
-        <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="[행동특성]&#10;학생의 관찰 기록을 입력하세요..." disabled={running} style={{width:'100%',minHeight:120,padding:10,border:'1px solid #ddd',borderRadius:8,fontSize:12,fontFamily:'inherit',lineHeight:1.5,resize:'vertical',boxSizing:'border-box'}}/>
+        <p style={{fontSize:13,fontWeight:700,color:'#1a1a2e',margin:'0 0 8px'}}>📝 행동특성 테스트 기록 입력</p>
+        <p style={{fontSize:11,color:'#666',margin:'0 0 10px',lineHeight:1.5}}>행동특성 전용 모드 — 태그 자동 추가됨. 6개 모델/설정으로 순차 생성됩니다.</p>
+        <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="학생의 관찰 기록을 입력하세요. (예: 성실하고 책임감이 강하며, 체육 활동에서 탁월한 운동 신경을 보임...)" disabled={running} style={{width:'100%',minHeight:120,padding:10,border:'1px solid #ddd',borderRadius:8,fontSize:12,fontFamily:'inherit',lineHeight:1.5,resize:'vertical',boxSizing:'border-box'}}/>
         <div style={{display:'flex',gap:8,marginTop:10,fontSize:10,color:'#999'}}>
           <span>글자 수: {text.length}</span>
           <span>·</span>
