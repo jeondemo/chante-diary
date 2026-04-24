@@ -2923,7 +2923,6 @@ function StudentList({user,records,onSelect,onTeacherWrite,onBack}){
       setLoading(false);
     }
   },[]);
-  // 진로/자율 건수를 각각 계산
   const getCounts=(id)=>{
     const recs=records.filter(r=>String(r.studentId)===String(id));
     return {
@@ -2944,7 +2943,7 @@ function StudentList({user,records,onSelect,onTeacherWrite,onBack}){
         const sid=s.studentId||s.id;
         const c=getCounts(sid);
         const total=c.career+c.creative;
-        return(<div key={sid} className="card" style={{padding:'10px 12px',display:'flex',alignItems:'center',gap:8,width:'100%'}}>
+        return(<div key={sid} onClick={()=>onSelect({id:sid,name:s.name})} className="card active-btn" style={{padding:'10px 12px',display:'flex',alignItems:'center',gap:8,width:'100%',cursor:'pointer'}}>
           <span style={{fontSize:12,color:'#bbb',fontWeight:700,width:36,flexShrink:0}}>{s.number?s.number+'번':String(sid).slice(2)}</span>
           <span style={{fontSize:14,fontWeight:800,color:'#1a1a2e'}}>{s.name}</span>
           <button onClick={(e)=>{e.stopPropagation();onTeacherWrite({id:sid,name:s.name});}} style={{background:'#0a6e55',color:'white',border:'none',borderRadius:14,padding:'4px 9px',fontSize:10,fontWeight:700,cursor:'pointer',flexShrink:0,fontFamily:'inherit'}}>+담임작성</button>
@@ -2957,13 +2956,12 @@ function StudentList({user,records,onSelect,onTeacherWrite,onBack}){
           ):(
             <span style={{fontSize:11,background:'#f5f5f5',color:'#ccc',padding:'2px 8px',borderRadius:8,fontWeight:700}}>0건</span>
           )}
-          <div onClick={()=>onSelect({id:sid,name:s.name})} style={{cursor:'pointer',padding:'4px 2px',flexShrink:0}}><Arr/></div>
+          <div style={{padding:'4px 2px',flexShrink:0,pointerEvents:'none'}}><Arr/></div>
         </div>);
       })}
     </div>
   </div>);
 }
-
 function MyReportList({user,onBack}){
   const [reports,setReports]=useState([]),[loading,setLoading]=useState(true);
   const [openSubject,setOpenSubject]=useState(null),[openClass,setOpenClass]=useState(null);
