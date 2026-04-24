@@ -163,9 +163,9 @@ const STRUCTURED_FIELDS = {
     },
     {
       key: 'f2',
-      label: '나의 역할',
+      label: '나의 역할이나 활동',
       required: true,
-      placeholder: '그 속에서 내가 맡은 역할은?',
+      placeholder: '그 속에서 내가 맡은 역할이나 활동은?',
       hint: '개별 기여 · 담당 업무',
       examples: [
         '진행 담당으로 순서를 조율하고 의견을 정리함',
@@ -2046,6 +2046,435 @@ function StudentHome({user,records,loading,onCat,onBack,onLogout}){
 
 /* ── 간략화된 공통 컴포넌트들 ── */
 function RecordList({catId,records,onBack,onWrite,onDelete,onEdit}){const cat=CATS[catId];const list=records.filter(r=>r.categoryId===catId).sort((a,b)=>new Date(b.date)-new Date(a.date));return(<div style={{paddingBottom:100}}><div style={{background:cat.grad,padding:'20px 16px 30px'}}><button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 홈</button><h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>{cat.label}</h2></div><div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:10}}>{list.length===0&&<div className="card" style={{padding:'30px 16px',textAlign:'center',color:'#bbb'}}>아직 기록이 없습니다</div>}{list.map(r=>(<div key={r.id} className="card" style={{padding:'14px 16px'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}><span style={{fontSize:11,color:'#bbb'}}>{r.date}</span><div style={{display:'flex',gap:6}}><button onClick={()=>onEdit(r)} style={{background:'#e8eaf6',color:'#3949ab',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>수정</button><button onClick={()=>onDelete(r.id)} style={{background:'#fce4ec',color:'#e53935',border:'none',borderRadius:8,padding:'3px 8px',fontSize:11,fontWeight:700,cursor:'pointer'}}>삭제</button></div></div><p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 4px'}}>{r.title}</p><p style={{fontSize:12,color:'#888',margin:0,lineHeight:1.5}}>{r.content}</p></div>))}</div><button onClick={onWrite} style={{position:'fixed',bottom:90,right:20,width:52,height:52,borderRadius:'50%',background:cat.grad,border:'none',color:'white',fontSize:26,cursor:'pointer',boxShadow:'0 4px 20px rgba(0,0,0,0.2)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:40}}>+</button></div>);}
+
+// ───────────────────────────────────────────────────────────────
+// 영역별 컬러 헬퍼
+// ───────────────────────────────────────────────────────────────
+function getCategoryColor(catId) {
+  if (catId === 'career')   return { main:'#c2185b', dark:'#ad1457', light:'#fce4ec', border:'#f3cad8', grad:'linear-gradient(135deg,#c2185b,#ad1457)' };
+  if (catId === 'creative') return { main:'#00695c', dark:'#00524a', light:'#eef7f3', border:'#b8dfd4', grad:'linear-gradient(135deg,#00897b,#00695c)' };
+  if (catId === 'club')     return { main:'#e64a19', dark:'#bf360c', light:'#fff3ec', border:'#ffccb3', grad:'linear-gradient(135deg,#ef6c00,#e64a19)' };
+  if (catId === 'subject')  return { main:'#5c2fa0', dark:'#4a1e80', light:'#f3efff', border:'#d7c9ee', grad:'linear-gradient(135deg,#5c2fa0,#7c3aed)' };
+  return { main:'#999', dark:'#666', light:'#f5f5f5', border:'#ddd', grad:'linear-gradient(135deg,#999,#666)' };
+}
+ 
+ 
+// ───────────────────────────────────────────────────────────────
+// 구조화 입력 폼 — 모든 영역 공통
+// ───────────────────────────────────────────────────────────────
+// 사용법:
+// <StructuredWriteForm
+//   catId="creative"              // 영역 id (career/creative/club/subject)
+//   fixedSubject="학급 독서 토론회"  // (옵션) 교과·동아리는 과목/동아리명 고정
+//   editing={r}                    // (옵션) 수정 모드일 때 기존 레코드
+//   onSave={handler}
+//   onCancel={handler}
+// />
+// ───────────────────────────────────────────────────────────────
+function StructuredWriteForm({ catId, fixedSubject, editing, onSave, onCancel }) {
+  const color = getCategoryColor(catId);
+  const meta = CATEGORY_META[catId] || { label: '기록', emoji: '📝', tip: '' };
+  const fieldDefs = STRUCTURED_FIELDS[catId] || [];
+ 
+  // ─── state ───
+  const [date, setDate] = useState(editing?.date ? (typeof editing.date === 'string' ? editing.date.slice(0,10) : new Date(editing.date).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0]);
+  const [title, setTitle] = useState(editing?.fields?.title || editing?.subject || editing?.title || '');
+  const [f1, setF1] = useState(editing?.fields?.f1 || '');
+  const [f2, setF2] = useState(editing?.fields?.f2 || '');
+  const [f3, setF3] = useState(editing?.fields?.f3 || '');
+  const [f4, setF4] = useState(editing?.fields?.f4 || '');
+  const [f5, setF5] = useState(editing?.fields?.f5 || '');
+  const [activeField, setActiveField] = useState(null);
+  const [saving, setSaving] = useState(false);
+ 
+  // 랜덤 예시 (컴포넌트 마운트 시 한 번만 결정)
+  const [exampleIndices] = useState(() => fieldDefs.map(f => Math.floor(Math.random() * (f.examples?.length || 1))));
+ 
+  const fieldValues = { f1, f2, f3, f4, f5 };
+  const setFieldValue = (key, val) => {
+    if (key === 'f1') setF1(val);
+    else if (key === 'f2') setF2(val);
+    else if (key === 'f3') setF3(val);
+    else if (key === 'f4') setF4(val);
+    else if (key === 'f5') setF5(val);
+  };
+ 
+  // ─── 진행 상태 계산 ───
+  const completedRequired = fieldDefs.filter(f => f.required && fieldValues[f.key] && fieldValues[f.key].trim()).length;
+  const totalRequired = fieldDefs.filter(f => f.required).length;
+  const completedAll = fieldDefs.filter(f => fieldValues[f.key] && fieldValues[f.key].trim()).length;
+  const canSave = completedRequired === totalRequired && title.trim();
+ 
+  // ─── 미리보기 텍스트 ───
+  const previewText = buildIntegratedText({ f1, f2, f3, f4, f5 });
+  const previewBytes = new TextEncoder().encode(previewText).length;
+ 
+  // ─── 저장 처리 ───
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!canSave) return alert('필수 항목을 모두 입력해주세요!');
+    setSaving(true);
+ 
+    const fieldsObj = {
+      title: title.trim(),
+      f1: f1.trim(),
+      f2: f2.trim(),
+      f3: f3.trim(),
+      f4: f4.trim(),
+      f5: f5.trim()
+    };
+ 
+    const payload = editing
+      ? { ...editing, date, subject: fixedSubject || title.trim(), title: title.trim(), fields: fieldsObj }
+      : { categoryId: catId, date, subject: fixedSubject || title.trim(), title: title.trim(), fields: fieldsObj };
+ 
+    await onSave(payload);
+    setSaving(false);
+  };
+ 
+  return (
+    <div style={{ background: color.light, minHeight: '100%', paddingBottom: 30 }}>
+      {/* ─── 헤더 ─── */}
+      <div style={{ background: color.grad, padding: '22px 20px 36px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', bottom: -1, left: 0, right: 0, lineHeight: 0, zIndex: 2 }}>
+          <svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display: 'block', width: '100%' }}>
+            <path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={color.light} />
+          </svg>
+        </div>
+        <div style={{ position: 'relative', zIndex: 3 }}>
+          <button onClick={onCancel} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 20, padding: '5px 12px', height: 26, fontSize: 11, color: 'rgba(255,255,255,0.9)', fontWeight: 500, cursor: 'pointer', marginBottom: 14, fontFamily: 'inherit' }}>
+            <svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            목록으로
+          </button>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: '0 0 2px', fontWeight: 600 }}>{meta.emoji} {meta.label}{fixedSubject ? ' · ' + fixedSubject : ''}</p>
+          <h1 style={{ fontSize: 20, fontWeight: 900, color: 'white', margin: 0 }}>{editing ? '기록 수정' : '새 기록 작성'}</h1>
+        </div>
+      </div>
+ 
+      <div style={{ padding: '12px 14px' }}>
+        {/* ─── 진행 스텝 바 ─── */}
+        <div style={{ display: 'flex', gap: 4, padding: '0 2px', margin: '4px 0 6px' }}>
+          {fieldDefs.map((f, idx) => {
+            const done = fieldValues[f.key] && fieldValues[f.key].trim();
+            const active = activeField === f.key;
+            return (
+              <div key={f.key} style={{
+                flex: 1,
+                height: 4,
+                borderRadius: 2,
+                background: done ? color.dark : (active ? color.main : '#dfeae5'),
+                transition: 'background 0.3s'
+              }}/>
+            );
+          })}
+        </div>
+        <p style={{ fontSize: 10, color: '#999', margin: '0 0 10px', textAlign: 'center' }}>
+          필수 {completedRequired}/{totalRequired} · 재료 {completedAll}/{fieldDefs.length} 완성
+        </p>
+ 
+        {/* ─── 영역 팁 카드 ─── */}
+        <div style={{ background: 'linear-gradient(135deg,#fffbeb,#fff8e1)', border: '1px solid #ffd54f', borderRadius: 12, padding: '10px 12px', marginBottom: 10, display: 'flex', gap: 9, alignItems: 'flex-start' }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>💡</span>
+          <div>
+            <p style={{ fontSize: 11, color: '#8d6e00', fontWeight: 900, margin: '0 0 3px' }}>{meta.label} 작성 팁</p>
+            <p style={{ fontSize: 10, color: '#bf8700', margin: 0, lineHeight: 1.55 }}>{meta.tip}. 핵심만 간결하게!</p>
+          </div>
+        </div>
+ 
+        <form onSubmit={submit}>
+          {/* ─── 날짜 + 활동명 ─── */}
+          <div style={{ background: 'white', borderRadius: 12, padding: '10px 13px', marginBottom: 8, border: `1.5px solid ${color.border}` }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 9, fontWeight: 700, color: color.main, margin: '0 0 2px' }}>날짜</p>
+                <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ background: 'transparent', border: 'none', padding: 0, fontSize: 12, color: '#1a1a2e', width: '100%', outline: 'none', fontFamily: 'inherit', fontWeight: 600 }}/>
+              </div>
+              <div style={{ flex: 1.4 }}>
+                <p style={{ fontSize: 9, fontWeight: 700, color: color.main, margin: '0 0 2px' }}>{fixedSubject ? (catId === 'subject' ? '학습 주제' : '활동명') : '활동명'}</p>
+                <input type="text" placeholder={fixedSubject ? '이번 활동의 주제' : '예: 학급 체육대회'} value={title} onChange={e => setTitle(e.target.value)} style={{ background: 'transparent', border: 'none', padding: 0, fontSize: 12, color: '#1a1a2e', width: '100%', outline: 'none', fontFamily: 'inherit', fontWeight: 600 }}/>
+              </div>
+            </div>
+          </div>
+ 
+          {/* ─── 필드 5개 ─── */}
+          {fieldDefs.map((f, idx) => {
+            const value = fieldValues[f.key];
+            const isDone = value && value.trim();
+            const isActive = activeField === f.key;
+            const charCount = (value || '').length;
+            const countStatus = charCount === 0 ? null : (charCount < 15 ? 'short' : charCount > 100 ? 'long' : 'ok');
+            const currentExample = f.examples[exampleIndices[idx]] || '';
+ 
+            return (
+              <div key={f.key} style={{
+                background: 'white',
+                borderRadius: 13,
+                padding: 13,
+                marginBottom: 8,
+                border: `1.5px solid ${isActive ? color.main : color.border}`,
+                boxShadow: isActive ? `0 2px 10px ${color.main}22` : 'none',
+                transition: 'all 0.2s'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: '50%',
+                    fontSize: 11, fontWeight: 900,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                    background: isDone ? color.main : (isActive ? color.light : '#f0f4f2'),
+                    color: isDone ? 'white' : (isActive ? color.main : '#999')
+                  }}>
+                    {isDone ? '✓' : (idx + 1)}
+                  </div>
+                  <p style={{ fontSize: 12, fontWeight: 800, color: '#1a1a2e', margin: 0, flex: 1, lineHeight: 1.3 }}>
+                    {['①','②','③','④','⑤'][idx]} {f.label}
+                  </p>
+                  <span style={{
+                    fontSize: 9,
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                    fontWeight: 700,
+                    flexShrink: 0,
+                    color: f.required ? '#e53935' : '#999',
+                    background: f.required ? '#fce4ec' : '#f0f0f0'
+                  }}>
+                    {f.required ? '필수' : '선택'}
+                  </span>
+                </div>
+ 
+                {/* 예시 문구 */}
+                {!isDone && (
+                  <div style={{
+                    background: color.light,
+                    borderLeft: `2px solid ${color.main}`,
+                    padding: '6px 9px',
+                    margin: '4px 0 7px',
+                    borderRadius: '0 5px 5px 0',
+                    fontSize: 10,
+                    lineHeight: 1.5,
+                    fontStyle: 'italic',
+                    color: color.dark
+                  }}>
+                    💡 예) {currentExample}
+                  </div>
+                )}
+ 
+                {/* 입력 필드 */}
+                <textarea
+                  value={value}
+                  onChange={e => setFieldValue(f.key, e.target.value)}
+                  onFocus={() => setActiveField(f.key)}
+                  onBlur={() => setActiveField(null)}
+                  placeholder={f.placeholder}
+                  rows="2"
+                  style={{
+                    background: isActive ? 'white' : '#f5faf8',
+                    border: `1px solid ${color.border}`,
+                    borderRadius: 9,
+                    padding: '9px 11px',
+                    fontSize: 12,
+                    color: '#1a1a2e',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    width: '100%',
+                    resize: 'none',
+                    lineHeight: 1.6
+                  }}
+                />
+ 
+                {/* 글자수 가이드 */}
+                {isDone && (
+                  <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{
+                      fontSize: 9,
+                      fontWeight: 700,
+                      padding: '2px 7px',
+                      borderRadius: 4,
+                      background: countStatus === 'ok' ? '#e8f5e9' : countStatus === 'short' ? '#fff3e0' : '#fce4ec',
+                      color: countStatus === 'ok' ? '#2e7d32' : countStatus === 'short' ? '#e65100' : '#c2185b'
+                    }}>
+                      {charCount}자 · {countStatus === 'ok' ? '적절' : countStatus === 'short' ? '조금 짧음' : '너무 길어요'}
+                    </span>
+                    <span style={{ fontSize: 9, color: '#999', fontStyle: 'italic' }}>{f.hint}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+ 
+          {/* ─── 실시간 미리보기 ─── */}
+          {previewText && (
+            <div style={{
+              background: `linear-gradient(135deg,${color.light},#fff)`,
+              border: `1.5px solid ${color.main}`,
+              borderRadius: 13,
+              padding: 13,
+              marginBottom: 10
+            }}>
+              <p style={{ fontSize: 11, fontWeight: 800, margin: '0 0 7px', display: 'flex', alignItems: 'center', gap: 5, color: color.main }}>
+                <span style={{ width: 3, height: 10, background: color.main, borderRadius: 2 }}/>
+                🔗 저장될 통합 기록
+              </p>
+              <p style={{ fontSize: 11, color: '#444', lineHeight: 1.7, margin: 0, background: 'white', padding: '9px 11px', borderRadius: 8 }}>{previewText}</p>
+              <div style={{ display: 'flex', gap: 5, marginTop: 7, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 5, fontWeight: 700, background: color.light, color: color.main }}>{previewBytes} bytes</span>
+                <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 5, fontWeight: 700, background: color.light, color: color.main }}>재료 {completedAll}/{fieldDefs.length}</span>
+                {completedAll >= 4 && <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 5, fontWeight: 700, background: color.light, color: color.main }}>품질 우수</span>}
+              </div>
+            </div>
+          )}
+ 
+          {/* ─── 저장 버튼 ─── */}
+          <button
+            type="submit"
+            disabled={!canSave || saving}
+            style={{
+              width: '100%',
+              padding: 12,
+              borderRadius: 12,
+              border: 'none',
+              color: 'white',
+              fontSize: 13,
+              fontWeight: 900,
+              cursor: canSave ? 'pointer' : 'not-allowed',
+              fontFamily: 'inherit',
+              background: canSave ? color.grad : '#ccc',
+              opacity: saving ? 0.6 : 1
+            }}
+          >
+            {saving ? <Spin/> : (editing ? '수정 완료' : '저장하기')}
+          </button>
+ 
+          {/* 필수 미완료 시 안내 */}
+          {!canSave && !saving && (
+            <p style={{ fontSize: 10, color: '#e65100', textAlign: 'center', margin: '8px 0 0', fontWeight: 600 }}>
+              {!title.trim() && '활동명과 '}필수 필드 {totalRequired - completedRequired}개를 더 채워주세요
+            </p>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+}
+ 
+ 
+// ───────────────────────────────────────────────────────────────
+// 재료 태그 + 품질 바 카드 (리스트에서 사용)
+// ───────────────────────────────────────────────────────────────
+// 사용법:
+// <StructuredRecordCard
+//   record={r}
+//   catId="creative"
+//   onEdit={handler}
+//   onDelete={handler}
+// />
+// ───────────────────────────────────────────────────────────────
+function StructuredRecordCard({ record, catId, onEdit, onDelete }) {
+  const color = getCategoryColor(catId);
+  const fieldDefs = STRUCTURED_FIELDS[catId] || [];
+  const hasFields = record.fields && typeof record.fields === 'object';
+  const completedCount = hasFields ? countMaterials(record.fields) : 0;
+  const qualityPct = hasFields ? (completedCount / fieldDefs.length) * 100 : 0;
+  const qualityLabel = completedCount === 5 ? '완벽 · 5/5' : completedCount === 4 ? '우수 · 4/5' : completedCount === 3 ? '양호 · 3/5' : completedCount >= 1 ? `보완 필요 · ${completedCount}/5` : '기존 기록';
+ 
+  const title = hasFields ? (record.fields.title || record.subject || '(제목없음)') : (record.title || record.subject || record.unit || '(제목없음)');
+  const previewText = hasFields ? buildIntegratedText(record.fields) : (record.content || record.learned || '');
+ 
+  // 날짜 포맷팅
+  let dateLabel = '';
+  try {
+    const d = typeof record.date === 'string' ? record.date : new Date(record.date).toISOString();
+    dateLabel = d.slice(5,10).replace('-', '/');
+  } catch(e) {
+    dateLabel = '';
+  }
+ 
+  return (
+    <div style={{
+      background: hasFields && completedCount >= 4 ? `linear-gradient(135deg,${color.light},#fff)` : 'white',
+      borderRadius: 13,
+      padding: '12px 14px',
+      marginBottom: 7,
+      border: hasFields && completedCount >= 4 ? `1.5px solid ${color.main}` : '1px solid #e5e5e5',
+      position: 'relative'
+    }}>
+      {/* 상단: 날짜 + 제목 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <span style={{ background: color.light, color: color.main, fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 6, flexShrink: 0 }}>{dateLabel}</span>
+        <span style={{ fontSize: 13, fontWeight: 800, color: '#1a1a2e', flex: 1, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
+      </div>
+ 
+      {/* 재료 태그 (구조화 기록만) */}
+      {hasFields && (
+        <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
+          {fieldDefs.map(f => {
+            const has = record.fields[f.key] && String(record.fields[f.key]).trim();
+            const shortLabel = f.label.split(' ')[0].replace(/[·\s]/g, '').slice(0, 3);
+            return (
+              <span key={f.key} style={{
+                fontSize: 9,
+                padding: '2px 7px',
+                borderRadius: 4,
+                fontWeight: 700,
+                background: has ? color.light : '#f5f5f5',
+                color: has ? color.main : '#bbb',
+                textDecoration: has ? 'none' : 'line-through'
+              }}>
+                {has && <span style={{ marginRight: 3 }}>✓</span>}{shortLabel}
+              </span>
+            );
+          })}
+        </div>
+      )}
+ 
+      {/* 기존 기록 뱃지 */}
+      {!hasFields && (
+        <div style={{ marginBottom: 6 }}>
+          <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 4, fontWeight: 700, background: '#f5f5f5', color: '#999' }}>기존 기록</span>
+        </div>
+      )}
+ 
+      {/* 프리뷰 */}
+      {previewText && (
+        <p style={{
+          fontSize: 11,
+          color: '#666',
+          margin: 0,
+          lineHeight: 1.5,
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden'
+        }}>{previewText}</p>
+      )}
+ 
+      {/* 품질 바 */}
+      {hasFields && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+          <div style={{ flex: 1, height: 4, background: '#eef3f1', borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: qualityPct + '%', background: color.grad, borderRadius: 2, transition: 'width 0.3s' }}/>
+          </div>
+          <span style={{ fontSize: 9, color: '#888', fontWeight: 700 }}>{qualityLabel}</span>
+        </div>
+      )}
+ 
+      {/* 하단: 수정/삭제 버튼 */}
+      <div style={{ display: 'flex', gap: 5, marginTop: 8, paddingTop: 8, borderTop: '1px solid #f5f5f5' }}>
+        {hasFields ? (
+          <>
+            <button onClick={() => onEdit(record)} style={{ background: '#e8eaf6', color: '#3949ab', border: 'none', borderRadius: 7, padding: '3px 9px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>수정</button>
+            <button onClick={() => onDelete(record.id)} style={{ background: '#fce4ec', color: '#e53935', border: 'none', borderRadius: 7, padding: '3px 9px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>삭제</button>
+          </>
+        ) : (
+          <>
+            <span style={{ fontSize: 9, color: '#999', padding: '3px 9px', fontStyle: 'italic' }}>읽기 전용 (수정 불가)</span>
+            <button onClick={() => onDelete(record.id)} style={{ background: '#fce4ec', color: '#e53935', border: 'none', borderRadius: 7, padding: '3px 9px', fontSize: 10, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}>삭제</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function WriteForm({catId,onSave,onCancel,editing}){const[date,setDate]=useState(editing?.date||new Date().toISOString().split('T')[0]);const[title,setTitle]=useState(editing?.title||'');const[content,setContent]=useState(editing?.content||'');const[loading,setLoading]=useState(false);const cat=CATS[catId];const submit=async e=>{e.preventDefault();if(!title||!content)return alert('모두 입력하세요!');setLoading(true);await onSave(editing?{...editing,date,title,content}:{categoryId:catId,date,title,content});setLoading(false);};return(<div style={{padding:16}}><button onClick={onCancel} style={{background:'none',border:'none',color:'#999',cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4,fontSize:13}}><Back/>목록으로</button><div className="card" style={{padding:20}}><h3 style={{fontSize:16,fontWeight:900,color:'#1a1a2e',margin:'0 0 16px'}}>{cat.label} {editing?'수정':'기록'}</h3><form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}><div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>날짜</p><input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div><div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>활동명</p><input className="input" type="text" placeholder="활동명" value={title} onChange={e=>setTitle(e.target.value)}/></div><div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>내용</p><textarea className="input" rows="5" placeholder="자세히 기록할수록 좋은 생기부가 만들어져요" value={content} onChange={e=>setContent(e.target.value)} style={{resize:'none',lineHeight:1.6}}/></div><button type="submit" className="btn-pink" disabled={loading} style={{background:cat.grad}}>{loading?<Spin/>:(editing?'수정 완료':'저장하기')}</button></form></div></div>);}
 
