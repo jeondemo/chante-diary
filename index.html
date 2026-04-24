@@ -2192,7 +2192,7 @@ function StructuredWriteForm({ catId, fixedSubject, editing, onSave, onCancel })
               </div>
               <div style={{ flex: 1.4 }}>
                 <p style={{ fontSize: 9, fontWeight: 700, color: color.main, margin: '0 0 2px' }}>{fixedSubject ? (catId === 'subject' ? '학습 주제' : '활동명') : '활동명'}</p>
-                <input type="text" placeholder={catId==='career'?'예: 직업탐구':catId==='creative'?'예: 사회적 장애인식 개선교육':catId==='subject'?'예: 수업 활동의 주제':catId==='club'?'예: 이번 동아리활동의 주제':'활동명'} value={title} onChange={e => setTitle(e.target.value)} style={{ background: 'transparent', border: 'none', padding: 0, fontSize: 12, color: '#1a1a2e', width: '100%', outline: 'none', fontFamily: 'inherit', fontWeight: 600 }}/>
+                <input type="text" placeholder={catId==='career'?'예: 직업탐구활동':catId==='creative'?'예: 사회적 장애인식 개선교육':catId==='subject'?'예: 수업 활동의 주제':catId==='club'?'예: 이번 동아리활동의 주제':'활동명'} value={title} onChange={e => setTitle(e.target.value)} style={{ background: 'transparent', border: 'none', padding: 0, fontSize: 12, color: '#1a1a2e', width: '100%', outline: 'none', fontFamily: 'inherit', fontWeight: 600 }}/>
               </div>
             </div>
           </div>
