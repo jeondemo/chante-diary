@@ -2537,7 +2537,6 @@ function ClubStudentList({user,records,onSelect,onTeacherWrite,onImportStudents,
     }).catch(()=>{setApplicants([]);setLoading(false);});
   },[refreshKey]);
 
-  // 각 학생의 동아리 기록 건수 계산
   const getCount=(sid)=>records.filter(r=>r.categoryId==='club'&&String(r.studentId)===String(sid)&&clubNames.includes(String(r.subject||'').trim())).length;
 
   return(<div style={{background:'#fbe9e7',minHeight:'100%',paddingBottom:20}}>
@@ -2550,7 +2549,6 @@ function ClubStudentList({user,records,onSelect,onTeacherWrite,onImportStudents,
       </div>
     </div>
     <div style={{padding:'12px 16px 0'}}>
-      {/* 학생 가지고 오기 버튼 */}
       <div onClick={onImportStudents} className="active-btn" style={{background:'#fbe9e7',border:'1.5px dashed #ff7043',borderRadius:12,padding:'10px 12px',display:'flex',alignItems:'center',gap:10,marginBottom:10,cursor:'pointer'}}>
         <div style={{width:28,height:28,background:'white',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
           <svg width="14" height="14" fill="none" stroke="#e64a19" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14"/></svg>
@@ -2570,7 +2568,7 @@ function ClubStudentList({user,records,onSelect,onTeacherWrite,onImportStudents,
         const cnt=getCount(a.studentId);
         const gLabel=String(a.studentId).slice(0,1);
         const cLabel=String(parseInt(String(a.studentId).slice(1,2)));
-        return(<div key={a.studentId} className="card" style={{padding:'10px 12px',display:'flex',alignItems:'center',gap:8,marginBottom:6,border:'0.5px solid #ffccbc'}}>
+        return(<div key={a.studentId} onClick={()=>onSelect({id:a.studentId,name:a.name,club:a.club})} className="card active-btn" style={{padding:'10px 12px',display:'flex',alignItems:'center',gap:8,marginBottom:6,border:'0.5px solid #ffccbc',cursor:'pointer'}}>
           <div style={{width:30,height:30,background:'linear-gradient(135deg,#fbe9e7,#ffccbc)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:'#e64a19',flexShrink:0}}>{a.name[0]}</div>
           <span style={{fontSize:10,color:'#bbb',fontWeight:700,flexShrink:0}}>{gLabel}학년 {cLabel}반</span>
           <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>{a.name}</span>
@@ -2580,7 +2578,7 @@ function ClubStudentList({user,records,onSelect,onTeacherWrite,onImportStudents,
             ?<span style={{fontSize:10,background:'#fbe9e7',color:'#e64a19',padding:'2px 7px',borderRadius:8,fontWeight:700,flexShrink:0}}>{cnt}건</span>
             :<span style={{fontSize:10,background:'#f5f5f5',color:'#ccc',padding:'2px 7px',borderRadius:8,fontWeight:700,flexShrink:0}}>0건</span>
           }
-          <div onClick={()=>onSelect({id:a.studentId,name:a.name,club:a.club})} style={{cursor:'pointer',padding:'4px 2px',flexShrink:0}}>
+          <div style={{padding:'4px 2px',flexShrink:0,pointerEvents:'none'}}>
             <svg width="11" height="11" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
           </div>
         </div>);
