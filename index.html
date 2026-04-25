@@ -1491,17 +1491,13 @@ function AdminAIStats({onBack,onLogout}){
   if(!data)return(<div style={{background:phoneBg,minHeight:'100%',padding:40,textAlign:'center',color:'#999'}}>데이터 없음</div>);
 
   const modelNames={
-    'gemini-2.5-pro':'Gemini 2.5 Pro ⭐',
-    'gemini-2.5-flash':'Gemini 2.5 Flash',
-    'gemini-flash-latest':'Flash Latest',
-    'gpt-4o-mini':'GPT-4o Mini'
-  };
-  const modelColors={
-    'gemini-2.5-pro':'#c2185b',
-    'gemini-2.5-flash':'#3949ab',
-    'gemini-flash-latest':'#7b1fa2',
-    'gpt-4o-mini':'#00695c'
-  };
+  'gemini-2.5-pro':'Gemini 2.5 Pro ⭐',
+  'gemini-2.5-flash':'Gemini 2.5 Flash'
+};
+const modelColors={
+  'gemini-2.5-pro':'#c2185b',
+  'gemini-2.5-flash':'#3949ab'
+};
   const reasonNames={
     'overloaded':'AI 서버 과부하',
     'unknown':'알 수 없는 오류'
