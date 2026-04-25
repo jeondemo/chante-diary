@@ -3652,7 +3652,7 @@ function AIProgressOverlay() {
     finishing: {
       title: '거의 다 완성됐어요!',
       message: '생기부 초안이 완성되어 마무리 검토 중이에요',
-      tip: '✨ 거의 완성됐어요! 1,500byte 분량과 규칙 준수를 확인 중이에요.',
+      tip: '✨ 거의 완성됐어요! 1,400~1,500byte 분량과 규칙 준수를 확인 중이에요.',
     },
   }[phase];
 
@@ -3699,7 +3699,7 @@ function AIProgressOverlay() {
     logs.push({ icon: '✅', text: '프롬프트 분석중', done: true });
     logs.push({ icon: '✅', text: '프롬프트 구성중', done: true });
     logs.push({ icon: '✅', text: 'AI 응답 수신 완료', done: true });
-    logs.push({ icon: '⏳', text: '1,250~1,450byte 분량 검증 중', animated: true });
+    logs.push({ icon: '⏳', text: '1,400~1,500byte 분량 검증 중', animated: true });
   }
   return (
     <div style={{
