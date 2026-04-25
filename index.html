@@ -948,16 +948,16 @@ function AdminHome({user,isCaptain,onUnregistered,onUnregisteredTeachers,onClass
           <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>가입 안 한 학생 조회</p>
           <p style={{fontSize:11,color:'#999',margin:0}}>학생명단에 있지만 앱 가입 안 한 학생</p>
         </div>
-        <div onClick={onUnregisteredTeachers} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
-  <div style={{width:42,height:42,background:'linear-gradient(135deg,#ec407a,#c2185b)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-    <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-  </div>
-  <div style={{flex:1}}>
-    <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>가입 안 한 교사 조회</p>
-    <p style={{fontSize:11,color:'#999',margin:0}}>교사명단에 있지만 앱 가입 안 한 선생님</p>
-  </div>
-  <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-</div>
+        <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      <div onClick={onUnregisteredTeachers} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#ec407a,#c2185b)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>가입 안 한 교사 조회</p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>교사명단에 있지만 앱 가입 안 한 선생님</p>
+        </div>
         <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
       </div>
       <div onClick={onClassStats} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
