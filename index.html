@@ -3619,8 +3619,22 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onTeacherWrit
               </div>
               <span style={{fontSize:10,color:'#ccc'}}>{r.date}</span>
             </div>
-            <p style={{fontSize:13,fontWeight:700,color:'#1a1a2e',margin:'0 0 4px'}}>{r.title}</p>
-            {r.content&&<p style={{fontSize:11,color:'#666',margin:0,lineHeight:1.6}}>{r.content}</p>}
+            <p style={{fontSize:13,fontWeight:700,color:'#1a1a2e',margin:'0 0 4px'}}>{r.fields?.title||r.title||r.subject||'(제목없음)'}</p>
+{(()=>{
+  // 구조화 기록이면 f1~f5를 합쳐서 표시
+  if(r.fields){
+    const parts=[];
+    for(let i=1;i<=5;i++){
+      const v=r.fields['f'+i];
+      if(v&&String(v).trim())parts.push(String(v).trim());
+    }
+    if(parts.length>0)return <p style={{fontSize:11,color:'#666',margin:0,lineHeight:1.6}}>{parts.join(' ')}</p>;
+  }
+  // 일반 기록이면 content 또는 learned
+  const text=r.content||r.learned||'';
+  if(text)return <p style={{fontSize:11,color:'#666',margin:0,lineHeight:1.6}}>{text}</p>;
+  return null;
+})()}
           </div>
           {onEdit&&onDelete&&(<div style={{display:'flex',gap:5,marginTop:8,paddingTop:8,borderTop:'1px solid #f5f5f5'}}>
             <button onClick={(e)=>{e.stopPropagation();onEdit(r);}} style={{background:'#e8eaf6',color:'#3949ab',border:'none',borderRadius:7,padding:'3px 9px',fontSize:10,fontWeight:700,cursor:'pointer'}}>수정</button>
