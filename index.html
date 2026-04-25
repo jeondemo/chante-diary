@@ -910,7 +910,7 @@ function KpiCard({label,value,color,bg}){
     </div>
   );
 }
-function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onBack,onLogout}){
+function AdminHome({user,isCaptain,onUnregistered,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onBack,onLogout}){
   const c='#4a148c';
   const phoneBg='#f4f0f9';
   return(<div style={{paddingBottom:20}}>
@@ -921,7 +921,7 @@ function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,
         <TopBar onLogout={onLogout}/>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
           <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button>
-          <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>ADMIN</span>
+          <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>{isCaptain?'CAPTAIN':'ADMIN'}</span>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
           <div style={{width:44,height:44,borderRadius:12,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -929,7 +929,7 @@ function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,
           </div>
           <div>
             <p style={{fontSize:22,fontWeight:900,color:'white',margin:'0 0 2px',lineHeight:1.1}}>{user.name||'관리자'}</p>
-            <p style={{fontSize:11,color:'rgba(255,255,255,0.75)',margin:0,fontWeight:600}}>시스템 관리자</p>
+            <p style={{fontSize:11,color:'rgba(255,255,255,0.75)',margin:0,fontWeight:600}}>{isCaptain?'학교장 · 전체 조회':'시스템 관리자'}</p>
           </div>
         </div>
       </div>
@@ -981,16 +981,16 @@ function AdminHome({user,onUnregistered,onClassStats,onAIStats,onTeacherRanking,
         </div>
         <svg width="14" height="14" fill="none" stroke="#c2185b" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
       </div>
-      <div onClick={onApiUsage} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #4a148c',background:'linear-gradient(135deg,#fff 0%,#ede7f6 100%)',position:'relative'}}>
-        <div style={{width:42,height:42,background:'linear-gradient(135deg,#4a148c,#6a1b9a)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        </div>
-        <div style={{flex:1}}>
-          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>API 사용량 분석 <span style={{fontSize:9,background:'#4a148c',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:800,marginLeft:4}}>NEW</span></p>
-          <p style={{fontSize:11,color:'#999',margin:0}}>토큰 · 비용 · 모델별 호출 이력</p>
-        </div>
-        <svg width="14" height="14" fill="none" stroke="#4a148c" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-      </div>
+      {!isCaptain && (<div onClick={onApiUsage} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #4a148c',background:'linear-gradient(135deg,#fff 0%,#ede7f6 100%)',position:'relative'}}>
+  <div style={{width:42,height:42,background:'linear-gradient(135deg,#4a148c,#6a1b9a)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+    <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+  </div>
+  <div style={{flex:1}}>
+    <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>API 사용량 분석 <span style={{fontSize:9,background:'#4a148c',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:800,marginLeft:4}}>NEW</span></p>
+    <p style={{fontSize:11,color:'#999',margin:0}}>토큰 · 비용 · 모델별 호출 이력</p>
+  </div>
+  <svg width="14" height="14" fill="none" stroke="#4a148c" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+</div>)}
       
       {/* AI 엔진 상태 카드 (하단으로 이동) */}
       <div style={{display:'flex',alignItems:'center',gap:8,margin:'20px 0 12px'}}>
@@ -1970,7 +1970,18 @@ function LoginScreen({role,onLogin,onBack}){
 
   const checkName=async()=>{if(!id.trim()||!name.trim()||!phone.trim())return alert('학번, 이름, 전화번호를 모두 입력해주세요!');setChecking(true);setMatch(null);try{const r=await callAPI({action:'lookupStudent',studentId:id.trim(),name:name.trim(),phone:phone.replace(/\D/g,'')});if(r.success)setMatch(true);else{setMatch(false);alert(r.message||'불일치');}}catch(e){setMatch(false);}setChecking(false);};
 
-  const submit=async(e)=>{e.preventDefault();if(!id.trim()||!pw.trim())return alert('입력해주세요!');if(mode==='register'&&!name.trim())return alert('이름을 입력해주세요!');if(mode==='register'&&isStudent&&!match)return alert('학번 확인이 필요합니다!');if(mode==='register'&&isTeacher&&!match)return alert('이름/인증코드 확인이 필요합니다!');setLoading(true);try{let res;if(mode==='login'){res=await callAPI({action:'login',studentId:id.trim(),password:pw,role});}else if(isStudent){res=await callAPI({action:'register',studentId:id.trim(),name:name.trim(),password:pw,role:'student'});}else if(isTeacher){const va=assigns.filter(a=>a.subject&&a.classes.size>0);const ad=va.length>0?JSON.stringify(va.map(a=>({subject:a.subject,classes:[...a.classes].sort()}))):'';;res=await callAPI({action:'registerTeacher',teacherId:id.trim(),name:name.trim(),password:pw,role:'teacher',grade:match?.grade||'',classNum:match?.classNum||'',assignments:ad});if(res.success)res.assignments=ad;}else{res=await callAPI({action:'registerTeacher',teacherId:id.trim(),name:name.trim(),password:pw,role:'career',grade:'',classNum:'',assignments:''});}if(res.success){if(mode==='login'){if(autoLogin)try{localStorage.setItem(storageKey,JSON.stringify({savedId:id.trim(),savedPw:pw}));}catch(e){}else if(saveId){try{localStorage.removeItem(storageKey);}catch(e){}try{localStorage.setItem(idKey,id.trim());}catch(e){}}else{try{localStorage.removeItem(storageKey);localStorage.removeItem(idKey);}catch(e){}}}onLogin({studentId:id.trim(),name:mode==='login'?res.name:name.trim(),role,homeroomClass:res.homeroomClass||(isTeacher&&match?match.homeroomClass:''),assignments:res.assignments||'',club:res.club||'',authToken:res.authToken||''});}else alert(res.message||'오류');}catch(e){alert('서버 오류');}setLoading(false);};
+  const submit=async(e)=>{e.preventDefault();if(!id.trim()||!pw.trim())return alert('입력해주세요!');if(mode==='register'&&!name.trim())return alert('이름을 입력해주세요!');if(mode==='register'&&isStudent&&!match)return alert('학번 확인이 필요합니다!');if(mode==='register'&&isTeacher&&!match)return alert('이름/인증코드 확인이 필요합니다!');setLoading(true);try{let res;if(mode==='login'){
+  // admin 화면에서는 admin과 captain 둘 다 시도
+  if(role==='admin'){
+    res=await callAPI({action:'login',studentId:id.trim(),password:pw,role:'admin'});
+    if(!res.success){
+      res=await callAPI({action:'login',studentId:id.trim(),password:pw,role:'captain'});
+    }
+  }else{
+    res=await callAPI({action:'login',studentId:id.trim(),password:pw,role});
+  }
+}
+else if(isStudent){res=await callAPI({action:'register',studentId:id.trim(),name:name.trim(),password:pw,role:'student'});}else if(isTeacher){const va=assigns.filter(a=>a.subject&&a.classes.size>0);const ad=va.length>0?JSON.stringify(va.map(a=>({subject:a.subject,classes:[...a.classes].sort()}))):'';;res=await callAPI({action:'registerTeacher',teacherId:id.trim(),name:name.trim(),password:pw,role:'teacher',grade:match?.grade||'',classNum:match?.classNum||'',assignments:ad});if(res.success)res.assignments=ad;}else{res=await callAPI({action:'registerTeacher',teacherId:id.trim(),name:name.trim(),password:pw,role:'career',grade:'',classNum:'',assignments:''});}if(res.success){if(mode==='login'){if(autoLogin)try{localStorage.setItem(storageKey,JSON.stringify({savedId:id.trim(),savedPw:pw}));}catch(e){}else if(saveId){try{localStorage.removeItem(storageKey);}catch(e){}try{localStorage.setItem(idKey,id.trim());}catch(e){}}else{try{localStorage.removeItem(storageKey);localStorage.removeItem(idKey);}catch(e){}}}onLogin({studentId:id.trim(),name:mode==='login'?res.name:name.trim(),role,homeroomClass:res.homeroomClass||(isTeacher&&match?match.homeroomClass:''),assignments:res.assignments||'',club:res.club||'',authToken:res.authToken||''});}else alert(res.message||'오류');}catch(e){alert('서버 오류');}setLoading(false);};
 
   if(loading&&autoLogin)return(<div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',background:phoneBg}}><div style={{textAlign:'center'}}><div style={{width:52,height:52,background:c,borderRadius:15,margin:'0 auto 14px',display:'flex',alignItems:'center',justifyContent:'center'}}><RoleIcon role={role}/></div><p style={{fontSize:14,fontWeight:700,color:c,margin:'0 0 8px'}}>자동 로그인 중...</p><Spin/></div></div>);
 
@@ -3967,7 +3978,8 @@ function App() {
   if(!role)return<div style={cs}><RoleScreen onSelect={setRole}/></div>;
   if(!user)return<div style={cs}><LoginScreen role={role} onLogin={login} onBack={()=>setRole(null)}/></div>;
 
-  const isStudent=user.role==='student',isTeacher=user.role==='teacher',isCareer=user.role==='career',isAdmin=user.role==='admin';
+  const isStudent=user.role==='student',isTeacher=user.role==='teacher',isCareer=user.role==='career',isAdmin=user.role==='admin'||user.role==='captain';
+const isCaptain=user.role==='captain';
   const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 
   return(<div style={cs}>
@@ -3996,13 +4008,13 @@ function App() {
 )}
 
       {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
-      {isAdmin&&view==='home'&&<AdminHome user={user} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onBack={goBackToRole} onLogout={logout}/>}
+      {isAdmin&&view==='home'&&<AdminHome user={user} isCaptain={isCaptain} onUnregistered={()=>setView('adminUnregistered')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='adminTeacherRanking'&&<AdminTeacherRanking onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminClassStats'&&<AdminClassStats onStudentClick={s=>{setSelStudent(s);setView('adminStudentRecords');}} onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminStudentRecords'&&selStudent&&<AdminStudentRecords student={selStudent} onBack={()=>{setSelStudent(null);setView('adminClassStats');}} onLogout={logout}/>}
       {isAdmin&&view==='adminAIStats'&&<AdminAIStats onBack={()=>setView('home')} onLogout={logout}/>}
-      {isAdmin&&view==='adminApiUsage'&&<AdminApiUsage onBack={()=>setView('home')} onLogout={logout}/>}
+      {isAdmin&&!isCaptain&&view==='adminApiUsage'&&<AdminApiUsage onBack={()=>setView('home')} onLogout={logout}/>}
       {(isTeacher||isCareer)&&view==='students'&&!selStudent&&!teacherWriteStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherWrite');}} onBack={()=>setView('home')}/>}
       {(isTeacher||isCareer)&&view==='ai'&&selStudent&&<AIReport student={selStudent} user={user} refreshKey={aiRefreshKey} onEdit={(r)=>{setTeacherWriteStudent(selStudent);setTeacherWriteEditing(r);setView('teacherWrite');}} onDelete={async(id)=>{if(!confirm('삭제할까요?'))return;try{await callAPI({action:'deleteRecord',recordId:id,studentId:selStudent.id});setAiRefreshKey(k=>k+1);fetchRecords(user);}catch(e){alert('삭제 실패');}}} onBack={()=>{setSelStudent(null);setView('students');}}/>}
       {(isTeacher||isCareer)&&view==='teacherWrite'&&teacherWriteStudent&&<TeacherWriteForm student={teacherWriteStudent} editing={teacherWriteEditing} onSave={async(data)=>{try{const payload={...data,studentId:teacherWriteStudent.id,name:teacherWriteStudent.name};const action=teacherWriteEditing?'updateRecord':'saveRecord';const r=await callAPI({action,record:payload});if(r.success){await fetchRecords(user);setAiRefreshKey(k=>k+1);setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'ai':'students');}else alert(r.message);}catch(e){alert('저장 실패');}}} onCancel={()=>{setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'ai':'students');}}/>}
