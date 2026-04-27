@@ -910,7 +910,7 @@ function KpiCard({label,value,color,bg}){
     </div>
   );
 }
-function AdminHome({user,isCaptain,onUnregistered,onUnregisteredTeachers,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onBack,onLogout}){
+function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTeachers,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onBack,onLogout}){
   const c='#4a148c';
   const phoneBg='#f4f0f9';
   return(<div style={{paddingBottom:20}}>
@@ -935,6 +935,17 @@ function AdminHome({user,isCaptain,onUnregistered,onUnregisteredTeachers,onClass
       </div>
     </div>
     <div style={{padding:'16px 14px'}}>
+    {/* 화면 전환 탭 */}
+      <div style={{background:'white',borderRadius:12,padding:'10px 12px',marginBottom:14,border:'1.5px solid #e1bee7'}}>
+        <p style={{fontSize:10,color:'#888',margin:'0 0 8px',fontWeight:700}}>👁️ 화면 미리보기</p>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
+          <div style={{background:'#4a148c',color:'white',padding:'8px 6px',borderRadius:8,textAlign:'center',fontSize:11,fontWeight:700}}>관리자</div>
+          <div onClick={()=>onSwitchRole('student')} className="active-btn" style={{background:'white',border:'1px solid #ddd',padding:'8px 6px',borderRadius:8,textAlign:'center',fontSize:11,fontWeight:600,color:'#666',cursor:'pointer'}}>🎓 학생</div>
+          <div onClick={()=>onSwitchRole('teacher')} className="active-btn" style={{background:'white',border:'1px solid #ddd',padding:'8px 6px',borderRadius:8,textAlign:'center',fontSize:11,fontWeight:600,color:'#666',cursor:'pointer'}}>👨‍🏫 교사</div>
+        </div>
+        <p style={{fontSize:9,color:'#bbb',margin:'8px 0 0',textAlign:'center'}}>학생·교사 화면을 보기 전용으로 미리볼 수 있습니다</p>
+      </div>
+    
       {/* 관리 메뉴 (상단으로 이동) */}
       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
         <div style={{width:3,height:12,background:c,borderRadius:2}}/>
@@ -4162,6 +4173,21 @@ function App() {
   // 세션 복원 시 records 로드
   useEffect(()=>{if(user&&records.length===0)fetchRecords(user);},[user]);
 
+  // admin 미리보기 시 records 다시 로드
+  useEffect(()=>{
+    if(isAdminPreview){
+      if(viewAsRole==='student'){
+        callAPI({action:'getRecords',studentId:'1101'}).then(res=>{
+          if(res.success)setRecords(res.records||[]);
+        });
+      }else if(viewAsRole==='teacher'){
+        callAPI({action:'getAllRecords',role:'teacher',grade:'1',classNum:'1',homeroomClass:'11',subjectClasses:[],studentId:user.studentId}).then(res=>{
+          if(res.success)setRecords(res.records||[]);
+        });
+      }
+    }
+  },[viewAsRole]);
+
   const goBackToRole=()=>{try{if(user)localStorage.removeItem(`autologin_${user.role}`);}catch(e){}setCurrentUser(null);setUser(null);setRole(null);setRecords([]);setView('home');setCatId(null);setSubject(null);setWriting(false);setEditing(null);setSelStudent(null);setSelAssignment(null);setSelClass(null);clearSession();};
   const logout=()=>goBackToRole();
 
@@ -4175,13 +4201,30 @@ function App() {
   if(!role)return<div style={cs}><RoleScreen onSelect={setRole}/></div>;
   if(!user)return<div style={cs}><LoginScreen role={role} onLogin={login} onBack={()=>setRole(null)}/></div>;
 
-  const isStudent=user.role==='student',isTeacher=user.role==='teacher',isCareer=user.role==='career',isAdmin=user.role==='admin'||user.role==='captain';
-const isCaptain=user.role==='captain';
+  const realRole=user.role;
+const isAdminReal=realRole==='admin'||realRole==='captain';
+const isCaptain=realRole==='captain';
+// admin 미리보기 시 가상 사용자 정보 생성
+const previewUser=isAdminPreview?(viewAsRole==='student'
+  ?{...user,role:'student',studentId:'1101',name:user.name+' (관리자)',grade:'1',classNum:'1',number:'1'}
+  :{...user,role:'teacher',studentId:user.studentId,name:user.name,grade:'1',classNum:'1',homeroomClass:'11',assignments:'',club:''}
+):user;
+const effectiveUser=isAdminPreview?previewUser:user;
+// admin이 학생/교사 미리보기 중인지
+const isAdminPreview=isAdminReal&&!!viewAsRole;
+const effectiveRole=viewAsRole||realRole;
+const isStudent=effectiveRole==='student',isTeacher=effectiveRole==='teacher',isCareer=effectiveRole==='career';
+const isAdmin=isAdminReal&&!viewAsRole;
   const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 
   return(<div style={cs}>
     <AIProgressOverlay/>
     <div className="no-scrollbar" style={{flex:1,overflowY:'scroll',minHeight:0,background:phoneBg,height:0}}>
+        {isAdminPreview&&<div style={{background:'#fff3e0',padding:'8px 12px',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid #ffcc80',position:'sticky',top:0,zIndex:100}}>
+    <span style={{fontSize:13}}>👁️</span>
+    <span style={{fontSize:11,color:'#e65100',fontWeight:700,flex:1}}>관리자가 {viewAsRole==='student'?'학생':'교사'} 화면을 보고 있습니다 (보기 전용)</span>
+    <button onClick={()=>{setViewAsRole(null);fetchRecords(user);}} style={{background:'#ff9800',color:'white',border:'none',padding:'4px 10px',borderRadius:12,fontSize:10,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>관리자로 ↩</button>
+  </div>}
       {isStudent&&view==='home'&&!catId&&<StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}} onBack={goBackToRole} onLogout={logout}/>}
       {isStudent&&view==='cat'&&catId!=='subject'&&catId!=='club'&&!writing&&<RecordList catId={catId} records={records} onBack={()=>{setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRec} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
       {isStudent&&view==='cat'&&catId!=='subject'&&catId!=='club'&&writing&&(
@@ -4205,7 +4248,7 @@ const isCaptain=user.role==='captain';
 )}
 
       {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
-      {isAdmin&&view==='home'&&<AdminHome user={user} isCaptain={isCaptain} onUnregistered={()=>setView('adminUnregistered')} onUnregisteredTeachers={()=>setView('adminUnregisteredTeachers')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onBack={goBackToRole} onLogout={logout}/>}
+      {isAdmin&&view==='home'&&<AdminHome user={user} isCaptain={isCaptain} onSwitchRole={(r)=>{setViewAsRole(r);setView('home');}} onUnregistered={()=>setView('adminUnregistered')} onUnregisteredTeachers={()=>setView('adminUnregisteredTeachers')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='adminTeacherRanking'&&<AdminTeacherRanking onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
 {isAdmin&&view==='adminUnregisteredTeachers'&&<AdminUnregisteredTeachers user={user} onBack={()=>setView('home')} onLogout={logout}/>}
