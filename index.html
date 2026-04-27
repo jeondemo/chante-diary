@@ -2055,7 +2055,13 @@ function RoleScreenBlue({onSelect}){
   </div>);
 }
 function LoginScreen({role,onLogin,onBack}){
-  const isStudent=role==='student',isTeacher=role==='teacher',isCareer=role==='career',isAdmin=role==='admin';
+  const realRole=user.role;
+const isAdminReal=realRole==='admin'||realRole==='captain';
+const isCaptain=realRole==='captain';
+const isAdminPreview=isAdminReal&&!!viewAsRole;
+const effectiveRole=viewAsRole||realRole;
+const isStudent=effectiveRole==='student',isTeacher=effectiveRole==='teacher',isCareer=effectiveRole==='career';
+const isAdmin=isAdminReal&&!viewAsRole;
   const [mode,setMode]=useState('login');
   const [id,setId]=useState(''),[name,setName]=useState(''),[pw,setPw]=useState(''),[phone,setPhone]=useState('');
   const [match,setMatch]=useState(null),[loading,setLoading]=useState(false),[checking,setChecking]=useState(false);
@@ -4160,6 +4166,7 @@ function App() {
   const [aiRefreshKey,setAiRefreshKey]=useState(0);
   const [isDesktop,setIsDesktop]=useState(window.innerWidth>500);
   const [subjectRecords,setSubjectRecords]=useState(null);
+  const [viewAsRole,setViewAsRole]=useState(null);
 
   useEffect(()=>{const h=()=>setIsDesktop(window.innerWidth>500);window.addEventListener('resize',h);return()=>window.removeEventListener('resize',h);},[]);
 
