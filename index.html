@@ -2199,11 +2199,12 @@ function TeacherHome({user,records,onSelectStudent,onViewReports,onSubjectHome,o
           <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.08)',border:'0.5px solid rgba(255,255,255,0.16)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button>
           <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>HOME</span>
         </div>
-        <p style={{fontSize:9,color:'#5dcaa5',fontWeight:500,letterSpacing:'0.15em',margin:'0 0 8px'}}>★ TEACHER</p>
-        <p style={{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,color:'white',margin:'0 0 4px',lineHeight:1.1}}>{user.name} <span style={{fontSize:16,fontStyle:'italic',color:'#9fe1cb',fontWeight:400}}>선생님</span></p>
-        {hasHomeroom&&!isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.6)',margin:0,fontWeight:500}}>{g}학년 {cls}반 · 담임</p>}
-        {isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.6)',margin:0,fontWeight:500}}>진로활동 담당</p>}
-        {!hasHomeroom&&!isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.6)',margin:0,fontWeight:500}}>교과목 교사</p>}
+         <p style={{fontSize:9,color:'#5dcaa5',fontWeight:500,letterSpacing:'0.15em',margin:'0 0 8px'}}>★ TEACHER</p>
+        <p style={{fontSize:24,fontWeight:900,color:'white',margin:'0 0 4px',lineHeight:1.1,letterSpacing:'-0.5px'}}>{user.name} <span style={{fontSize:16,color:'#9fe1cb',fontWeight:600}}>선생님</span></p>
+        {hasHomeroom&&!isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:'0 0 6px',fontWeight:500}}>{g}학년 {cls}반 · 담임</p>}
+        {isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:'0 0 6px',fontWeight:500}}>진로활동 담당</p>}
+        {!hasHomeroom&&!isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:'0 0 6px',fontWeight:500}}>교과목 교사</p>}
+        <p style={{fontSize:9,color:'rgba(255,255,255,0.4)',fontWeight:500,letterSpacing:'0.14em',margin:0}}>GWACHEON WOMANS HIGH SCHOOL</p>
       </div>
     </div>
     <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:12}}>
@@ -2336,8 +2337,9 @@ function StudentHome({user,records,loading,onCat,onBack,onLogout}){
           <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.08)',border:'0.5px solid rgba(255,255,255,0.16)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button><span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>HOME</span>
         </div>
         <p style={{fontSize:9,color:'#ff829a',fontWeight:500,letterSpacing:'0.15em',margin:'0 0 8px'}}>★ STUDENT</p>
-        <p style={{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,color:'white',margin:'0 0 4px',lineHeight:1.1}}>{user.name} <span style={{fontSize:16,fontStyle:'italic',color:'#ffc8d4',fontWeight:400}}>학생</span></p>
-        <p style={{fontSize:11,color:'rgba(255,255,255,0.6)',margin:0,fontWeight:500}}>{info}</p>
+        <p style={{fontSize:24,fontWeight:900,color:'white',margin:'0 0 4px',lineHeight:1.1,letterSpacing:'-0.5px'}}>{user.name} <span style={{fontSize:16,color:'#ffc8d4',fontWeight:600}}>학생</span></p>
+        <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:'0 0 6px',fontWeight:500}}>{info}</p>
+        <p style={{fontSize:9,color:'rgba(255,255,255,0.4)',fontWeight:500,letterSpacing:'0.14em',margin:0}}>GWACHEON WOMANS HIGH SCHOOL</p>
       </div>
     </div>
     <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:10}}>
