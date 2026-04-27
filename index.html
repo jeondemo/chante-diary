@@ -2088,27 +2088,7 @@ else if(isStudent){res=await callAPI({action:'register',studentId:id.trim(),name
   if(loading&&autoLogin)return(<div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',background:phoneBg}}><div style={{textAlign:'center'}}><div style={{width:52,height:52,background:c,borderRadius:15,margin:'0 auto 14px',display:'flex',alignItems:'center',justifyContent:'center'}}><RoleIcon role={role}/></div><p style={{fontSize:14,fontWeight:700,color:c,margin:'0 0 8px'}}>자동 로그인 중...</p><Spin/></div></div>);
 
   return(<div style={{flex:1,display:'flex',flexDirection:'column',background:phoneBg,overflowY:'auto'}}>
-    좋아요! 로그인 페이지는 텍스트·구조·문구 그대로 두고, 헤더 디자인 요소만 학생/교사 홈과 동일하게 맞춰볼게요.
-
-📍 LoginScreen 헤더 — 디자인 요소만 교체
-🔍 찾을 코드:
-jsx    <div style={{background:c,padding:'30px 20px 44px',position:'relative',overflow:'hidden',flexShrink:0}}>
-      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
-      <div style={{position:'relative',zIndex:3}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:22}}>
-          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button>
-          <div style={{display:'inline-flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.18)',border:'1px solid rgba(255,255,255,0.3)',borderRadius:20,padding:'5px 11px',height:26}}><div style={{width:5,height:5,borderRadius:'50%',background:'#ffd580'}}/><span style={{fontSize:10,color:'rgba(255,255,255,0.9)',fontWeight:600}}>{ROLE_LABELS[role]}</span></div>
-        </div>
-        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-  <div style={{width:64,height:64,background:'white',borderRadius:16,display:'flex',alignItems:'flex-end',justifyContent:'center',overflow:'hidden',boxShadow:`0 2px 12px rgba(${role==='student'?'155,28,46':'10,110,85'},0.25)`,flexShrink:0}}><img src={`https://jeondemo.github.io/chante-diary/${role==='student'?'1':'3-1'}.png`} style={{width:role==='student'?'115%':'95%',height:role==='student'?'115%':'95%',objectFit:role==='student'?'cover':'contain',objectPosition:'center bottom'}} alt=""/></div>
-  <div style={{flex:1,display:'flex',justifyContent:'center'}}><div><p style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontStyle:'italic',fontWeight:600,color:'rgba(255,255,255,0.35)',margin:0,lineHeight:1.2,textTransform:'uppercase',letterSpacing:'0.05em'}}>Creating Tomorrow,</p><p style={{fontFamily:"'Cormorant Garamond',serif",fontSize:25,fontStyle:'italic',fontWeight:600,color:'rgba(255,255,255,0.5)',margin:'2px 0 0',lineHeight:1.1,textTransform:'uppercase',letterSpacing:'0.05em'}}>Together</p></div></div>
-</div>
-        <p style={{fontSize:22,fontWeight:700,color:'#fff',margin:'0 0 3px'}}>{mode==='login'?'로그인':'계정 등록'}</p>
-        <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',letterSpacing:'0.1em',margin:0}}>GWACHEON WOMANS HIGH SCHOOL</p>
-      </div>
-    </div>
-✨ 새 코드:
-jsx    <div style={{background:isStudent?'#2a1626':isTeacher?'#0e2620':isCareer?'#2a1f14':'#1a0f2a',padding:'30px 20px 44px',position:'relative',overflow:'hidden',flexShrink:0}}>
+    <div style={{background:isStudent?'#2a1626':isTeacher?'#0e2620':isCareer?'#2a1f14':'#1a0f2a',padding:'30px 20px 44px',position:'relative',overflow:'hidden',flexShrink:0}}>
       {/* 그리드 패턴 오버레이 */}
       <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px)',backgroundSize:'24px 24px',pointerEvents:'none',zIndex:1}}/>
       {/* 상단 중앙 글로우 */}
@@ -2124,9 +2104,9 @@ jsx    <div style={{background:isStudent?'#2a1626':isTeacher?'#0e2620':isCareer?
           <div style={{display:'inline-flex',alignItems:'center',gap:6,background:'rgba(255,255,255,0.08)',border:'0.5px solid rgba(255,255,255,0.16)',borderRadius:20,padding:'5px 11px',height:26}}><div style={{width:5,height:5,borderRadius:'50%',background:'#ffd580'}}/><span style={{fontSize:10,color:'rgba(255,255,255,0.9)',fontWeight:600}}>{ROLE_LABELS[role]}</span></div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-  <div style={{width:64,height:64,background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.18)',borderRadius:16,display:'flex',alignItems:'flex-end',justifyContent:'center',overflow:'hidden',flexShrink:0}}><img src={`https://jeondemo.github.io/chante-diary/${role==='student'?'1':'3-1'}.png`} style={{width:role==='student'?'115%':'95%',height:role==='student'?'115%':'95%',objectFit:role==='student'?'cover':'contain',objectPosition:'center bottom'}} alt=""/></div>
-  <div style={{flex:1,display:'flex',justifyContent:'center'}}><div><p style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontStyle:'italic',fontWeight:600,color:'rgba(255,255,255,0.35)',margin:0,lineHeight:1.2,textTransform:'uppercase',letterSpacing:'0.05em'}}>Creating Tomorrow,</p><p style={{fontFamily:"'Cormorant Garamond',serif",fontSize:25,fontStyle:'italic',fontWeight:600,color:'rgba(255,255,255,0.5)',margin:'2px 0 0',lineHeight:1.1,textTransform:'uppercase',letterSpacing:'0.05em'}}>Together</p></div></div>
-</div>
+          <div style={{width:64,height:64,background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.18)',borderRadius:16,display:'flex',alignItems:'flex-end',justifyContent:'center',overflow:'hidden',flexShrink:0}}><img src={`https://jeondemo.github.io/chante-diary/${role==='student'?'1':'3-1'}.png`} style={{width:role==='student'?'115%':'95%',height:role==='student'?'115%':'95%',objectFit:role==='student'?'cover':'contain',objectPosition:'center bottom'}} alt=""/></div>
+          <div style={{flex:1,display:'flex',justifyContent:'center'}}><div><p style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontStyle:'italic',fontWeight:600,color:'rgba(255,255,255,0.35)',margin:0,lineHeight:1.2,textTransform:'uppercase',letterSpacing:'0.05em'}}>Creating Tomorrow,</p><p style={{fontFamily:"'Cormorant Garamond',serif",fontSize:25,fontStyle:'italic',fontWeight:600,color:'rgba(255,255,255,0.5)',margin:'2px 0 0',lineHeight:1.1,textTransform:'uppercase',letterSpacing:'0.05em'}}>Together</p></div></div>
+        </div>
         <p style={{fontSize:9,color:isStudent?'#ff829a':isTeacher?'#5dcaa5':isCareer?'#ffb45a':'#ba8cff',fontWeight:500,letterSpacing:'0.15em',margin:'0 0 8px'}}>★ {role==='student'?'STUDENT':role==='teacher'?'TEACHER':role==='career'?'CAREER':'ADMIN'} · GWACHEON WOMANS HIGH SCHOOL</p>
         <p style={{fontSize:22,fontWeight:900,color:'#fff',margin:0,letterSpacing:'-0.3px'}}>{mode==='login'?'로그인':'계정 등록'}</p>
       </div>
