@@ -2055,10 +2055,9 @@ function RoleScreenBlue({onSelect}){
   </div>);
 }
 function LoginScreen({role,onLogin,onBack}){
-const isAdminPreview=isAdminReal&&!!viewAsRole;
-const effectiveRole=viewAsRole||realRole;
-const isStudent=effectiveRole==='student',isTeacher=effectiveRole==='teacher',isCareer=effectiveRole==='career';
-const isAdmin=isAdminReal&&!viewAsRole;
+function LoginScreen({role,onLogin,onBack}){
+  const isStudent=role==='student',isTeacher=role==='teacher',isCareer=role==='career',isAdmin=role==='admin';
+  const [mode,setMode]=useState('login');
   const [mode,setMode]=useState('login');
   const [id,setId]=useState(''),[name,setName]=useState(''),[pw,setPw]=useState(''),[phone,setPhone]=useState('');
   const [match,setMatch]=useState(null),[loading,setLoading]=useState(false),[checking,setChecking]=useState(false);
