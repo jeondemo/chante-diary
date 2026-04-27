@@ -4117,7 +4117,6 @@ const isCaptain=user.role==='captain';
       {isAdmin&&view==='adminTeacherRanking'&&<AdminTeacherRanking onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
 {isAdmin&&view==='adminUnregisteredTeachers'&&<AdminUnregisteredTeachers user={user} onBack={()=>setView('home')} onLogout={logout}/>}
-{isAdmin&&view==='adminUnregisteredTeachers'&&<AdminUnregisteredTeachers user={user} onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminClassStats'&&<AdminClassStats onStudentClick={s=>{setSelStudent(s);setView('adminStudentRecords');}} onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminStudentRecords'&&selStudent&&<AdminStudentRecords student={selStudent} onBack={()=>{setSelStudent(null);setView('adminClassStats');}} onLogout={logout}/>}
       {isAdmin&&view==='adminAIStats'&&<AdminAIStats onBack={()=>setView('home')} onLogout={logout}/>}
