@@ -2333,10 +2333,6 @@ function StudentHome({user,records,loading,onCat,onBack,onLogout}){
         <img src="https://jeondemo.github.io/chante-diary/logo.png" style={{width:'55%',height:'55%',objectFit:'contain',opacity:0.4}} alt=""/>
       </div>
       <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f7f0f2"/></svg></div>
-      {/* 워터마크 학교명 */}
-      <div style={{position:'absolute',bottom:18,left:-8,right:0,zIndex:2,pointerEvents:'none',overflow:'hidden'}}>
-        <p style={{fontFamily:'Georgia,serif',fontSize:36,fontWeight:900,fontStyle:'italic',color:'rgba(255,255,255,0.06)',margin:0,letterSpacing:'-0.02em',whiteSpace:'nowrap',lineHeight:1}}>Gwacheon Womans High School</p>
-      </div>
       <div style={{position:'relative',zIndex:3}}>
         <TopBar onLogout={onLogout}/>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
