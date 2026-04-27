@@ -2055,9 +2055,6 @@ function RoleScreenBlue({onSelect}){
   </div>);
 }
 function LoginScreen({role,onLogin,onBack}){
-  const realRole=user.role;
-const isAdminReal=realRole==='admin'||realRole==='captain';
-const isCaptain=realRole==='captain';
 const isAdminPreview=isAdminReal&&!!viewAsRole;
 const effectiveRole=viewAsRole||realRole;
 const isStudent=effectiveRole==='student',isTeacher=effectiveRole==='teacher',isCareer=effectiveRole==='career';
@@ -4212,6 +4209,19 @@ function App() {
 const isAdminReal=realRole==='admin'||realRole==='captain';
 const isCaptain=realRole==='captain';
 // admin 미리보기 시 가상 사용자 정보 생성
+const isAdminPreview=isAdminReal&&!!viewAsRole;
+const effectiveRole=viewAsRole||realRole;
+const isStudent=effectiveRole==='student',isTeacher=effectiveRole==='teacher',isCareer=effectiveRole==='career';
+const isAdmin=isAdminReal&&!viewAsRole;
+
+// admin 미리보기 시 가상 사용자 정보 생성
+const previewUser=isAdminPreview?(viewAsRole==='student'
+  ?{...user,role:'student',studentId:'1101',name:user.name+' (관리자)',grade:'1',classNum:'1',number:'1'}
+  :{...user,role:'teacher',studentId:user.studentId,name:user.name,grade:'1',classNum:'1',homeroomClass:'11',assignments:'',club:''}
+):user;
+const effectiveUser=isAdminPreview?previewUser:user;
+
+const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 const previewUser=isAdminPreview?(viewAsRole==='student'
   ?{...user,role:'student',studentId:'1101',name:user.name+' (관리자)',grade:'1',classNum:'1',number:'1'}
   :{...user,role:'teacher',studentId:user.studentId,name:user.name,grade:'1',classNum:'1',homeroomClass:'11',assignments:'',club:''}
