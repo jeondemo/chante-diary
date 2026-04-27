@@ -2206,10 +2206,8 @@ function TeacherHome({user,records,onSelectStudent,onViewReports,onSubjectHome,o
         </div>
         {hasHomeroom&&!isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0,fontWeight:500,letterSpacing:'0.02em'}}>{g}학년 {cls}반 · 담임</p>}
         {isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0,fontWeight:500,letterSpacing:'0.02em'}}>진로활동 담당</p>}
-        {!hasHomeroom&&!isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0,fontWeight:500,letterSpacing:'0.02em'}}>교과목 교사</p>}
         {!hasHomeroom&&!isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:'0 0 6px',fontWeight:500}}>교과목 교사</p>}
-        <p style={{fontSize:9,color:'rgba(255,255,255,0.4)',fontWeight:500,letterSpacing:'0.14em',margin:0}}>GWACHEON WOMANS HIGH SCHOOL</p>
-      </div>
+        </div>
     </div>
     <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:12}}>
 
@@ -2325,7 +2323,7 @@ function StudentHome({user,records,loading,onCat,onBack,onLogout}){
   const sid=String(user.studentId||''),g=sid[0]||'',c=sid[1]||'',n=sid.slice(2)||'';
   const info=g&&c&&n?`${g}학년 ${c}반 ${parseInt(n)}번`:'';const col=ROLE_COLORS.student;
   return(<div style={{paddingBottom:20}}>
-    <div style={{background:'#2a1626',padding:'10px 20px 24px',position:'relative',overflow:'hidden'}}>
+    <div style={{background:'#2a1626',padding:'10px 20px 40px',position:'relative',overflow:'hidden'}}>
       {/* 그리드 패턴 오버레이 */}
       <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px)',backgroundSize:'24px 24px',pointerEvents:'none',zIndex:1}}/>
       {/* 상단 중앙 글로우 */}
