@@ -88,10 +88,10 @@ const {useState,useEffect,useCallback,useRef} = React;
 // ═══════════════════════════════════════════════
 const LOGIN_THEME = 'crimson';
 const CATS = {
-  career:{id:'career',label:'진로활동',desc:'꿈과 진로 탐색 기록',grad:'linear-gradient(135deg,#ff8a65,#ef5350)',chipText:'#c2185b',chipBg:'#fce4ec'},
-  subject:{id:'subject',label:'교과활동',desc:'수업 배움 세특 기록',grad:'linear-gradient(135deg,#7986cb,#5c6bc0)',chipText:'#3949ab',chipBg:'#e8eaf6'},
-  creative:{id:'creative',label:'자율 활동',desc:'창의적 체험 활동',grad:'linear-gradient(135deg,#4db6ac,#26a69a)',chipText:'#00695c',chipBg:'#e0f2f1'},
-  club:{id:'club',label:'동아리활동',desc:'동아리 활동 기록',grad:'linear-gradient(135deg,#ff7043,#f4511e)',chipText:'#bf360c',chipBg:'#fbe9e7'}
+  career:{id:'career',label:'진로활동',desc:'꿈과 진로 탐색 기록',grad:'linear-gradient(135deg,#ff8a65,#ef5350)',grad3d:'radial-gradient(circle at 30% 30%,#ffb699,#ef5350 65%,#b71c1c)',shadow:'rgba(239,83,80,0.4)',chipText:'#c2185b',chipBg:'#fce4ec',iconPath:<><circle cx="12" cy="12" r="9"/><path d="M14.5 9.5l-2 5-5 2 2-5z" fill="white"/></>},
+  subject:{id:'subject',label:'교과활동',desc:'수업 배움 세특 기록',grad:'linear-gradient(135deg,#7986cb,#5c6bc0)',grad3d:'radial-gradient(circle at 30% 30%,#b3bce8,#5c6bc0 65%,#303f9f)',shadow:'rgba(92,107,192,0.4)',chipText:'#3949ab',chipBg:'#e8eaf6',iconPath:<path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>},
+  creative:{id:'creative',label:'자율 활동',desc:'창의적 체험 활동',grad:'linear-gradient(135deg,#4db6ac,#26a69a)',grad3d:'radial-gradient(circle at 30% 30%,#95dbd2,#26a69a 65%,#00695c)',shadow:'rgba(38,166,154,0.4)',chipText:'#00695c',chipBg:'#e0f2f1',iconPath:<path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>},
+  club:{id:'club',label:'동아리활동',desc:'동아리 활동 기록',grad:'linear-gradient(135deg,#ff7043,#f4511e)',grad3d:'radial-gradient(circle at 30% 30%,#ffb59e,#f4511e 65%,#bf360c)',shadow:'rgba(244,81,30,0.4)',chipText:'#bf360c',chipBg:'#fbe9e7',iconPath:<path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.539-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" fill="white"/>}
 };
 // ───────────────────────────────────────────────────────────────
 // B3 구조화 입력 · 영역별 필드 정의
@@ -2370,15 +2370,20 @@ function StudentHome({user,records,loading,onCat,onBack,onLogout}){
         <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0,fontWeight:500,letterSpacing:'0.02em'}}>{info}</p>
       </div>
     </div>
-    <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:10}}>
+    <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:10,background:'linear-gradient(180deg,#fdfaf6 0%,#faf3eb 100%)',backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(155,28,46,0.04) 28px,rgba(155,28,46,0.04) 29px),linear-gradient(180deg,#fdfaf6 0%,#faf3eb 100%)',position:'relative',minHeight:'calc(100vh - 260px)'}}>
+      <p style={{fontSize:19,fontFamily:"'Cormorant Garamond',Georgia,serif",fontStyle:'italic',color:'#9b1c2e',margin:'4px 0 6px',fontWeight:600,letterSpacing:'0.02em'}}>My Diary</p>
       {Object.values(CATS).filter(cat=>cat.id!=='club').map(cat=>{const count=records.filter(r=>r.categoryId===cat.id).length;return(<div key={cat.id} onClick={()=>onCat(cat.id)} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer'}}>
-        <div style={{width:44,height:44,background:cat.grad,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+        <div style={{width:44,height:44,background:cat.grad3d,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:`0 4px 12px ${cat.shadow}, inset 0 1px 2px rgba(255,255,255,0.5), inset 0 -2px 4px rgba(0,0,0,0.1)`}}><svg width="22" height="22" fill={cat.id==='club'?'white':'none'} stroke="white" viewBox="0 0 24 24" strokeWidth="2.2" style={{filter:'drop-shadow(0 1px 1px rgba(0,0,0,0.2))'}}>{cat.iconPath}</svg></div>
         <div style={{flex:1}}><div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}><p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:0}}>{cat.label}</p><span style={{background:cat.chipBg,color:cat.chipText,fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:8}}>{loading?'...':count+'건'}</span></div><p style={{fontSize:11,color:'#aaa',margin:0}}>{cat.desc}</p></div><Arr/>
       </div>);})}
       {(()=>{const cat=CATS.club;const count=records.filter(r=>r.categoryId==='club').length;return(<div onClick={()=>onCat('club')} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:14,cursor:'pointer'}}>
-        <div style={{width:44,height:44,background:cat.grad,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+        <div style={{width:44,height:44,background:cat.grad3d,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:`0 4px 12px ${cat.shadow}, inset 0 1px 2px rgba(255,255,255,0.5), inset 0 -2px 4px rgba(0,0,0,0.1)`}}><svg width="22" height="22" fill="white" stroke="white" viewBox="0 0 24 24" strokeWidth="0.5" style={{filter:'drop-shadow(0 1px 1px rgba(0,0,0,0.2))'}}>{cat.iconPath}</svg></div>
         <div style={{flex:1}}><div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}><p style={{fontSize:15,fontWeight:900,color:'#1a1a2e',margin:0}}>{cat.label}</p><span style={{background:cat.chipBg,color:cat.chipText,fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:8}}>{loading?'...':count+'건'}</span></div><p style={{fontSize:11,color:'#aaa',margin:0}}>{cat.desc}</p></div><Arr/>
       </div>);})()}
+      <div style={{margin:'14px 0 16px',padding:'13px 16px',borderLeft:'3px solid #9b1c2e',background:'rgba(255,255,255,0.6)'}}>
+        <p style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontStyle:'italic',fontSize:13,color:'#5a3540',margin:'0 0 4px',lineHeight:1.5}}>"기록되지 않은 경험은 사라집니다."</p>
+        <p style={{fontSize:9,color:'#a48088',margin:0}}>— 오늘의 한 줄을 남겨보세요</p>
+      </div>
     </div>
   </div>);
 }
