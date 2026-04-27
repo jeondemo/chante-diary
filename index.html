@@ -4222,12 +4222,6 @@ const previewUser=isAdminPreview?(viewAsRole==='student'
 const effectiveUser=isAdminPreview?previewUser:user;
 
 const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
-// admin이 학생/교사 미리보기 중인지
-const isAdminPreview=isAdminReal&&!!viewAsRole;
-const effectiveRole=viewAsRole||realRole;
-const isStudent=effectiveRole==='student',isTeacher=effectiveRole==='teacher',isCareer=effectiveRole==='career';
-const isAdmin=isAdminReal&&!viewAsRole;
-  const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 
   return(<div style={cs}>
     <AIProgressOverlay/>
