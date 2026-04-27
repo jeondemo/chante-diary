@@ -3577,17 +3577,17 @@ function SubjectClassList({assignment,records,onSelect,onBack}){
     </div>
   </div>);
 }
-function SubjectStudentList({assignment,classCode,records,onSelect,onTeacherWrite,onBack}){
+function SubjectStudentList({assignment,classCode,records,onSelect,onTeacherWrite,onImportStudents,onBack,refreshKey}){
   const [students,setStudents]=useState(null),[loading,setLoading]=useState(true);
   
   useEffect(()=>{
-    callAPI({action:'getStudentsByClass',classCode}).then(r=>{
+    setLoading(true);
+    callAPI({action:'getSubjectStudents',subject:assignment.subject,classCode}).then(r=>{
       setStudents(r.students||[]);
       setLoading(false);
-    }).catch(()=>setLoading(false));
-  },[classCode]);
+    }).catch(()=>{setStudents([]);setLoading(false);});
+  },[refreshKey,classCode]);
 
-  // 학생별 기록 건수 계산
   const getCount=(sid)=>records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===assignment.subject&&String(r.studentId)===String(sid)).length;
 
   return(<div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:20}}>
@@ -3599,15 +3599,28 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onTeacherWrit
         <p style={{fontSize:11,color:'rgba(255,255,255,0.65)',margin:0}}>{assignment.subject} · {(students||[]).length}명</p>
       </div>
     </div>
-    <div style={{padding:'16px 16px 0'}}>
+    <div style={{padding:'12px 16px 0'}}>
+      <div onClick={onImportStudents} className="active-btn" style={{background:'#ede7f6',border:'1.5px dashed #5c2fa0',borderRadius:12,padding:'10px 12px',display:'flex',alignItems:'center',gap:10,marginBottom:10,cursor:'pointer'}}>
+        <div style={{width:28,height:28,background:'white',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="14" height="14" fill="none" stroke="#5c2fa0" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:12,fontWeight:700,color:'#5c2fa0',margin:0}}>학생 가지고 오기</p>
+          <p style={{fontSize:10,color:'#aaa',margin:'2px 0 0'}}>학기 초에 한 번 추가하면 끝</p>
+        </div>
+      </div>
+
       {loading&&<LoadingSpin/>}
-      {!loading&&(students||[]).length===0&&<div style={{background:'white',borderRadius:14,padding:24,textAlign:'center',color:'#ccc'}}>학생이 없습니다</div>}
-      {(students||[]).map(s=>{
-        const sid=s.studentId||(s.grade+s.classNum+String(s.number).padStart(2,'0'));
+      {!loading&&(students||[]).length===0&&<div style={{background:'white',borderRadius:14,padding:24,textAlign:'center',color:'#ccc',fontSize:12,lineHeight:1.7}}>
+        아직 등록된 학생이 없습니다.<br/>
+        <span style={{fontSize:11,color:'#aaa'}}>위의 "학생 가지고 오기"를 이용하세요.</span>
+      </div>}
+      {!loading&&(students||[]).map(s=>{
+        const sid=s.studentId;
         const cnt=getCount(sid);
         return(<div key={sid} onClick={()=>onSelect({id:sid,name:s.name,subject:assignment.subject})} className="card active-btn" style={{padding:'10px 12px',display:'flex',alignItems:'center',gap:8,marginBottom:6,border:'1.5px solid #ede8f7',cursor:'pointer'}}>
           <div style={{width:30,height:30,background:'linear-gradient(135deg,#ede7f6,#d1c4e9)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:'#5c2fa0',flexShrink:0}}>{s.name[0]}</div>
-          <span style={{fontSize:10,color:'#bbb',fontWeight:700,width:30,flexShrink:0}}>{s.number}번</span>
+          <span style={{fontSize:10,color:'#bbb',fontWeight:700,width:30,flexShrink:0}}>{String(parseInt(sid.slice(2)))}번</span>
           <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>{s.name}</span>
           <button onClick={(e)=>{e.stopPropagation();onTeacherWrite({id:sid,name:s.name,subject:assignment.subject});}} style={{background:'#5c2fa0',color:'white',border:'none',borderRadius:14,padding:'4px 9px',fontSize:10,fontWeight:700,cursor:'pointer',flexShrink:0,fontFamily:'inherit'}}>+교사입력</button>
           <span style={{flex:1}}></span>
@@ -3620,6 +3633,85 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onTeacherWrit
           </div>
         </div>);
       })}
+    </div>
+  </div>);
+}
+/* ── 교과 학생 가지고 오기 (학생 선택 화면) ── */
+function SubjectStudentPicker({assignment,classCode,onBack,onDone}){
+  const [students,setStudents]=useState([]),[loading,setLoading]=useState(true);
+  const [searchText,setSearchText]=useState('');
+  const [selected,setSelected]=useState(new Set());
+  const [submitting,setSubmitting]=useState(false);
+
+  useEffect(()=>{
+    setLoading(true);
+    callAPI({action:'getAllStudentsForSubject',subject:assignment.subject,classCode}).then(r=>{
+      setStudents(r.students||[]);
+      setLoading(false);
+    }).catch(()=>{setStudents([]);setLoading(false);});
+  },[]);
+
+  const toggle=(sid)=>{
+    const s=students.find(x=>x.studentId===sid);
+    if(s&&s.registeredSource)return; // 이미 등록되어 있으면 토글 불가
+    const sel=new Set(selected);
+    sel.has(sid)?sel.delete(sid):sel.add(sid);
+    setSelected(sel);
+  };
+
+  const filtered=students.filter(s=>{
+    if(searchText&&!s.name.includes(searchText))return false;
+    return true;
+  });
+
+  const submit=async()=>{
+    if(!selected.size)return alert('추가할 학생을 선택하세요!');
+    setSubmitting(true);
+    try{
+      const r=await callAPI({action:'addStudentsToSubject',subject:assignment.subject,classCode,studentIds:[...selected]});
+      if(r.success){
+        alert(`${r.added}명이 ${assignment.subject}에 추가되었습니다.`);
+        onDone();
+      }else alert(r.message||'추가 실패');
+    }catch(e){alert('서버 오류');}
+    setSubmitting(false);
+  };
+
+  return(<div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:30}}>
+    <div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'22px 20px 32px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:12,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>학생 목록</button>
+        <p style={{fontSize:17,color:'white',margin:'0 0 2px',fontWeight:900}}>학생 가지고 오기</p>
+        <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>{assignment.subject} · {classCode[0]}학년 {classCode.slice(1)}반 · {selected.size}명 선택됨</p>
+      </div>
+    </div>
+    <div style={{padding:'12px 14px'}}>
+      <div style={{background:'white',borderRadius:10,padding:'10px 12px',marginBottom:10,border:'1px solid #ddd8f0',display:'flex',alignItems:'center',gap:8}}>
+        <span style={{fontSize:13,color:'#ccc'}}>🔍</span>
+        <input type="text" placeholder="이름 검색" value={searchText} onChange={e=>setSearchText(e.target.value)} style={{flex:1,border:'none',outline:'none',fontSize:13,background:'transparent',fontFamily:'inherit'}}/>
+        {searchText&&<button onClick={()=>setSearchText('')} style={{background:'none',border:'none',color:'#ccc',fontSize:14,cursor:'pointer'}}>✕</button>}
+      </div>
+
+      <div style={{background:'white',borderRadius:10,padding:4,border:'1px solid #ddd8f0',marginBottom:10}}>
+        {loading&&<LoadingSpin/>}
+        {!loading&&filtered.length===0&&<p style={{textAlign:'center',color:'#ccc',padding:20,fontSize:12,margin:0}}>해당하는 학생이 없습니다</p>}
+        {!loading&&filtered.map(s=>{
+          const isAlready=!!s.registeredSource;
+          const isSelected=selected.has(s.studentId);
+          return(<div key={s.studentId} onClick={()=>toggle(s.studentId)} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',borderBottom:'0.5px solid #f5f5f5',cursor:isAlready?'default':'pointer',opacity:isAlready?0.5:1}}>
+            <div style={{width:18,height:18,border:isSelected?'1.5px solid #5c2fa0':'1.5px solid #ddd',borderRadius:5,background:isSelected?'#5c2fa0':(isAlready?'#f5f5f5':'white'),flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+              {isSelected&&<svg width="10" height="10" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
+            </div>
+            <span style={{fontSize:10,color:'#bbb',width:24,flexShrink:0}}>{s.number}번</span>
+            <span style={{flex:1,fontSize:12,color:isAlready?'#999':'#1a1a2e',fontWeight:500}}>{s.name}</span>
+            {s.registeredSource==='added'&&<span style={{fontSize:9,background:'#ede7f6',color:'#5c2fa0',padding:'2px 6px',borderRadius:6,fontWeight:500,flexShrink:0}}>등록됨</span>}
+            {s.registeredSource==='record'&&<span style={{fontSize:9,background:'#e8f5e9',color:'#2e7d32',padding:'2px 6px',borderRadius:6,fontWeight:500,flexShrink:0}}>입력함</span>}
+          </div>);
+        })}
+      </div>
+
+      <button onClick={submit} disabled={submitting||!selected.size} style={{width:'100%',padding:13,background:selected.size>0?'linear-gradient(135deg,#5c2fa0,#7c3aed)':'#ddd',color:'white',border:'none',borderRadius:12,fontSize:14,fontWeight:800,cursor:selected.size>0?'pointer':'default',fontFamily:'inherit'}}>{submitting?<Spin/>:`${selected.size}명 추가하기`}</button>
     </div>
   </div>);
 }
@@ -4131,7 +4223,8 @@ const isCaptain=user.role==='captain';
       {isTeacher&&view==='addSubject'&&<AddSubjectOnly onDone={async(nd)=>{let ex=[];try{ex=user.assignments?JSON.parse(user.assignments):[];}catch(e){}const ni=JSON.parse(nd);const mg=[...ex];ni.forEach(n=>{const idx=mg.findIndex(e=>e.subject===n.subject);if(idx>=0)mg[idx]={...mg[idx],classes:[...new Set([...mg[idx].classes,...n.classes])].sort()};else mg.push(n);});const ms=JSON.stringify(mg);const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,assignments:ms});if(res.success){const u2={...user,assignments:ms};setUser(u2);saveSession({role:u2.role,user:u2});fetchRecords(u2);}setView('home');}} onBack={()=>setView('home')}/>}
       {isTeacher&&view==='subjectHome'&&!selAssignment&&<SubjectTeacherHome user={user} records={subjectRecords||[]} onSelectSubject={a=>{setSelAssignment(a);setView('classes');}} onAddSubject={()=>setView('addSubject')} onDeleteSubject={async(a)=>{if(!confirm(`"${a.subject}" 과목을 삭제할까요?`))return;let ex=[];try{ex=user.assignments?JSON.parse(user.assignments):[];}catch(e){}const mg=ex.filter(e=>e.subject!==a.subject);const ms=JSON.stringify(mg);const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,assignments:ms});if(res.success){const u2={...user,assignments:ms};setUser(u2);saveSession({role:u2.role,user:u2});fetchRecords(u2);}}} onBack={()=>setView('home')}/>}
       {isTeacher&&view==='classes'&&selAssignment&&!selClass&&<SubjectClassList assignment={selAssignment} records={subjectRecords||records} onSelect={cls=>{setSelClass(cls);setView('students2');}} onBack={()=>{setSelAssignment(null);setView('subjectHome');}}/>}
-      {isTeacher&&view==='students2'&&selClass&&!selStudent&&!teacherWriteStudent&&<SubjectStudentList assignment={selAssignment} classCode={selClass} records={subjectRecords||records} onSelect={s=>{setSelStudent(s);setView('detail');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherSubjectWrite');}} onBack={()=>{setSelClass(null);setView('classes');}}/>}
+      {isTeacher&&view==='students2'&&selClass&&!selStudent&&!teacherWriteStudent&&<SubjectStudentList assignment={selAssignment} classCode={selClass} records={subjectRecords||records} refreshKey={aiRefreshKey} onSelect={s=>{setSelStudent(s);setView('detail');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherSubjectWrite');}} onImportStudents={()=>setView('subjectPicker')} onBack={()=>{setSelClass(null);setView('classes');}}/>}
+        {isTeacher&&view==='subjectPicker'&&selAssignment&&selClass&&<SubjectStudentPicker assignment={selAssignment} classCode={selClass} onBack={()=>setView('students2')} onDone={()=>{setAiRefreshKey(k=>k+1);setView('students2');}}/>}
 {isTeacher&&view==='teacherSubjectWrite'&&teacherWriteStudent&&<TeacherSubjectWriteForm student={teacherWriteStudent} editing={teacherWriteEditing} onSave={async(data)=>{try{const payload={...data,studentId:teacherWriteStudent.id,name:teacherWriteStudent.name};const action=teacherWriteEditing?'updateRecord':'saveRecord';const r=await callAPI({action,record:payload});if(r.success){let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});setAiRefreshKey(k=>k+1);setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'detail':'students2');}else alert(r.message);}catch(e){alert('저장 실패');}}} onCancel={()=>{setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'detail':'students2');}}/>}
       {isTeacher&&view==='detail'&&selStudent&&<SubjectStudentDetail student={selStudent} user={user} records={subjectRecords||records} onBack={()=>{setSelStudent(null);setView('students2');}}/>}
       {isTeacher&&view==='clubHome'&&!selStudent&&!teacherWriteStudent&&<ClubStudentList user={user} records={subjectRecords||[]} refreshKey={aiRefreshKey} onSelect={s=>{setSelStudent(s);setView('clubDetail');}} onTeacherWrite={s=>{setTeacherWriteStudent({id:s.id,name:s.name,club:s.club,forClub:true});setTeacherWriteEditing(null);setView('teacherClubWrite');}} onImportStudents={()=>setView('clubPicker')} onBack={()=>setView('home')}/>}
