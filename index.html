@@ -2183,20 +2183,27 @@ function TeacherHome({user,records,onSelectStudent,onViewReports,onSubjectHome,o
   const hasClub=!!(user.club);
 
   return(<div style={{paddingBottom:20}}>
-    <div style={{background:`linear-gradient(135deg,${col},${isCareer?'#c68a00':'#0d8c6a'})`,padding:'10px 20px 40px',position:'relative',overflow:'hidden'}}>
-      <div style={{position:'absolute',top:-30,right:-30,width:90,height:90,background:'rgba(255,255,255,0.1)',borderRadius:'50%'}}/>
+    <div style={{background:'#0e2620',padding:'10px 20px 40px',position:'relative',overflow:'hidden'}}>
+      {/* 그리드 패턴 오버레이 */}
+      <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px)',backgroundSize:'24px 24px',pointerEvents:'none',zIndex:1}}/>
+      {/* 상단 중앙 글로우 */}
+      <div style={{position:'absolute',top:-80,left:'50%',transform:'translateX(-50%)',width:400,height:300,background:'radial-gradient(ellipse at center top,rgba(93,202,165,0.4) 0%,transparent 60%)',pointerEvents:'none',zIndex:1}}/>
+      {/* 우측 로고 원 */}
+      <div style={{position:'absolute',right:-50,top:'50%',transform:'translateY(-50%)',width:160,height:160,borderRadius:'50%',border:'1px solid rgba(159,225,203,0.2)',background:'rgba(159,225,203,0.03)',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',zIndex:1}}>
+        <img src="https://jeondemo.github.io/chante-diary/logo.png" style={{width:'55%',height:'55%',objectFit:'contain',opacity:0.4}} alt=""/>
+      </div>
       <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
       <div style={{position:'relative',zIndex:3}}>
         <TopBar onLogout={onLogout}/>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
-          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button>
+          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.08)',border:'0.5px solid rgba(255,255,255,0.16)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button>
           <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>HOME</span>
         </div>
-        <p style={{fontSize:34,fontWeight:900,color:'white',margin:'0 0 4px',lineHeight:1.1}}>{user.name} <span style={{fontSize:20,fontWeight:600,opacity:0.85}}>선생님</span></p>
-        {hasHomeroom&&!isCareer&&<p style={{fontSize:17,color:'rgba(255,255,255,0.85)',fontWeight:700,margin:'0 0 6px'}}>{g}학년 {cls}반 담임</p>}
-        {isCareer&&<p style={{fontSize:17,color:'rgba(255,255,255,0.85)',fontWeight:700,margin:'0 0 6px'}}>진로활동 담당</p>}
-        {!hasHomeroom&&!isCareer&&<p style={{fontSize:14,color:'rgba(255,255,255,0.65)',fontWeight:600,margin:'0 0 6px'}}>교과목 교사</p>}
-        <p style={{fontSize:10,color:'rgba(255,255,255,0.45)',letterSpacing:'0.1em'}}>GWACHEON WOMANS HIGH SCHOOL</p>
+        <p style={{fontSize:9,color:'#5dcaa5',fontWeight:500,letterSpacing:'0.15em',margin:'0 0 8px'}}>★ TEACHER</p>
+        <p style={{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,color:'white',margin:'0 0 4px',lineHeight:1.1}}>{user.name} <span style={{fontSize:16,fontStyle:'italic',color:'#9fe1cb',fontWeight:400}}>선생님</span></p>
+        {hasHomeroom&&!isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.6)',margin:0,fontWeight:500}}>{g}학년 {cls}반 · 담임</p>}
+        {isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.6)',margin:0,fontWeight:500}}>진로활동 담당</p>}
+        {!hasHomeroom&&!isCareer&&<p style={{fontSize:11,color:'rgba(255,255,255,0.6)',margin:0,fontWeight:500}}>교과목 교사</p>}
       </div>
     </div>
     <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:12}}>
@@ -2313,18 +2320,24 @@ function StudentHome({user,records,loading,onCat,onBack,onLogout}){
   const sid=String(user.studentId||''),g=sid[0]||'',c=sid[1]||'',n=sid.slice(2)||'';
   const info=g&&c&&n?`${g}학년 ${c}반 ${parseInt(n)}번`:'';const col=ROLE_COLORS.student;
   return(<div style={{paddingBottom:20}}>
-    <div style={{background:`linear-gradient(135deg,${col},#c62828)`,padding:'10px 20px 34px',position:'relative',overflow:'hidden'}}>
+    <div style={{background:'#2a1626',padding:'10px 20px 34px',position:'relative',overflow:'hidden'}}>
+      {/* 그리드 패턴 오버레이 */}
+      <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px)',backgroundSize:'24px 24px',pointerEvents:'none',zIndex:1}}/>
+      {/* 상단 중앙 글로우 */}
+      <div style={{position:'absolute',top:-80,left:'50%',transform:'translateX(-50%)',width:400,height:300,background:'radial-gradient(ellipse at center top,rgba(255,107,136,0.4) 0%,transparent 60%)',pointerEvents:'none',zIndex:1}}/>
+      {/* 우측 로고 원 */}
+      <div style={{position:'absolute',right:-50,top:'50%',transform:'translateY(-50%)',width:160,height:160,borderRadius:'50%',border:'1px solid rgba(255,200,215,0.2)',background:'rgba(255,200,215,0.03)',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',zIndex:1}}>
+        <img src="https://jeondemo.github.io/chante-diary/logo.png" style={{width:'55%',height:'55%',objectFit:'contain',opacity:0.4}} alt=""/>
+      </div>
       <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f7f0f2"/></svg></div>
       <div style={{position:'relative',zIndex:3}}>
         <TopBar onLogout={onLogout}/>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
-          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button><span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>HOME</span>
+          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.08)',border:'0.5px solid rgba(255,255,255,0.16)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button><span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>HOME</span>
         </div>
-        <p style={{fontSize:10,color:'rgba(255,255,255,0.5)',fontWeight:600,letterSpacing:'0.14em',margin:'0 0 4px'}}>GWACHEON WOMANS HIGH SCHOOL</p>
-        <div style={{display:'inline-flex',alignItems:'center',gap:10,background:'rgba(255,255,255,0.22)',borderRadius:26,padding:'8px 16px',marginTop:4}}>
-          <div style={{width:32,height:32,background:'white',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:col,flexShrink:0}}>{user.name[0]}</div>
-          <div><p style={{fontSize:16,fontWeight:900,color:'white',margin:0,lineHeight:1}}>{user.name}</p><p style={{fontSize:11,color:'rgba(255,255,255,0.85)',margin:'3px 0 0',fontWeight:600}}>{info}</p></div>
-        </div>
+        <p style={{fontSize:9,color:'#ff829a',fontWeight:500,letterSpacing:'0.15em',margin:'0 0 8px'}}>★ STUDENT</p>
+        <p style={{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,color:'white',margin:'0 0 4px',lineHeight:1.1}}>{user.name} <span style={{fontSize:16,fontStyle:'italic',color:'#ffc8d4',fontWeight:400}}>학생</span></p>
+        <p style={{fontSize:11,color:'rgba(255,255,255,0.6)',margin:0,fontWeight:500}}>{info}</p>
       </div>
     </div>
     <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:10}}>
