@@ -4224,7 +4224,7 @@ function App() {
   const deleteRec=async(id)=>{if(!confirm('삭제할까요?'))return;try{await callAPI({action:'deleteRecord',recordId:id,studentId:user.studentId});fetchRecords(user);}catch(e){alert('삭제 실패');}};
 
   const dH=isDesktop?Math.min(window.innerHeight*0.92,900):null,dW=isDesktop?Math.round(dH*(430/844)):null;
-  const cs={width:isDesktop?dW:'100%',maxWidth:isDesktop?dW:430,margin:isDesktop?`${window.innerHeight*0.04}px auto`:0,background:'white',height:isDesktop?dH:'auto',minHeight:isDesktop?dH:'100dvh',display:'flex',flexDirection:'column',position:'relative',overflow:'visible',boxShadow:isDesktop?'0 0 0 1.5px #2a2a2a, 0 30px 80px rgba(206,147,216,0.4)':'none',borderRadius:isDesktop?28:0,border:isDesktop?'5px solid #1a1a1a':'none'};
+  const cs={width:isDesktop?dW:'100%',maxWidth:isDesktop?dW:430,margin:isDesktop?`${window.innerHeight*0.04}px auto`:0,background:'white',height:isDesktop?dH:'auto',minHeight:isDesktop?dH:'100dvh',display:'flex',flexDirection:'column',position:'relative',overflow:isDesktop?'hidden':'visible',boxShadow:isDesktop?'0 0 0 1.5px #2a2a2a, 0 30px 80px rgba(206,147,216,0.4)':'none',borderRadius:isDesktop?28:0,border:isDesktop?'5px solid #1a1a1a':'none'};
 
   if(!role)return<div style={cs}><RoleScreen onSelect={setRole}/></div>;
   if(!user)return<div style={cs}><LoginScreen role={role} onLogin={login} onBack={()=>setRole(null)}/></div>;
@@ -4248,7 +4248,7 @@ const effectiveUser=isAdminPreview?previewUser:user;
 const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 
   return(<div style={cs}>
-    {isDesktop&&<div style={{position:'absolute',top:10,left:'50%',transform:'translateX(-50%)',width:10,height:10,background:'#000',borderRadius:'50%',zIndex:9999,boxShadow:'0 0 0 1px #333',pointerEvents:'none'}}/>}
+    {isDesktop&&<div style={{position:'absolute',top:14,left:'50%',transform:'translateX(-50%)',width:10,height:10,background:'#000',borderRadius:'50%',zIndex:9999,boxShadow:'0 0 0 1px #333',pointerEvents:'none'}}/>}
     <AIProgressOverlay/>
     <div className="no-scrollbar" style={{flex:1,overflowY:'scroll',minHeight:0,background:phoneBg,height:0,borderRadius:isDesktop?'23px':0}}>
         {isAdminPreview&&<div style={{background:'#fff3e0',padding:'8px 12px',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid #ffcc80',position:'sticky',top:0,zIndex:100}}>
