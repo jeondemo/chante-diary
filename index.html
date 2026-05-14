@@ -2434,7 +2434,32 @@ function RecordList({catId,records,onBack,onWrite,onDelete,onEdit}){
     </div>
   );
 }
+// 🆕 선생님별 색상 자동 할당 (가나다순 정렬된 배열에서 인덱스로 선택)
+const TEACHER_COLOR_PALETTE = [
+  { main: '#1565c0', bg: '#e3f2fd', name: '파랑' },
+  { main: '#c2185b', bg: '#fce4ec', name: '분홍' },
+  { main: '#ef6c00', bg: '#fff3e0', name: '주황' },
+  { main: '#7b1fa2', bg: '#f3e5f5', name: '보라' },
+  { main: '#2e7d32', bg: '#e8f5e9', name: '초록' },
+  { main: '#00695c', bg: '#e0f2f1', name: '청록' }
+];
 
+function getTeacherColor(teachers, targetTeacherId) {
+  // teachers: [{teacherId, teacherName}, ...] 가나다순 정렬됨
+  // targetTeacherId가 없거나 매칭 안되면 회색(미지정) 반환
+  if (!targetTeacherId || !teachers || teachers.length === 0) {
+    return { main: '#9e9e9e', bg: '#f5f5f5', name: '미지정' };
+  }
+  const idx = teachers.findIndex(t => String(t.teacherId) === String(targetTeacherId));
+  if (idx === -1) return { main: '#9e9e9e', bg: '#f5f5f5', name: '미지정' };
+  return TEACHER_COLOR_PALETTE[idx % TEACHER_COLOR_PALETTE.length];
+}
+
+function getTeacherName(teachers, teacherId) {
+  if (!teacherId || !teachers) return '';
+  const t = teachers.find(t => String(t.teacherId) === String(teacherId));
+  return t ? t.teacherName : '';
+}
 function getCategoryColor(catId) {
   if (catId === 'career')   return { main:'#c2185b', dark:'#ad1457', light:'#fce4ec', border:'#f3cad8', grad:'linear-gradient(135deg,#c2185b,#ad1457)' };
   if (catId === 'creative') return { main:'#00695c', dark:'#00524a', light:'#eef7f3', border:'#b8dfd4', grad:'linear-gradient(135deg,#00897b,#00695c)' };
