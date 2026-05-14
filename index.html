@@ -2468,7 +2468,7 @@ function getCategoryColor(catId) {
   return { main:'#999', dark:'#666', light:'#f5f5f5', border:'#ddd', grad:'linear-gradient(135deg,#999,#666)' };
 }
 
-function StructuredWriteForm({ catId, fixedSubject, editing, onSave, onCancel }) {
+function StructuredWriteForm({ catId, fixedSubject, editing, onSave, onCancel, selectedTeacher }) {
   const color = getCategoryColor(catId);
   const meta = CATEGORY_META[catId] || { label: '기록', emoji: '📝', tip: '' };
   const fieldDefs = STRUCTURED_FIELDS[catId] || [];
@@ -2516,9 +2516,12 @@ function StructuredWriteForm({ catId, fixedSubject, editing, onSave, onCancel })
       f5: f5.trim()
     };
 
+    // 🆕 선생님 ID: 새로 선택한 게 있으면 그걸로, 수정 시엔 기존 값 유지
+    const teacherId = selectedTeacher?.teacherId || editing?.assignedTeacherId || '';
+    
     const payload = editing
-      ? { ...editing, date, subject: fixedSubject || title.trim(), title: title.trim(), fields: fieldsObj }
-      : { categoryId: catId, date, subject: fixedSubject || title.trim(), title: title.trim(), fields: fieldsObj };
+      ? { ...editing, date, subject: fixedSubject || title.trim(), title: title.trim(), fields: fieldsObj, assignedTeacherId: teacherId }
+      : { categoryId: catId, date, subject: fixedSubject || title.trim(), title: title.trim(), fields: fieldsObj, assignedTeacherId: teacherId };
 
     await onSave(payload);
     setSaving(false);
@@ -2537,7 +2540,10 @@ function StructuredWriteForm({ catId, fixedSubject, editing, onSave, onCancel })
             <svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
             목록으로
           </button>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: '0 0 2px', fontWeight: 600 }}>{meta.emoji} {meta.label}{fixedSubject ? ' · ' + fixedSubject : ''}</p>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: '0 0 2px', fontWeight: 600 }}>
+            {meta.emoji} {meta.label}{fixedSubject ? ' · ' + fixedSubject : ''}
+            {selectedTeacher && <span style={{ marginLeft: 6, background: 'rgba(255,255,255,0.25)', padding: '2px 7px', borderRadius: 5, fontSize: 10, fontWeight: 600 }}>{selectedTeacher.teacherName} 선생님께</span>}
+          </p>
           <h1 style={{ fontSize: 20, fontWeight: 900, color: 'white', margin: 0 }}>{editing ? '기록 수정' : '새 기록 작성'}</h1>
         </div>
       </div>
@@ -2938,8 +2944,102 @@ function SubjectRecords({subject,records,onBack,onWrite,onDelete,onEdit}){
     </div>
   );
 }
-
-function SubjectForm({subject,editing,onSave,onCancel}){const[date,setDate]=useState(editing?.date||new Date().toISOString().split('T')[0]);const[unit,setUnit]=useState(editing?.unit||'');const ic=editing?[editing.learned||'',editing.reflection||''].filter(Boolean).join('\n'):'';const[content,setContent]=useState(ic);const[loading,setLoading]=useState(false);const submit=async e=>{e.preventDefault();if(!unit||!content)return alert('입력해주세요!');setLoading(true);await onSave(editing?{...editing,date,unit,inquiry:'',learned:content,reflection:''}:{categoryId:'subject',date,subject:subject.subject,unit,inquiry:'',learned:content,reflection:''});setLoading(false);};return(<div style={{background:'#eae6f4',minHeight:'100%',paddingBottom:30}}><div style={{background:'linear-gradient(135deg,#5c6bc0,#7986cb)',padding:'calc(env(safe-area-inset-top) + 22px) 20px 36px',position:'relative',overflow:'hidden'}}><div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#eae6f4"/></svg></div><div style={{position:'relative',zIndex:3}}><button onClick={onCancel} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:16,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>목록으로</button><p style={{fontSize:11,color:'rgba(255,255,255,0.6)',margin:'0 0 2px',fontWeight:600}}>{subject.subject}</p><p style={{fontSize:18,fontWeight:900,color:'white',margin:0}}>{editing?'기록 수정':'기록하기'}</p></div></div><div style={{padding:'14px 16px'}}><form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}><div style={{background:'white',borderRadius:14,padding:'13px 14px',border:'1.5px solid #ddd8f0'}}><p style={{fontSize:10,color:'#7986cb',fontWeight:700,margin:'0 0 6px'}}>날짜</p><input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)} style={{background:'transparent',border:'none',padding:0,fontSize:14,fontWeight:600,color:'#1a1a2e',width:'100%',outline:'none'}}/></div><div style={{background:'white',borderRadius:14,padding:'13px 14px',border:'1.5px solid #ddd8f0'}}><p style={{fontSize:10,color:'#7986cb',fontWeight:700,margin:'0 0 6px'}}>단원 / 주제</p><input className="input" type="text" placeholder="예: 3단원 — 함수의 극한과 연속" value={unit} onChange={e=>setUnit(e.target.value)} style={{background:'transparent',border:'none',padding:0,fontSize:14,color:'#1a1a2e',width:'100%',outline:'none'}}/></div><div style={{background:'white',borderRadius:14,padding:'13px 14px',border:'1.5px solid #ddd8f0'}}><p style={{fontSize:10,color:'#7986cb',fontWeight:700,margin:'0 0 6px'}}>배운점 · 느낀점</p><textarea className="input" rows="6" placeholder="자세히 적을수록 좋은 생기부가 만들어져요" value={content} onChange={e=>setContent(e.target.value)} style={{background:'transparent',border:'none',padding:0,fontSize:13,color:'#1a1a2e',width:'100%',outline:'none',resize:'none',lineHeight:1.7}}/></div><button type="submit" disabled={loading} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#5c6bc0,#7986cb)',color:'white',fontSize:15,fontWeight:800,cursor:'pointer',fontFamily:'inherit'}}>{loading?<Spin/>:(editing?'수정 완료':'저장하기')}</button></form></div></div>);}
+// 🆕 선생님 선택 모달 (여러 분 담당 과목의 입력 버튼 클릭 시)
+function TeacherPickerModal({subject,teachers,records,onSelect,onClose}){
+  const getRecordCount=(teacherId)=>{
+    return (records||[]).filter(r=>r.categoryId==='subject'&&String(r.subject||'')===subject&&String(r.assignedTeacherId||'')===String(teacherId)).length;
+  };
+  
+  return(<div style={{position:'fixed',inset:0,zIndex:9000,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+    <div style={{background:'white',borderRadius:16,padding:'20px 18px',width:'100%',maxWidth:340,boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
+      <div style={{textAlign:'center',marginBottom:14}}>
+        <div style={{width:44,height:44,background:'#ede7f6',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 10px'}}>
+          <svg width="22" height="22" fill="none" stroke="#5c6bc0" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <p style={{fontSize:15,fontWeight:700,color:'#1a1a2e',margin:'0 0 4px'}}>어느 선생님께 작성할까요?</p>
+        <p style={{fontSize:11,color:'#999',margin:0}}>{subject} · {teachers.length}분 담당</p>
+      </div>
+      
+      <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:12}}>
+        {teachers.map((t,idx)=>{
+          const tc=getTeacherColor(teachers,t.teacherId);
+          const cnt=getRecordCount(t.teacherId);
+          return(<div key={idx} onClick={()=>onSelect(t)} className="active-btn" style={{background:'white',border:`1.5px solid ${tc.bg}`,borderRadius:10,padding:'10px 12px',display:'flex',alignItems:'center',gap:10,cursor:'pointer'}}>
+            <div style={{width:32,height:32,background:tc.bg,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              <span style={{fontSize:13,fontWeight:700,color:tc.main}}>{t.teacherName[0]}</span>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:13,fontWeight:600,color:'#1a1a2e',margin:0}}>{t.teacherName} 선생님</p>
+              <p style={{fontSize:10,color:'#999',margin:'1px 0 0'}}>{cnt>0?`기록 ${cnt}개 작성됨`:'아직 작성 안 함'}</p>
+            </div>
+            <svg width="13" height="13" fill="none" stroke={tc.main} strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </div>);
+        })}
+      </div>
+      
+      <button onClick={onClose} style={{width:'100%',padding:9,background:'#f5f5f5',color:'#888',border:'none',borderRadius:10,fontSize:12,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>취소</button>
+    </div>
+  </div>);
+}
+function SubjectForm({subject,editing,selectedTeacher,onSave,onCancel}){
+  const[date,setDate]=useState(editing?.date||new Date().toISOString().split('T')[0]);
+  const[unit,setUnit]=useState(editing?.unit||'');
+  const ic=editing?[editing.learned||'',editing.reflection||''].filter(Boolean).join('\n'):'';
+  const[content,setContent]=useState(ic);
+  const[loading,setLoading]=useState(false);
+  
+  const submit=async e=>{
+    e.preventDefault();
+    if(!unit||!content)return alert('입력해주세요!');
+    setLoading(true);
+    // 🆕 assignedTeacherId 포함해서 저장
+    const teacherId=selectedTeacher?.teacherId||editing?.assignedTeacherId||'';
+    await onSave(editing
+      ?{...editing,date,unit,inquiry:'',learned:content,reflection:'',assignedTeacherId:teacherId}
+      :{categoryId:'subject',date,subject:subject.subject,unit,inquiry:'',learned:content,reflection:'',assignedTeacherId:teacherId});
+    setLoading(false);
+  };
+  
+  // 🆕 선생님 표시용
+  const teacherDisplay=selectedTeacher?.teacherName||(editing&&editing.assignedTeacherId?'기존 선생님':'');
+  
+  return(<div style={{background:'#eae6f4',minHeight:'100%',paddingBottom:30}}>
+    <div style={{background:'linear-gradient(135deg,#5c6bc0,#7986cb)',padding:'calc(env(safe-area-inset-top) + 22px) 20px 36px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#eae6f4"/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={onCancel} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:16,fontFamily:'inherit'}}>
+          <svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>목록으로
+        </button>
+        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2,flexWrap:'wrap'}}>
+          <span style={{fontSize:11,color:'rgba(255,255,255,0.7)',fontWeight:600}}>{subject.subject}</span>
+          {/* 🆕 선택한 선생님 표시 */}
+          {teacherDisplay&&(<>
+            <span style={{fontSize:11,color:'rgba(255,255,255,0.5)'}}>·</span>
+            <span style={{fontSize:11,fontWeight:600,color:'white',background:'rgba(255,255,255,0.2)',padding:'2px 8px',borderRadius:6}}>{teacherDisplay} 선생님께</span>
+          </>)}
+        </div>
+        <p style={{fontSize:18,fontWeight:900,color:'white',margin:0}}>{editing?'기록 수정':'기록하기'}</p>
+      </div>
+    </div>
+    <div style={{padding:'14px 16px'}}>
+      <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}>
+        <div style={{background:'white',borderRadius:14,padding:'13px 14px',border:'1.5px solid #ddd8f0'}}>
+          <p style={{fontSize:10,color:'#7986cb',fontWeight:700,margin:'0 0 6px'}}>날짜</p>
+          <input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)} style={{background:'transparent',border:'none',padding:0,fontSize:14,fontWeight:600,color:'#1a1a2e',width:'100%',outline:'none'}}/>
+        </div>
+        <div style={{background:'white',borderRadius:14,padding:'13px 14px',border:'1.5px solid #ddd8f0'}}>
+          <p style={{fontSize:10,color:'#7986cb',fontWeight:700,margin:'0 0 6px'}}>단원 / 주제</p>
+          <input className="input" type="text" placeholder="예: 3단원 — 함수의 극한과 연속" value={unit} onChange={e=>setUnit(e.target.value)} style={{background:'transparent',border:'none',padding:0,fontSize:14,color:'#1a1a2e',width:'100%',outline:'none'}}/>
+        </div>
+        <div style={{background:'white',borderRadius:14,padding:'13px 14px',border:'1.5px solid #ddd8f0'}}>
+          <p style={{fontSize:10,color:'#7986cb',fontWeight:700,margin:'0 0 6px'}}>배운점 · 느낀점</p>
+          <textarea className="input" rows="6" placeholder="자세히 적을수록 좋은 생기부가 만들어져요" value={content} onChange={e=>setContent(e.target.value)} style={{background:'transparent',border:'none',padding:0,fontSize:13,color:'#1a1a2e',width:'100%',outline:'none',resize:'none',lineHeight:1.7}}/>
+        </div>
+        <button type="submit" disabled={loading} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#5c6bc0,#7986cb)',color:'white',fontSize:15,fontWeight:800,cursor:'pointer',fontFamily:'inherit'}}>{loading?<Spin/>:(editing?'수정 완료':'저장하기')}</button>
+      </form>
+    </div>
+  </div>);
+}
 
 function ClubList({user,onSelect,onBack,records}){const[clubs,setClubs]=useState([]),[loading,setLoading]=useState(true);const storageKey='selectedClub_'+user.studentId;const[saved,setSaved]=useState(null);useEffect(()=>{try{const s=localStorage.getItem(storageKey);if(s)setSaved(JSON.parse(s));}catch(e){}callAPI({action:'getClubList'}).then(r=>{setClubs(r.clubs||[]);setLoading(false);}).catch(()=>setLoading(false));},[]);useEffect(()=>{if(saved&&clubs.length>0&&!loading){const found=clubs.find(c=>c.clubName===saved.clubName);if(found){callAPI({action:'updateStudentClub',studentId:user.studentId,clubName:found.clubName}).catch(()=>{});onSelect(found);}else{try{localStorage.removeItem(storageKey);}catch(e){}setSaved(null);}}},[saved,clubs,loading]);const[showList,setShowList]=useState(false);if(saved&&!showList)return null;const colors=['#ff7043','#ab47bc','#42a5f5','#66bb6a','#ffa726','#ef5350'];const gc=cn=>(records||[]).filter(r=>r.categoryId==='club'&&String(r.subject||'')===cn).length;const select=(s)=>{
   try{localStorage.setItem(storageKey,JSON.stringify(s));}catch(e){}
@@ -4317,6 +4417,8 @@ function App() {
   const [selStudent,setSelStudent]=useState(null),[selAssignment,setSelAssignment]=useState(null),[selClass,setSelClass]=useState(null);
   const [teacherWriteStudent,setTeacherWriteStudent]=useState(null);
   const [teacherWriteEditing,setTeacherWriteEditing]=useState(null);
+  const [teacherPicker,setTeacherPicker]=useState(null); // 🆕 {subject, teachers} or null
+const [selectedTeacher,setSelectedTeacher]=useState(null); // 🆕 학생이 선택한 선생님
   const [aiRefreshKey,setAiRefreshKey]=useState(0);
   const [isDesktop,setIsDesktop]=useState(window.innerWidth>500);
   const [subjectRecords,setSubjectRecords]=useState(null);
@@ -4397,11 +4499,15 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
     : <StructuredWriteForm catId={catId} editing={editing} onSave={editing?updateRec:saveRec} onCancel={()=>{setWriting(false);setEditing(null);}}/>
 )}
       {isStudent&&view==='cat'&&catId==='subject'&&!subject&&<SubjectList user={user} records={records} onSelect={s=>setSubject(s)} onBack={()=>{setCatId(null);setView('home');}}/>}
-      {isStudent&&view==='cat'&&catId==='subject'&&subject&&!writing&&<SubjectRecords subject={subject} records={records} onBack={()=>setSubject(null)} onWrite={()=>setWriting(true)} onDelete={deleteRec} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
+      {isStudent&&view==='cat'&&catId==='subject'&&subject&&!writing&&<SubjectRecords subject={subject} records={records} onBack={()=>setSubject(null)} onWrite={()=>{
+  const tl=(subject.teachers&&subject.teachers.length>0)?subject.teachers:[];
+  if(tl.length<=1){setSelectedTeacher(tl[0]||null);setWriting(true);}
+  else setTeacherPicker({subject:subject.subject,teachers:tl});
+}} onDelete={deleteRec} onEdit={r=>{setEditing(r);setSelectedTeacher(null);setWriting(true);}}/>}
       {isStudent&&view==='cat'&&catId==='subject'&&subject&&writing&&(
   editing && !editing.fields
     ? (() => { alert('기존 기록은 수정할 수 없습니다. 삭제 후 새로 작성해주세요.'); setWriting(false); setEditing(null); return null; })()
-    : <StructuredWriteForm catId="subject" fixedSubject={subject.subject} editing={editing} onSave={editing?updateRec:saveRec} onCancel={()=>{setWriting(false);setEditing(null);}}/>
+    : <StructuredWriteForm catId="subject" fixedSubject={subject.subject} editing={editing} selectedTeacher={selectedTeacher} onSave={editing?updateRec:saveRec} onCancel={()=>{setWriting(false);setEditing(null);setSelectedTeacher(null);}}/>
 )}
       {isStudent&&view==='cat'&&catId==='club'&&!subject&&<ClubList user={user} records={records} onSelect={s=>setSubject(s)} onBack={()=>{setCatId(null);setView('home');}}/>}
       {isStudent&&view==='cat'&&catId==='club'&&subject&&!writing&&<ClubRecords club={subject} records={records} onBack={()=>{setSubject(null);setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRec} onEdit={r=>{setEditing(r);setWriting(true);}} onChangeClub={()=>{try{localStorage.removeItem('selectedClub_'+user.studentId);}catch(e){}setSubject(null);}}/>}
@@ -4440,6 +4546,15 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
       {isTeacher&&view==='clubReports'&&<ClubReportList user={user} onBack={()=>setView('home')}/>}
       {isTeacher&&view==='behavior'&&!selStudent&&<BehaviorStudentList user={user} onSelect={s=>{setSelStudent(s);setView('behaviorDetail');}} onBack={()=>setView('home')}/>}
       {isTeacher&&view==='behaviorDetail'&&selStudent&&<BehaviorDetail student={selStudent} user={user} onBack={()=>{setSelStudent(null);setView('behavior');}}/>}
+      
+      {/* 🆕 선생님 선택 모달 */}
+      {teacherPicker&&<TeacherPickerModal 
+        subject={teacherPicker.subject} 
+        teachers={teacherPicker.teachers} 
+        records={records}
+        onSelect={(t)=>{setSelectedTeacher(t);setTeacherPicker(null);setWriting(true);}} 
+        onClose={()=>setTeacherPicker(null)}
+      />}
     </div>
   </div>);
 }
