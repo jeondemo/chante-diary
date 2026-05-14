@@ -2893,9 +2893,7 @@ function SubjectRecords({subject,records,onBack,onWrite,onDelete,onEdit}){
   
   // 🆕 이 과목의 선생님 목록 (가나다순)
   const teacherList=(subject.teachers&&subject.teachers.length>0)?subject.teachers:(subject.teacher?[{teacherId:'',teacherName:subject.teacher}]:[]);
-  // 🔧 임시 디버그
-  console.log('[DEBUG] subject prop:', JSON.stringify(subject));
-  console.log('[DEBUG] teacherList:', JSON.stringify(teacherList));
+  
   return(
     <div style={{paddingBottom:100}}>
       <div style={{background:'linear-gradient(135deg,#7986cb,#5c6bc0)',padding:'calc(env(safe-area-inset-top) + 20px) 16px 30px'}}>
