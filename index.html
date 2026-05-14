@@ -2840,7 +2840,53 @@ function StructuredRecordCard({ record, catId, onEdit, onDelete }) {
 
 function WriteForm({catId,onSave,onCancel,editing}){const[date,setDate]=useState(editing?.date||new Date().toISOString().split('T')[0]);const[title,setTitle]=useState(editing?.title||'');const[content,setContent]=useState(editing?.content||'');const[loading,setLoading]=useState(false);const cat=CATS[catId];const submit=async e=>{e.preventDefault();if(!title||!content)return alert('모두 입력하세요!');setLoading(true);await onSave(editing?{...editing,date,title,content}:{categoryId:catId,date,title,content});setLoading(false);};return(<div style={{padding:16}}><button onClick={onCancel} style={{background:'none',border:'none',color:'#999',cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4,fontSize:13}}><Back/>목록으로</button><div className="card" style={{padding:20}}><h3 style={{fontSize:16,fontWeight:900,color:'#1a1a2e',margin:'0 0 16px'}}>{cat.label} {editing?'수정':'기록'}</h3><form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}><div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>날짜</p><input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div><div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>활동명</p><input className="input" type="text" placeholder="활동명" value={title} onChange={e=>setTitle(e.target.value)}/></div><div><p style={{fontSize:11,color:'#999',fontWeight:700,margin:'0 0 4px'}}>내용</p><textarea className="input" rows="5" placeholder="자세히 기록할수록 좋은 생기부가 만들어져요" value={content} onChange={e=>setContent(e.target.value)} style={{resize:'none',lineHeight:1.6}}/></div><button type="submit" className="btn-pink" disabled={loading} style={{background:cat.grad}}>{loading?<Spin/>:(editing?'수정 완료':'저장하기')}</button></form></div></div>);}
 
-function SubjectList({user,onSelect,onBack,records}){const[subjects,setSubjects]=useState([]),[loading,setLoading]=useState(true);useEffect(()=>{const cls=String(user.studentId||'').slice(0,2);callAPI({action:'getSubjectsByClass',classCode:cls}).then(r=>{setSubjects(r.subjects||[]);setLoading(false);}).catch(()=>setLoading(false));},[]);const colors=['#f48fb1','#ce93d8','#90caf9','#80cbc4','#ffcc80','#a5d6a7'];const gc=sn=>(records||[]).filter(r=>r.categoryId==='subject'&&String(r.subject||r.title||'')===sn).length;return(<div style={{paddingBottom:20}}><div style={{background:'linear-gradient(135deg,#7986cb,#5c6bc0)',padding:'calc(env(safe-area-inset-top) + 20px) 16px 30px'}}><button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 홈</button><h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>교과활동</h2></div><div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:8}}>{loading&&<Spin/>}{subjects.map((s,i)=>{const bc=colors[i%colors.length];const cnt=gc(s.subject);return(<button key={i} onClick={()=>onSelect(s)} className="active-btn card" style={{padding:'12px 14px',display:'flex',alignItems:'center',gap:12,border:`1.5px solid ${bc}`,textAlign:'left',cursor:'pointer',width:'100%'}}><div style={{width:36,height:36,background:bc,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,flexShrink:0}}>📖</div><div style={{flex:1}}><p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 2px'}}>{s.subject}</p><p style={{fontSize:11,color:'#bbb',margin:0}}>{s.teacher} 선생님</p></div>{cnt>0?<span style={{fontSize:11,fontWeight:700,background:bc+'33',color:bc,padding:'3px 9px',borderRadius:20}}>{cnt}개</span>:<span style={{fontSize:11,color:'#ddd',padding:'3px 9px',borderRadius:20,border:'1px solid #eee'}}>미입력</span>}<svg width="13" height="13" fill="none" stroke={bc} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg></button>);})}</div></div>);}
+function SubjectList({user,onSelect,onBack,records}){
+  const[subjects,setSubjects]=useState([]),[loading,setLoading]=useState(true);
+  useEffect(()=>{
+    const cls=String(user.studentId||'').slice(0,2);
+    callAPI({action:'getSubjectsByClass',classCode:cls}).then(r=>{
+      setSubjects(r.subjects||[]);
+      setLoading(false);
+    }).catch(()=>setLoading(false));
+  },[]);
+  
+  const colors=['#f48fb1','#ce93d8','#90caf9','#80cbc4','#ffcc80','#a5d6a7'];
+  const gc=sn=>(records||[]).filter(r=>r.categoryId==='subject'&&String(r.subject||r.title||'')===sn).length;
+  
+  return(<div style={{paddingBottom:20}}>
+    <div style={{background:'linear-gradient(135deg,#7986cb,#5c6bc0)',padding:'calc(env(safe-area-inset-top) + 20px) 16px 30px'}}>
+      <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 홈</button>
+      <h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>교과활동</h2>
+    </div>
+    <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:8}}>
+      {loading&&<Spin/>}
+      {subjects.map((s,i)=>{
+        const bc=colors[i%colors.length];
+        const cnt=gc(s.subject);
+        // 🆕 teachers 배열 우선, 없으면 teacher 문자열로 fallback
+        const teacherList=(s.teachers&&s.teachers.length>0)?s.teachers:(s.teacher?[{teacherId:'',teacherName:s.teacher}]:[]);
+        
+        return(<button key={i} onClick={()=>onSelect(s)} className="active-btn card" style={{padding:'12px 14px',display:'flex',alignItems:'center',gap:12,border:`1.5px solid ${bc}`,textAlign:'left',cursor:'pointer',width:'100%'}}>
+          <div style={{width:36,height:36,background:bc,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,flexShrink:0}}>📖</div>
+          <div style={{flex:1,minWidth:0}}>
+            <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 4px'}}>{s.subject}</p>
+            {/* 🆕 선생님별 색상 칩으로 표시 */}
+            <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+              {teacherList.length===0?(
+                <span style={{fontSize:10,color:'#bbb',fontStyle:'italic'}}>담당 교사 미상</span>
+              ):teacherList.map((t,idx)=>{
+                const tc=getTeacherColor(teacherList,t.teacherId);
+                return(<span key={idx} style={{fontSize:10,fontWeight:600,background:tc.bg,color:tc.main,padding:'2px 7px',borderRadius:6}}>{t.teacherName}</span>);
+              })}
+            </div>
+          </div>
+          {cnt>0?<span style={{fontSize:11,fontWeight:700,background:bc+'33',color:bc,padding:'3px 9px',borderRadius:20,flexShrink:0}}>{cnt}개</span>:<span style={{fontSize:11,color:'#ddd',padding:'3px 9px',borderRadius:20,border:'1px solid #eee',flexShrink:0}}>미입력</span>}
+          <svg width="13" height="13" fill="none" stroke={bc} viewBox="0 0 24 24" style={{flexShrink:0}}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
+        </button>);
+      })}
+    </div>
+  </div>);
+}
 
 function SubjectRecords({subject,records,onBack,onWrite,onDelete,onEdit}){
   const list=records.filter(r=>r.categoryId==='subject'&&String(r.subject||r.title||r.fields?.title||'')===subject.subject).sort((a,b)=>new Date(b.date)-new Date(a.date));
