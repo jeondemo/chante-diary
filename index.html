@@ -935,7 +935,7 @@ function KpiCard({label,value,color,bg}){
     </div>
   );
 }
-function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTeachers,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onBack,onLogout}){
+function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTeachers,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onAlimtalkHub,onBack,onLogout}){
   const c='#4a148c';
   const phoneBg='#f4f0f9';
   return(<div style={{paddingBottom:20}}>
@@ -1037,6 +1037,16 @@ function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTea
   </div>
   <svg width="14" height="14" fill="none" stroke="#4a148c" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
 </div>)}
+      {!isCaptain && (<div onClick={onAlimtalkHub} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #00897b',background:'linear-gradient(135deg,#fff 0%,#e0f2f1 100%)',position:'relative'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#26a69a,#00897b)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>알림톡 보내기 <span style={{fontSize:9,background:'#00897b',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:800,marginLeft:4}}>NEW</span></p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>미가입 안내 · 입력 독려 알림톡 발송</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#26a69a" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>)}
       
       {/* AI 엔진 상태 카드 (하단으로 이동) */}
       <div style={{display:'flex',alignItems:'center',gap:8,margin:'20px 0 12px'}}>
@@ -1176,6 +1186,157 @@ function AdminTeacherRanking({onBack,onLogout}){
     </div>
   </div>);
 }
+
+/* ── 관리자: 입력 독려 알림톡 발송 ── */
+function AdminAlimtalkEncourage({user,onBack,onLogout}){
+  const c='#3949ab';
+  const phoneBg='#e8eaf6';
+  const [students,setStudents]=useState(null),[loading,setLoading]=useState(true);
+  const [gradeOn,setGradeOn]=useState({'1':true,'2':true,'3':true});
+  const [sending,setSending]=useState(false),[sendResult,setSendResult]=useState(null);
+
+  useEffect(()=>{
+    callAPI({action:'getEnrolledStudentsForAlimtalk'}).then(r=>{
+      if(r.success)setStudents(r.students||[]);
+      else alert(r.message||'조회 실패');
+      setLoading(false);
+    }).catch(()=>{alert('서버 오류');setLoading(false);});
+  },[]);
+
+  if(loading)return(<div style={{background:phoneBg,minHeight:'100%',display:'flex',alignItems:'center',justifyContent:'center',padding:40}}><Spin/></div>);
+  if(!students)return(<div style={{background:phoneBg,minHeight:'100%',padding:40,textAlign:'center',color:'#999'}}>데이터 없음</div>);
+
+  const filtered=students.filter(s=>gradeOn[s.grade]);
+  const sendable=filtered.filter(s=>s.phone&&s.phone.length>=10);
+
+  const send=async()=>{
+    if(sendable.length===0)return alert('발송 가능한 학생이 없습니다. (전화번호 보유 학생 없음)');
+    const grades=Object.keys(gradeOn).filter(g=>gradeOn[g]).map(g=>g+'학년').join(', ');
+    if(!confirm(`${grades} 가입 학생 ${sendable.length}명에게 입력 독려 알림톡을 발송할까요?\n\n(전화번호 없는 학생은 제외됨)`))return;
+    setSending(true);setSendResult(null);
+    try{
+      const r=await callAPI({action:'sendEncourageAlimtalk',students:sendable.map(s=>({studentId:s.studentId,name:s.name,phone:s.phone})),senderId:user?.studentId||'',senderName:user?.name||''});
+      if(r.success){
+        setSendResult({total:r.total,success:r.successCount,fail:r.failCount});
+        alert(`발송 완료!\n성공: ${r.successCount}건\n실패: ${r.failCount}건`);
+      }else alert(r.message||'발송 실패');
+    }catch(e){alert('서버 오류: '+e.message);}
+    setSending(false);
+  };
+
+  return(<div style={{background:phoneBg,minHeight:'100%',paddingBottom:30}}>
+    <div style={{background:`linear-gradient(135deg,${c},#5c6bc0)`,padding:'calc(env(safe-area-inset-top) + 22px) 20px 38px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>알림톡 보내기</button>
+        <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 3px'}}>입력 독려 알림톡</p>
+        <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>전체 가입 학생 {students.length}명 대상</p>
+      </div>
+    </div>
+    <div style={{padding:'12px 14px'}}>
+      {/* 통계 카드 */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+        <div style={{background:'white',borderRadius:10,padding:'12px 8px',border:'1px solid #c5cae9',textAlign:'center'}}>
+          <p style={{fontSize:9,color:'#999',margin:'0 0 3px',fontWeight:600}}>선택된 학생</p>
+          <p style={{fontSize:22,fontWeight:900,color:c,margin:0}}>{filtered.length}명</p>
+        </div>
+        <div style={{background:'#e0f2f1',borderRadius:10,padding:'12px 8px',border:'1px solid #a5d6c7',textAlign:'center'}}>
+          <p style={{fontSize:9,color:'#0f6e56',margin:'0 0 3px',fontWeight:600}}>발송 가능(번호)</p>
+          <p style={{fontSize:22,fontWeight:900,color:'#0f6e56',margin:0}}>{sendable.length}명</p>
+        </div>
+      </div>
+
+      {/* 학년 토글 */}
+      <div style={{background:'white',borderRadius:10,padding:12,border:'1px solid #c5cae9',marginBottom:12}}>
+        <p style={{fontSize:11,fontWeight:700,color:c,margin:'0 0 8px'}}>발송 학년 선택 (복수 선택)</p>
+        <div style={{display:'flex',gap:6}}>
+          {['1','2','3'].map(g=>{
+            const cnt=students.filter(s=>s.grade===g).length;
+            const on=gradeOn[g];
+            return(<button key={g} type="button" onClick={()=>setGradeOn(p=>({...p,[g]:!p[g]}))} style={{flex:1,padding:'9px 0',borderRadius:8,border:'none',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',background:on?c:'white',color:on?'white':'#bbb',boxShadow:on?'none':'0 0 0 0.5px rgba(0,0,0,0.1) inset'}}>{g}학년<span style={{fontSize:9,opacity:0.8,display:'block',marginTop:1,fontWeight:500}}>{cnt}명</span></button>);
+          })}
+        </div>
+        <p style={{fontSize:10,color:'#bbb',margin:'8px 0 0'}}>끄고 싶은 학년을 탭하면 대상에서 제외됩니다 (예: 3학년 제외)</p>
+      </div>
+
+      {/* 미리보기 */}
+      <div style={{background:'#f1edf9',border:'1px solid #cecbf6',borderRadius:10,padding:'10px 12px',marginBottom:12}}>
+        <p style={{fontSize:11,fontWeight:700,color:'#3c3489',margin:'0 0 5px'}}>💬 발송 미리보기</p>
+        <p style={{fontSize:11,color:'#26215c',margin:0,lineHeight:1.6}}>[과천여고 생기부] OOO님, 이번 학기의 활동들이 차곡차곡 쌓이고 있나요? … 과천여고 생기부에서 지금, 나만의 이야기를 남겨보세요.</p>
+        <p style={{fontSize:9,color:'#7e57c2',margin:'6px 0 0',fontStyle:'italic'}}>실제 문구는 카카오에 등록된 템플릿 그대로 발송됩니다.</p>
+      </div>
+
+      {/* 발송 결과 */}
+      {sendResult&&(<div style={{background:'#e8f5e9',border:'1px solid #a5d6a7',borderRadius:10,padding:'10px 12px',marginBottom:12,fontSize:12,color:'#2e7d32',fontWeight:700}}>
+        ✅ 최근 발송 결과 — 성공 {sendResult.success}건 / 실패 {sendResult.fail}건 (전체 {sendResult.total}명)
+      </div>)}
+
+      {/* 발송 버튼 */}
+      <button type="button" onClick={send} disabled={sending||sendable.length===0} style={{width:'100%',padding:'13px 0',borderRadius:12,border:'none',background:sending||sendable.length===0?'#ccc':'linear-gradient(135deg,#fee500,#ffcd00)',color:'#1a1a2e',fontSize:14,fontWeight:800,cursor:sending||sendable.length===0?'default':'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+        {sending?<><Spin/> 발송 중...</>:<>💬 {sendable.length}명에게 알림톡 발송</>}
+      </button>
+      <p style={{fontSize:10,color:'#bbb',textAlign:'center',margin:'8px 0 0'}}>발송 전 확인 창이 한 번 더 표시됩니다</p>
+    </div>
+  </div>);
+}
+
+/* ── 관리자: 알림톡 보내기 허브 ── */
+function AdminAlimtalkHub({onUnregistered,onEncourage,onBack,onLogout}){
+  const c='#4a148c';
+  const phoneBg='#f4f0f9';
+  return(<div style={{background:phoneBg,minHeight:'100%',paddingBottom:30}}>
+    <div style={{background:`linear-gradient(135deg,${c},#6a1b9a)`,padding:'calc(env(safe-area-inset-top) + 22px) 20px 38px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>관리자 홈</button>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{width:40,height:40,borderRadius:10,background:'rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          </div>
+          <div>
+            <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 2px'}}>알림톡 보내기</p>
+            <p style={{fontSize:11,color:'rgba(255,255,255,0.75)',margin:0}}>카카오 알림톡 발송 관리</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style={{padding:'16px 14px'}}>
+      {/* 가입 안 한 학생 */}
+      <div onClick={onUnregistered} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #f8bbd0'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#ec407a,#c2185b)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>가입 안 한 학생 알림톡</p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>앱 미가입 학생에게 가입 안내</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      {/* 입력 독려 */}
+      <div onClick={onEncourage} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #c5cae9'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#5c6bc0,#3949ab)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>입력 독려 알림톡</p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>전체 학생에게 기록 작성 독려</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#9fa8da" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      {/* 향후 추가 안내 */}
+      <div style={{background:'#faf7fc',border:'1.5px dashed #d1c4e9',borderRadius:12,padding:'12px 16px',display:'flex',alignItems:'center',gap:12}}>
+        <div style={{width:42,height:42,background:'#ede7f6',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="18" height="18" fill="none" stroke="#b39ddb" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:13,fontWeight:700,color:'#b39ddb',margin:'0 0 2px'}}>향후 추가 예정</p>
+          <p style={{fontSize:11,color:'#ccc',margin:0}}>새 알림톡 종류가 여기에 추가됩니다</p>
+        </div>
+      </div>
+    </div>
+  </div>);
+}
+
 /* ── 관리자: 가입 안 한 학생 조회 ── */
 function AdminUnregistered({user,onBack,onLogout}){
   const c='#4a148c';
@@ -4518,7 +4679,7 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 )}
 
       {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
-      {isAdmin&&view==='home'&&<AdminHome user={user} isCaptain={isCaptain} onSwitchRole={(r)=>{setViewAsRole(r);setView('home');}} onUnregistered={()=>setView('adminUnregistered')} onUnregisteredTeachers={()=>setView('adminUnregisteredTeachers')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onBack={goBackToRole} onLogout={logout}/>}
+      {isAdmin&&view==='home'&&<AdminHome user={user} isCaptain={isCaptain} onSwitchRole={(r)=>{setViewAsRole(r);setView('home');}} onUnregistered={()=>setView('adminUnregistered')} onUnregisteredTeachers={()=>setView('adminUnregisteredTeachers')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onAlimtalkHub={()=>setView('adminAlimtalkHub')} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='adminTeacherRanking'&&<AdminTeacherRanking onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
 {isAdmin&&view==='adminUnregisteredTeachers'&&<AdminUnregisteredTeachers user={user} onBack={()=>setView('home')} onLogout={logout}/>}
@@ -4526,6 +4687,8 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
       {isAdmin&&view==='adminStudentRecords'&&selStudent&&<AdminStudentRecords student={selStudent} onBack={()=>{setSelStudent(null);setView('adminClassStats');}} onLogout={logout}/>}
       {isAdmin&&view==='adminAIStats'&&<AdminAIStats onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&!isCaptain&&view==='adminApiUsage'&&<AdminApiUsage onBack={()=>setView('home')} onLogout={logout}/>}
+      {isAdmin&&!isCaptain&&view==='adminAlimtalkHub'&&<AdminAlimtalkHub onUnregistered={()=>setView('adminUnregistered')} onEncourage={()=>setView('adminAlimtalkEncourage')} onBack={()=>setView('home')} onLogout={logout}/>}
+      {isAdmin&&!isCaptain&&view==='adminAlimtalkEncourage'&&<AdminAlimtalkEncourage user={user} onBack={()=>setView('adminAlimtalkHub')} onLogout={logout}/>}
       {(isTeacher||isCareer)&&view==='students'&&!selStudent&&!teacherWriteStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherWrite');}} onBack={()=>setView('home')}/>}
       {(isTeacher||isCareer)&&view==='ai'&&selStudent&&<AIReport student={selStudent} user={user} refreshKey={aiRefreshKey} onEdit={(r)=>{setTeacherWriteStudent(selStudent);setTeacherWriteEditing(r);setView('teacherWrite');}} onDelete={async(id)=>{if(!confirm('삭제할까요?'))return;try{await callAPI({action:'deleteRecord',recordId:id,studentId:selStudent.id});setAiRefreshKey(k=>k+1);fetchRecords(user);}catch(e){alert('삭제 실패');}}} onBack={()=>{setSelStudent(null);setView('students');}}/>}
       {(isTeacher||isCareer)&&view==='teacherWrite'&&teacherWriteStudent&&<TeacherWriteForm student={teacherWriteStudent} editing={teacherWriteEditing} onSave={async(data)=>{try{const payload={...data,studentId:teacherWriteStudent.id,name:teacherWriteStudent.name};const action=teacherWriteEditing?'updateRecord':'saveRecord';const r=await callAPI({action,record:payload});if(r.success){await fetchRecords(user);setAiRefreshKey(k=>k+1);setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'ai':'students');}else alert(r.message);}catch(e){alert('저장 실패');}}} onCancel={()=>{setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'ai':'students');}}/>}
