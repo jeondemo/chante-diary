@@ -4154,6 +4154,24 @@ function SubjectStudentPicker({assignment,classCode,onBack,onDone}){
     return true;
   });
 
+  // 전체 선택 대상 = 화면에 보이는 학생 중 아직 등록 안 된 학생
+  const selectable=filtered.filter(s=>!s.registeredSource);
+  const selectableCount=selectable.length;
+  const selectedInView=selectable.filter(s=>selected.has(s.studentId)).length;
+  const allSelected=selectableCount>0&&selectedInView===selectableCount;
+
+  const toggleAll=()=>{
+    const sel=new Set(selected);
+    if(allSelected){
+      // 전체 해제 (보이는 선택가능 학생만)
+      selectable.forEach(s=>sel.delete(s.studentId));
+    }else{
+      // 전체 선택 (보이는 선택가능 학생만)
+      selectable.forEach(s=>sel.add(s.studentId));
+    }
+    setSelected(sel);
+  };
+
   const submit=async()=>{
     if(!selected.size)return alert('추가할 학생을 선택하세요!');
     setSubmitting(true);
@@ -4182,6 +4200,24 @@ function SubjectStudentPicker({assignment,classCode,onBack,onDone}){
         <input type="text" placeholder="이름 검색" value={searchText} onChange={e=>setSearchText(e.target.value)} style={{flex:1,border:'none',outline:'none',fontSize:13,background:'transparent',fontFamily:'inherit'}}/>
         {searchText&&<button onClick={()=>setSearchText('')} style={{background:'none',border:'none',color:'#ccc',fontSize:14,cursor:'pointer'}}>✕</button>}
       </div>
+
+      {!loading&&selectableCount>0&&(
+        <div onClick={toggleAll} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'11px 13px',background:'#ede7f6',border:'1px solid #b39ddb',borderRadius:10,marginBottom:8,cursor:'pointer'}}>
+          <div style={{display:'flex',alignItems:'center',gap:9}}>
+            <div style={{width:22,height:22,borderRadius:6,background:allSelected?'#5e35b1':(selectedInView>0?'#b39ddb':'white'),border:allSelected||selectedInView>0?'none':'1.5px solid #ccc',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              {allSelected&&<svg width="14" height="14" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
+              {!allSelected&&selectedInView>0&&<svg width="14" height="14" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14"/></svg>}
+            </div>
+            <span style={{fontSize:13,fontWeight:800,color:'#4527a0'}}>{searchText?'검색결과 전체 선택':'이 반 전체 선택'}</span>
+          </div>
+          <span style={{fontSize:11,color:'#7e57c2',fontWeight:500}}>{selectableCount}명 중 {selectedInView}명 선택</span>
+        </div>
+      )}
+      {!loading&&selectableCount===0&&filtered.length>0&&(
+        <div style={{padding:'10px 13px',background:'#f5f5f5',borderRadius:10,marginBottom:8,textAlign:'center'}}>
+          <span style={{fontSize:11,color:'#999'}}>이미 모든 학생이 등록되어 있습니다</span>
+        </div>
+      )}
 
       <div style={{background:'white',borderRadius:10,padding:4,border:'1px solid #ddd8f0',marginBottom:10}}>
         {loading&&<LoadingSpin/>}
