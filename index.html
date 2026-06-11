@@ -4080,6 +4080,38 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onTeacherWrit
 
   const getCount=(sid)=>records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===assignment.subject&&String(r.studentId)===String(sid)).length;
 
+  const [deleteMode,setDeleteMode]=useState(false);
+  const [delSel,setDelSel]=useState(new Set());
+  const [deleting,setDeleting]=useState(false);
+
+  const toggleDel=(sid)=>{
+    const s=new Set(delSel);
+    s.has(sid)?s.delete(sid):s.add(sid);
+    setDelSel(s);
+  };
+  const exitDeleteMode=()=>{setDeleteMode(false);setDelSel(new Set());};
+
+  const doDelete=async()=>{
+    if(!delSel.size)return alert('삭제할 학생을 선택하세요.');
+    const ids=[...delSel];
+    const withRec=ids.filter(id=>getCount(id)>0);
+    let msg=`선택한 ${ids.length}명을 ${assignment.subject} 배정 명단에서 제거할까요?`;
+    if(withRec.length>0)msg+=`\n\n※ 이 중 ${withRec.length}명은 작성된 기록이 있습니다.\n기록은 그대로 보존되며, 배정 명단에서만 제외됩니다.`;
+    if(!confirm(msg))return;
+    setDeleting(true);
+    let ok=0,fail=0;
+    for(const id of ids){
+      try{
+        const r=await callAPI({action:'removeStudentFromSubject',subject:assignment.subject,classCode,studentId:id});
+        if(r.success){ok++;setStudents(prev=>(prev||[]).filter(x=>x.studentId!==id));}
+        else fail++;
+      }catch(e){fail++;}
+    }
+    setDeleting(false);
+    exitDeleteMode();
+    alert(`제거 완료: ${ok}명${fail>0?` / 실패: ${fail}명`:''}`);
+  };
+
   const [removing,setRemoving]=useState('');
   const removeStudent=async(s)=>{
     const sid=s.studentId;
@@ -4105,15 +4137,21 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onTeacherWrit
       </div>
     </div>
     <div style={{padding:'12px 16px 0'}}>
-      <div onClick={onImportStudents} className="active-btn" style={{background:'#ede7f6',border:'1.5px dashed #5c2fa0',borderRadius:12,padding:'10px 12px',display:'flex',alignItems:'center',gap:10,marginBottom:10,cursor:'pointer'}}>
-        <div style={{width:28,height:28,background:'white',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-          <svg width="14" height="14" fill="none" stroke="#5c2fa0" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14"/></svg>
+      {!deleteMode&&(<div style={{display:'flex',gap:8,marginBottom:10}}>
+        <div onClick={onImportStudents} className="active-btn" style={{flex:1,background:'#ede7f6',border:'1.5px dashed #5c2fa0',borderRadius:12,padding:'11px 8px',display:'flex',alignItems:'center',justifyContent:'center',gap:7,cursor:'pointer'}}>
+          <svg width="15" height="15" fill="none" stroke="#5c2fa0" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14"/></svg>
+          <span style={{fontSize:12,fontWeight:700,color:'#5c2fa0'}}>학생 가지고 오기</span>
         </div>
-        <div style={{flex:1}}>
-          <p style={{fontSize:12,fontWeight:700,color:'#5c2fa0',margin:0}}>학생 가지고 오기</p>
-          <p style={{fontSize:10,color:'#aaa',margin:'2px 0 0'}}>학기 초에 한 번 추가하면 끝</p>
+        <div onClick={()=>{if((students||[]).length===0){alert('등록된 학생이 없습니다.');return;}setDeleteMode(true);}} className="active-btn" style={{flex:1,background:'#fdeaea',border:'1.5px dashed #c0392b',borderRadius:12,padding:'11px 8px',display:'flex',alignItems:'center',justifyContent:'center',gap:7,cursor:'pointer'}}>
+          <svg width="15" height="15" fill="none" stroke="#c0392b" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14"/></svg>
+          <span style={{fontSize:12,fontWeight:700,color:'#c0392b'}}>학생 삭제하기</span>
         </div>
-      </div>
+      </div>)}
+
+      {deleteMode&&(<div style={{background:'#fdeaea',border:'1px solid #f0c0c0',borderRadius:10,padding:'9px 12px',marginBottom:10,display:'flex',alignItems:'center',gap:8}}>
+        <svg width="15" height="15" fill="none" stroke="#c0392b" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 8v4m0 4h.01"/></svg>
+        <span style={{fontSize:11,color:'#a5281f',lineHeight:1.5}}>삭제할 학생을 선택하세요. 기록은 보존되고 배정 명단에서만 제외됩니다.</span>
+      </div>)}
 
       {loading&&<LoadingSpin/>}
       {!loading&&(students||[]).length===0&&<div style={{background:'white',borderRadius:14,padding:24,textAlign:'center',color:'#ccc',fontSize:12,lineHeight:1.7}}>
@@ -4123,23 +4161,29 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onTeacherWrit
       {!loading&&(students||[]).map(s=>{
         const sid=s.studentId;
         const cnt=getCount(sid);
-        return(<div key={sid} onClick={()=>onSelect({id:sid,name:s.name,subject:assignment.subject})} className="card active-btn" style={{padding:'10px 12px',display:'flex',alignItems:'center',gap:8,marginBottom:6,border:'1.5px solid #ede8f7',cursor:'pointer'}}>
+        const checked=delSel.has(sid);
+        return(<div key={sid} onClick={()=>deleteMode?toggleDel(sid):onSelect({id:sid,name:s.name,subject:assignment.subject})} className="card active-btn" style={{padding:'10px 12px',display:'flex',alignItems:'center',gap:8,marginBottom:6,border:deleteMode&&checked?'1.5px solid #c0392b':'1.5px solid #ede8f7',background:deleteMode&&checked?'#fff8f8':'white',cursor:'pointer'}}>
+          {deleteMode&&<div style={{width:22,height:22,borderRadius:6,background:checked?'#c0392b':'white',border:checked?'none':'1.5px solid #ddd',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>{checked&&<svg width="13" height="13" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}</div>}
           <div style={{width:30,height:30,background:'linear-gradient(135deg,#ede7f6,#d1c4e9)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:'#5c2fa0',flexShrink:0}}>{s.name[0]}</div>
           <span style={{fontSize:10,color:'#bbb',fontWeight:700,width:30,flexShrink:0}}>{String(parseInt(sid.slice(2)))}번</span>
           <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>{s.name}</span>
-          <button onClick={(e)=>{e.stopPropagation();onTeacherWrite({id:sid,name:s.name,subject:assignment.subject});}} style={{background:'#5c2fa0',color:'white',border:'none',borderRadius:14,padding:'4px 9px',fontSize:10,fontWeight:700,cursor:'pointer',flexShrink:0,fontFamily:'inherit'}}>+교사입력</button>
+          {!deleteMode&&<button onClick={(e)=>{e.stopPropagation();onTeacherWrite({id:sid,name:s.name,subject:assignment.subject});}} style={{background:'#5c2fa0',color:'white',border:'none',borderRadius:14,padding:'4px 9px',fontSize:10,fontWeight:700,cursor:'pointer',flexShrink:0,fontFamily:'inherit'}}>+교사입력</button>}
           <span style={{flex:1}}></span>
           {cnt>0
             ?<span style={{fontSize:10,background:'#ede7f6',color:'#5c2fa0',padding:'2px 7px',borderRadius:8,fontWeight:700,flexShrink:0}}>{cnt}건</span>
             :<span style={{fontSize:10,background:'#f5f5f5',color:'#ccc',padding:'2px 7px',borderRadius:8,fontWeight:700,flexShrink:0}}>0건</span>
           }
-          {cnt===0&&<button onClick={(e)=>{e.stopPropagation();removeStudent(s);}} disabled={removing===sid} style={{flexShrink:0,width:24,height:24,borderRadius:7,border:'1px solid #f0c0c0',background:removing===sid?'#f5f5f5':'#fdeaea',color:'#c0392b',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',padding:0,fontFamily:'inherit'}} title="과목에서 제거">{removing===sid?'⋯':'✕'}</button>}
-          <div style={{padding:'4px 2px',flexShrink:0,pointerEvents:'none'}}>
+          {!deleteMode&&<div style={{padding:'4px 2px',flexShrink:0,pointerEvents:'none'}}>
             <svg width="11" height="11" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
-          </div>
+          </div>}
         </div>);
       })}
     </div>
+
+    {deleteMode&&(<div style={{position:'sticky',bottom:0,background:'#f3f0f9',borderTop:'1px solid #e0d8f0',padding:'10px 16px calc(env(safe-area-inset-bottom) + 10px)',display:'flex',gap:8}}>
+      <button onClick={exitDeleteMode} disabled={deleting} style={{flex:1,padding:12,background:'white',border:'1px solid #ddd',borderRadius:10,fontSize:13,fontWeight:700,color:'#888',cursor:'pointer',fontFamily:'inherit'}}>취소</button>
+      <button onClick={doDelete} disabled={deleting||!delSel.size} style={{flex:1.6,padding:12,background:delSel.size>0?'#c0392b':'#ddd',border:'none',borderRadius:10,fontSize:13,fontWeight:800,color:'white',cursor:delSel.size>0?'pointer':'default',fontFamily:'inherit'}}>{deleting?'삭제 중...':`선택한 ${delSel.size}명 삭제`}</button>
+    </div>)}
   </div>);
 }
 /* ── 교과 학생 가지고 오기 (학생 선택 화면) ── */
