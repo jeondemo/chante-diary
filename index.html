@@ -4080,6 +4080,21 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onTeacherWrit
 
   const getCount=(sid)=>records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===assignment.subject&&String(r.studentId)===String(sid)).length;
 
+  const [removing,setRemoving]=useState('');
+  const removeStudent=async(s)=>{
+    const sid=s.studentId;
+    if(getCount(sid)>0){alert('이미 기록이 있는 학생은 제거할 수 없습니다.');return;}
+    if(!confirm(`${s.name} 학생을 ${assignment.subject}에서 제거할까요?\n(잘못 가져온 학생 제거용)`))return;
+    setRemoving(sid);
+    try{
+      const r=await callAPI({action:'removeStudentFromSubject',subject:assignment.subject,classCode,studentId:sid});
+      if(r.success){
+        setStudents(prev=>(prev||[]).filter(x=>x.studentId!==sid));
+      }else alert(r.message||'제거 실패');
+    }catch(e){alert('서버 오류');}
+    setRemoving('');
+  };
+
   return(<div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:20}}>
     <div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'calc(env(safe-area-inset-top) + 22px) 20px 38px',position:'relative',overflow:'hidden'}}>
       <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div>
@@ -4118,6 +4133,7 @@ function SubjectStudentList({assignment,classCode,records,onSelect,onTeacherWrit
             ?<span style={{fontSize:10,background:'#ede7f6',color:'#5c2fa0',padding:'2px 7px',borderRadius:8,fontWeight:700,flexShrink:0}}>{cnt}건</span>
             :<span style={{fontSize:10,background:'#f5f5f5',color:'#ccc',padding:'2px 7px',borderRadius:8,fontWeight:700,flexShrink:0}}>0건</span>
           }
+          {cnt===0&&<button onClick={(e)=>{e.stopPropagation();removeStudent(s);}} disabled={removing===sid} style={{flexShrink:0,width:24,height:24,borderRadius:7,border:'1px solid #f0c0c0',background:removing===sid?'#f5f5f5':'#fdeaea',color:'#c0392b',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',padding:0,fontFamily:'inherit'}} title="과목에서 제거">{removing===sid?'⋯':'✕'}</button>}
           <div style={{padding:'4px 2px',flexShrink:0,pointerEvents:'none'}}>
             <svg width="11" height="11" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
           </div>
