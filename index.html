@@ -960,8 +960,8 @@ function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTea
       </div>
     </div>
     <div style={{padding:'16px 14px'}}>
-    {/* 화면 전환 탭 */}
-      <div style={{background:'white',borderRadius:12,padding:'10px 12px',marginBottom:14,border:'1.5px solid #e1bee7'}}>
+    {/* 화면 전환 탭 (관리자 전용, 캡틴 제외) */}
+      {!isCaptain && (<div style={{background:'white',borderRadius:12,padding:'10px 12px',marginBottom:14,border:'1.5px solid #e1bee7'}}>
         <p style={{fontSize:10,color:'#888',margin:'0 0 8px',fontWeight:700}}>👁️ 화면 미리보기</p>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
           <div style={{background:'#4a148c',color:'white',padding:'8px 6px',borderRadius:8,textAlign:'center',fontSize:11,fontWeight:700}}>관리자</div>
@@ -969,7 +969,7 @@ function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTea
           <div onClick={()=>onSwitchRole('teacher')} className="active-btn" style={{background:'white',border:'1px solid #ddd',padding:'8px 6px',borderRadius:8,textAlign:'center',fontSize:11,fontWeight:600,color:'#666',cursor:'pointer'}}>👨‍🏫 교사</div>
         </div>
         <p style={{fontSize:9,color:'#bbb',margin:'8px 0 0',textAlign:'center'}}>학생·교사 화면을 보기 전용으로 미리볼 수 있습니다</p>
-      </div>
+      </div>)}
     
       {/* 관리 메뉴 (상단으로 이동) */}
       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
