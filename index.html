@@ -4154,6 +4154,20 @@ function SubjectStudentPicker({assignment,classCode,onBack,onDone}){
     return true;
   });
 
+  const [removing,setRemoving]=useState('');
+  const removeStudent=async(s)=>{
+    if(s.registeredSource!=='added')return; // 안전장치: added만 삭제
+    if(!confirm(`${s.name} 학생을 ${assignment.subject}에서 제거할까요?`))return;
+    setRemoving(s.studentId);
+    try{
+      const r=await callAPI({action:'removeStudentFromSubject',subject:assignment.subject,classCode,studentId:s.studentId});
+      if(r.success){
+        setStudents(prev=>prev.map(x=>x.studentId===s.studentId?{...x,registeredSource:null}:x));
+      }else alert(r.message||'제거 실패');
+    }catch(e){alert('서버 오류');}
+    setRemoving('');
+  };
+
   // 전체 선택 대상 = 화면에 보이는 학생 중 아직 등록 안 된 학생
   const selectable=filtered.filter(s=>!s.registeredSource);
   const selectableCount=selectable.length;
@@ -4233,6 +4247,7 @@ function SubjectStudentPicker({assignment,classCode,onBack,onDone}){
             <span style={{flex:1,fontSize:12,color:isAlready?'#999':'#1a1a2e',fontWeight:500}}>{s.name}</span>
             {s.registeredSource==='added'&&<span style={{fontSize:9,background:'#ede7f6',color:'#5c2fa0',padding:'2px 6px',borderRadius:6,fontWeight:500,flexShrink:0}}>등록됨</span>}
             {s.registeredSource==='record'&&<span style={{fontSize:9,background:'#e8f5e9',color:'#2e7d32',padding:'2px 6px',borderRadius:6,fontWeight:500,flexShrink:0}}>입력함</span>}
+            {s.registeredSource==='added'&&<button onClick={(e)=>{e.stopPropagation();removeStudent(s);}} disabled={removing===s.studentId} style={{flexShrink:0,width:22,height:22,borderRadius:6,border:'1px solid #f0c0c0',background:removing===s.studentId?'#f5f5f5':'#fdeaea',color:'#c0392b',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',padding:0,marginLeft:2}} title="과목에서 제거">{removing===s.studentId?'⋯':'✕'}</button>}
           </div>);
         })}
       </div>
