@@ -1480,30 +1480,53 @@ function AdminUnregisteredTeachers({user,onBack,onLogout}){
   if(loading)return(<div style={{background:phoneBg,minHeight:'100%',display:'flex',alignItems:'center',justifyContent:'center',padding:40}}><Spin/></div>);
   if(!data)return(<div style={{background:phoneBg,minHeight:'100%',padding:40,textAlign:'center',color:'#999'}}>데이터 없음</div>);
 
+  // 가입은 했지만 과목 미설정인 교사
+  const noSubject=(data.registered||[]).filter(t=>!t.hasSubject);
+
   return(<div style={{background:phoneBg,minHeight:'100%',paddingBottom:30}}>
     <div style={{background:`linear-gradient(135deg,${c},#6a1b9a)`,padding:'calc(env(safe-area-inset-top) + 22px) 20px 38px',position:'relative',overflow:'hidden'}}>
       <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
       <div style={{position:'relative',zIndex:3}}>
         <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>관리자 홈</button>
-        <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 2px'}}>가입 안 한 교사</p>
-        <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>전체 {data.totalTeachers}명 중 {data.unregistered.length}명 미가입</p>
+        <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 2px'}}>교사 가입·설정 현황</p>
+        <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>전체 {data.totalTeachers}명 · 미가입 {data.unregistered.length}명 · 과목 미설정 {noSubject.length}명</p>
       </div>
     </div>
     <div style={{padding:'12px 14px'}}>
       {/* 통계 카드 */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
-        <div style={{background:'white',borderRadius:10,padding:'10px 8px',border:'1px solid #e1bee7',textAlign:'center'}}>
-          <p style={{fontSize:9,color:'#999',margin:'0 0 3px',fontWeight:600}}>전체</p>
-          <p style={{fontSize:18,fontWeight:900,color:'#1a1a2e',margin:0}}>{data.totalTeachers}명</p>
-        </div>
-        <div style={{background:'#e8f5e9',borderRadius:10,padding:'10px 8px',border:'1px solid #a5d6a7',textAlign:'center'}}>
-          <p style={{fontSize:9,color:'#2e7d32',margin:'0 0 3px',fontWeight:600}}>가입</p>
-          <p style={{fontSize:18,fontWeight:900,color:'#2e7d32',margin:0}}>{data.registered.length}명</p>
-        </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}}>
         <div style={{background:'#fce4ec',borderRadius:10,padding:'10px 8px',border:'1px solid #f8bbd0',textAlign:'center'}}>
           <p style={{fontSize:9,color:'#c2185b',margin:'0 0 3px',fontWeight:600}}>미가입</p>
-          <p style={{fontSize:18,fontWeight:900,color:'#c2185b',margin:0}}>{data.unregistered.length}명</p>
+          <p style={{fontSize:20,fontWeight:900,color:'#c2185b',margin:0}}>{data.unregistered.length}명</p>
         </div>
+        <div style={{background:'#fff3e0',borderRadius:10,padding:'10px 8px',border:'1px solid #ffcc80',textAlign:'center'}}>
+          <p style={{fontSize:9,color:'#e65100',margin:'0 0 3px',fontWeight:600}}>과목 미설정</p>
+          <p style={{fontSize:20,fontWeight:900,color:'#e65100',margin:0}}>{noSubject.length}명</p>
+        </div>
+      </div>
+
+      {/* 과목 미설정 교사 섹션 */}
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+        <div style={{width:3,height:12,background:'#e65100',borderRadius:2}}/>
+        <span style={{fontSize:11,fontWeight:700,color:'#e65100'}}>과목 미설정 교사 ({noSubject.length}명)</span>
+      </div>
+      <p style={{fontSize:10,color:'#999',margin:'0 0 8px',lineHeight:1.5}}>가입은 했지만 담당 과목·학급을 아직 등록하지 않은 선생님입니다. 담임·동아리는 함께 표시됩니다.</p>
+      <div style={{background:'white',borderRadius:10,padding:4,border:'1px solid #ffe0b2',marginBottom:16}}>
+        {noSubject.length===0
+          ?<p style={{textAlign:'center',color:'#ccc',padding:20,fontSize:12,margin:0}}>모든 가입 교사가 과목을 등록했습니다 🎉</p>
+          :noSubject.map((t,i)=>(<div key={i} style={{display:'flex',alignItems:'center',gap:9,padding:'10px',borderBottom:i===noSubject.length-1?'none':'0.5px solid #f5f5f5'}}>
+            <div style={{width:30,height:30,background:'#fff3e0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:'#e65100',flexShrink:0}}>{t.name[0]}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:13,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>{t.name} 선생님</p>
+              <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                {t.hasHomeroom&&<span style={{fontSize:10,background:'#e0f2f1',color:'#00695c',padding:'2px 7px',borderRadius:6,fontWeight:700}}>담임 {t.homeroomClass}</span>}
+                {t.hasClub&&<span style={{fontSize:10,background:'#fbe9e7',color:'#e64a19',padding:'2px 7px',borderRadius:6,fontWeight:700}}>🎯 {t.clubInfo}</span>}
+                {!t.hasHomeroom&&!t.hasClub&&<span style={{fontSize:10,color:'#bbb',fontStyle:'italic'}}>담임·동아리 없음</span>}
+              </div>
+            </div>
+            <span style={{fontSize:9,background:'#fff3e0',color:'#e65100',padding:'3px 8px',borderRadius:8,fontWeight:700,flexShrink:0}}>과목 미설정</span>
+          </div>))
+        }
       </div>
 
       {/* 미가입 교사 목록 */}
