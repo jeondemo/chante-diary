@@ -1463,6 +1463,78 @@ function AdminUnregistered({user,onBack,onLogout}){
     </div>
   </div>);
 }
+
+/* ── 교사별 과목 등록 현황 (탭) ── */
+function AdminTeacherEnrollment({teacherId,teacherName,onBack,onLogout}){
+  const c='#5c2fa0';
+  const phoneBg='#f3f0f9';
+  const [data,setData]=useState(null),[loading,setLoading]=useState(true);
+  const [tabIdx,setTabIdx]=useState(0);
+
+  useEffect(()=>{
+    callAPI({action:'getTeacherSubjectEnrollment',teacherId}).then(r=>{
+      if(r.success)setData(r);
+      else alert(r.message||'조회 실패');
+      setLoading(false);
+    }).catch(()=>{alert('서버 오류');setLoading(false);});
+  },[]);
+
+  if(loading)return(<div style={{background:phoneBg,minHeight:'100%',display:'flex',alignItems:'center',justifyContent:'center',padding:40}}><Spin/></div>);
+  if(!data||!data.subjects||data.subjects.length===0)return(<div style={{background:phoneBg,minHeight:'100%',padding:40,textAlign:'center',color:'#999'}}>등록된 과목이 없습니다</div>);
+
+  const subjects=data.subjects;
+  const cur=subjects[tabIdx]||subjects[0];
+
+  return(<div style={{background:phoneBg,minHeight:'100%',paddingBottom:30}}>
+    <div style={{background:`linear-gradient(135deg,${c},#7c3aed)`,padding:'calc(env(safe-area-inset-top) + 22px) 20px 38px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:12,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>학생 미등록 교사</button>
+        <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 2px'}}>{data.teacherName} 선생님</p>
+        <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>담당 과목 {subjects.length}개 · 과목별 등록 현황</p>
+      </div>
+    </div>
+
+    {/* 과목 탭 */}
+    <div style={{display:'flex',overflowX:'auto',background:'white',borderBottom:'1px solid #e1d8f0',padding:'0 6px'}} className="no-scrollbar">
+      {subjects.map((s,i)=>(
+        <button key={i} onClick={()=>setTabIdx(i)} style={{flex:'0 0 auto',padding:'12px 10px',border:'none',borderBottom:`2px solid ${tabIdx===i?c:'transparent'}`,background:'white',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
+          <span style={{fontSize:12,fontWeight:900,color:tabIdx===i?c:'#bbb'}}>{s.subject}</span>
+          <span style={{fontSize:10,fontWeight:700,background:tabIdx===i?c+'22':'#f5f5f5',color:tabIdx===i?c:'#ccc',padding:'2px 6px',borderRadius:20,marginLeft:5}}>{s.total}</span>
+        </button>
+      ))}
+    </div>
+
+    <div style={{padding:'14px'}}>
+      {/* 총 인원 */}
+      <div style={{background:'#ede7f6',border:'1px solid #d1c4e9',borderRadius:10,padding:'12px 14px',marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <span style={{fontSize:12,fontWeight:800,color:'#4527a0'}}>{cur.subject} 전체 등록</span>
+        <span style={{fontSize:20,fontWeight:900,color:c}}>{cur.total}명</span>
+      </div>
+
+      {/* 반별 블록 */}
+      {cur.classes.map((cl,i)=>{
+        const empty=cl.count===0;
+        return(<div key={i} style={{marginBottom:14}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+            <div style={{width:26,height:26,background:empty?'#ccc':c,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:11,fontWeight:900}}>{cl.classCode[0]}-{cl.classCode.slice(1)}</div>
+            <span style={{fontSize:13,fontWeight:800,color:empty?'#999':'#1a1a2e'}}>{cl.classCode[0]}학년 {cl.classCode.slice(1)}반</span>
+            <span style={{fontSize:11,padding:'2px 8px',borderRadius:8,fontWeight:700,marginLeft:'auto',background:empty?'#fdeaea':'#ede7f6',color:empty?'#c0392b':c}}>{cl.count}명</span>
+          </div>
+          {empty
+            ?<div style={{background:'#fff8f8',border:'0.5px dashed #f0c0c0',borderRadius:10,padding:14,textAlign:'center'}}><span style={{fontSize:11,color:'#c0392b'}}>아직 등록된 학생이 없습니다 · 학생 가져오기 필요</span></div>
+            :<div style={{background:'white',border:'0.5px solid #e1d8f0',borderRadius:10,padding:'8px 6px'}}>
+              <div style={{display:'flex',flexWrap:'wrap',gap:5,padding:4}}>
+                {cl.students.map((st,j)=>(<span key={j} style={{fontSize:11,background:'#f7f4fc',color:'#444',padding:'4px 9px',borderRadius:7}}>{String(parseInt(st.studentId.slice(2)))} {st.name}</span>))}
+              </div>
+            </div>
+          }
+        </div>);
+      })}
+    </div>
+  </div>);
+}
+
 /* ── 관리자: 가입 안 한 교사 조회 ── */
 function AdminUnregisteredTeachers({user,onBack,onLogout}){
   const c='#4a148c';
@@ -1470,6 +1542,7 @@ function AdminUnregisteredTeachers({user,onBack,onLogout}){
   const [data,setData]=useState(null),[loading,setLoading]=useState(true);
 
   const [noStudents,setNoStudents]=useState([]);
+  const [enrollView,setEnrollView]=useState(null); // {teacherId, teacherName}
 
   useEffect(()=>{
     Promise.all([
@@ -1485,6 +1558,10 @@ function AdminUnregisteredTeachers({user,onBack,onLogout}){
 
   if(loading)return(<div style={{background:phoneBg,minHeight:'100%',display:'flex',alignItems:'center',justifyContent:'center',padding:40}}><Spin/></div>);
   if(!data)return(<div style={{background:phoneBg,minHeight:'100%',padding:40,textAlign:'center',color:'#999'}}>데이터 없음</div>);
+
+  if(enrollView)return(<AdminTeacherEnrollment teacherId={enrollView.teacherId} teacherName={enrollView.teacherName} onBack={()=>setEnrollView(null)} onLogout={onLogout}/>);
+
+  if(enrollView)return(<AdminTeacherEnrollment teacherId={enrollView.teacherId} teacherName={enrollView.teacherName} onBack={()=>setEnrollView(null)} onLogout={onLogout}/>);
 
   // 가입은 했지만 과목 미설정인 교사
   const noSubject=(data.registered||[]).filter(t=>!t.hasSubject);
@@ -1526,10 +1603,10 @@ function AdminUnregisteredTeachers({user,onBack,onLogout}){
           ?<p style={{textAlign:'center',color:'#ccc',padding:20,fontSize:12,margin:0}}>모든 교사가 수강 학생을 등록했습니다 🎉</p>
           :noStudents.map((t,i)=>{
             const multiSubject=t.subjects.length>1;
-            return(<div key={i} style={{display:'flex',alignItems:'flex-start',gap:9,padding:'11px 10px',borderBottom:i===noStudents.length-1?'none':'0.5px solid #f5f5f5'}}>
+            return(<div key={i} onClick={()=>setEnrollView({teacherId:t.teacherId,teacherName:t.name})} className="active-btn" style={{display:'flex',alignItems:'flex-start',gap:9,padding:'11px 10px',borderBottom:i===noStudents.length-1?'none':'0.5px solid #f5f5f5',cursor:'pointer'}}>
               <div style={{width:30,height:30,background:'#e8eaf6',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:'#3949ab',flexShrink:0,marginTop:1}}>{t.name[0]}</div>
               <div style={{flex:1,minWidth:0}}>
-                <p style={{fontSize:13,fontWeight:800,color:'#1a1a2e',margin:'0 0 5px'}}>{t.name} 선생님 <span style={{fontSize:10,color:'#bbb',fontWeight:500}}>· {t.subjects.join(', ')}</span></p>
+                <p style={{fontSize:13,fontWeight:800,color:'#1a1a2e',margin:'0 0 5px'}}>{t.name} 선생님 <span style={{fontSize:10,color:'#3949ab',fontWeight:700}}>›</span> <span style={{fontSize:10,color:'#bbb',fontWeight:500}}>· {t.subjects.join(', ')}</span></p>
                 <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
                   {t.emptySlots.map((s,j)=>(<span key={j} style={{fontSize:10,background:'#e8eaf6',color:'#1a237e',padding:'2px 7px',borderRadius:6,fontWeight:600}}>{multiSubject?s.subject+' ':''}{s.classCode[0]}-{s.classCode.slice(1)}</span>))}
                 </div>
