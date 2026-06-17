@@ -935,7 +935,7 @@ function KpiCard({label,value,color,bg}){
     </div>
   );
 }
-function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTeachers,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onAlimtalkHub,onBack,onLogout}){
+function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTeachers,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onAlimtalkHub,onSubjectEnrollment,onBack,onLogout}){
   const c='#4a148c';
   const phoneBg='#f4f0f9';
   return(<div style={{paddingBottom:20}}>
@@ -1005,6 +1005,16 @@ function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTea
           <p style={{fontSize:11,color:'#999',margin:0}}>반별 기록 작성 상황 분석</p>
         </div>
         <svg width="14" height="14" fill="none" stroke="#ce93d8" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      <div onClick={onSubjectEnrollment} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #00897b',background:'linear-gradient(135deg,#fff 0%,#e0f2f1 100%)'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#26a69a,#00695c)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>과목별 학생 등록 현황 <span style={{fontSize:9,background:'#00897b',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:800,marginLeft:4}}>NEW</span></p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>학년별 과목 · 담당교사 · 등록 학생 수</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#26a69a" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
       </div>
       <div onClick={onAIStats} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #e1bee7'}}>
         <div style={{width:42,height:42,background:'linear-gradient(135deg,#3949ab,#1a237e)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -1531,6 +1541,94 @@ function AdminTeacherEnrollment({teacherId,teacherName,onBack,onLogout}){
           }
         </div>);
       })}
+    </div>
+  </div>);
+}
+
+/* ── 관리자: 과목별 학생 등록 현황 (학년별) ── */
+function AdminSubjectEnrollment({onBack,onLogout}){
+  const c='#00695c';
+  const phoneBg='#e8f3f1';
+  const [grade,setGrade]=useState('1');
+  const [data,setData]=useState(null),[loading,setLoading]=useState(true);
+  const [detail,setDetail]=useState(null); // 선택한 과목
+
+  useEffect(()=>{
+    setLoading(true);setDetail(null);
+    callAPI({action:'getSubjectEnrollmentOverview',grade}).then(r=>{
+      if(r.success)setData(r);
+      else alert(r.message||'조회 실패');
+      setLoading(false);
+    }).catch(()=>{alert('서버 오류');setLoading(false);});
+  },[grade]);
+
+  return(<div style={{background:phoneBg,minHeight:'100%',paddingBottom:30}}>
+    <div style={{background:`linear-gradient(135deg,${c},#00897b)`,padding:'calc(env(safe-area-inset-top) + 22px) 20px 38px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={detail?()=>setDetail(null):onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:12,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>{detail?'과목 목록':'관리자 홈'}</button>
+        {!detail?<>
+          <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 2px'}}>과목별 학생 등록 현황</p>
+          <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>학년별 과목 · 담당교사 · 등록 학생 수</p>
+        </>:<>
+          <p style={{fontSize:18,fontWeight:900,color:'white',margin:'0 0 2px'}}>{detail.subject} <span style={{fontSize:11,color:'rgba(255,255,255,0.7)',fontWeight:500}}>· {grade}학년</span></p>
+          <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>{detail.teachers.length>0?detail.teachers.join(', '):'담당교사 미설정'} · 총 {detail.total}명</p>
+        </>}
+      </div>
+    </div>
+
+    {!detail&&(<div style={{padding:'12px 14px 0'}}>
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
+        {['1','2','3'].map(g=>(
+          <button key={g} onClick={()=>setGrade(g)} style={{flex:1,padding:'9px 0',borderRadius:8,border:grade===g?'none':'1px solid #ddd',background:grade===g?c:'white',color:grade===g?'white':'#888',fontSize:13,fontWeight:800,cursor:'pointer',fontFamily:'inherit'}}>{g}학년</button>
+        ))}
+      </div>
+    </div>)}
+
+    <div style={{padding:'0 14px'}}>
+      {loading&&<LoadingSpin/>}
+
+      {/* 과목 목록 */}
+      {!loading&&!detail&&data&&(data.subjects||[]).length===0&&<div style={{background:'white',borderRadius:12,padding:24,textAlign:'center',color:'#ccc',fontSize:12}}>해당 학년 과목이 없습니다</div>}
+      {!loading&&!detail&&data&&(data.subjects||[]).map((s,i)=>{
+        const noTeacher=s.teachers.length===0;
+        const noStudent=s.total===0;
+        return(<div key={i} onClick={()=>setDetail(s)} className="active-btn" style={{background:'white',border:noTeacher||noStudent?'0.5px solid #ffcdd2':'0.5px solid #cfe3df',borderRadius:10,padding:'12px 13px',display:'flex',alignItems:'center',gap:10,marginBottom:7,cursor:'pointer'}}>
+          <div style={{flex:1,minWidth:0}}>
+            <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 4px'}}>{s.subject}</p>
+            <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+              {s.teachers.length>0
+                ?s.teachers.map((t,j)=>(<span key={j} style={{fontSize:10,background:'#e0f2f1',color:'#00695c',padding:'2px 7px',borderRadius:6,fontWeight:700}}>{t}</span>))
+                :<span style={{fontSize:10,background:'#fdeaea',color:'#c0392b',padding:'2px 7px',borderRadius:6,fontWeight:700}}>담당교사 미설정</span>
+              }
+            </div>
+          </div>
+          <div style={{textAlign:'center',flexShrink:0}}>
+            <p style={{fontSize:19,fontWeight:900,color:noStudent?'#c0392b':'#00695c',margin:0,lineHeight:1}}>{s.total}</p>
+            <p style={{fontSize:9,color:'#aaa',margin:'2px 0 0'}}>명 등록</p>
+          </div>
+          <svg width="14" height="14" fill="none" stroke="#ccc" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </div>);
+      })}
+
+      {/* 과목 상세 (반별 명단) */}
+      {!loading&&detail&&(<div>
+        {detail.classes.length===0
+          ?<div style={{background:'#fff8f8',border:'0.5px dashed #f0c0c0',borderRadius:10,padding:18,textAlign:'center',marginTop:12}}><span style={{fontSize:12,color:'#c0392b'}}>아직 등록된 학생이 없습니다</span></div>
+          :detail.classes.map((cl,i)=>(<div key={i} style={{marginTop:i===0?12:14}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+              <div style={{width:26,height:26,background:c,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:11,fontWeight:900}}>{cl.classCode[0]}-{cl.classCode.slice(1)}</div>
+              <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>{cl.classCode[0]}학년 {cl.classCode.slice(1)}반</span>
+              <span style={{fontSize:11,background:'#e0f2f1',color:c,padding:'2px 8px',borderRadius:8,fontWeight:700,marginLeft:'auto'}}>{cl.count}명</span>
+            </div>
+            <div style={{background:'white',border:'0.5px solid #cfe3df',borderRadius:10,padding:8}}>
+              <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+                {cl.students.map((st,j)=>(<span key={j} style={{fontSize:11,background:'#f1f8f6',color:'#444',padding:'4px 9px',borderRadius:7}}>{String(parseInt(st.studentId.slice(2)))} {st.name}</span>))}
+              </div>
+            </div>
+          </div>))
+        }
+      </div>)}
     </div>
   </div>);
 }
@@ -4972,7 +5070,7 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 )}
 
       {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
-      {isAdmin&&view==='home'&&<AdminHome user={user} isCaptain={isCaptain} onSwitchRole={(r)=>{setViewAsRole(r);setView('home');}} onUnregistered={()=>setView('adminUnregistered')} onUnregisteredTeachers={()=>setView('adminUnregisteredTeachers')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onAlimtalkHub={()=>setView('adminAlimtalkHub')} onBack={goBackToRole} onLogout={logout}/>}
+      {isAdmin&&view==='home'&&<AdminHome user={user} isCaptain={isCaptain} onSwitchRole={(r)=>{setViewAsRole(r);setView('home');}} onUnregistered={()=>setView('adminUnregistered')} onUnregisteredTeachers={()=>setView('adminUnregisteredTeachers')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onAlimtalkHub={()=>setView('adminAlimtalkHub')} onSubjectEnrollment={()=>setView('adminSubjectEnrollment')} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='adminTeacherRanking'&&<AdminTeacherRanking onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
 {isAdmin&&view==='adminUnregisteredTeachers'&&<AdminUnregisteredTeachers user={user} onBack={()=>setView('home')} onLogout={logout}/>}
@@ -4981,6 +5079,7 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
       {isAdmin&&view==='adminAIStats'&&<AdminAIStats onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&!isCaptain&&view==='adminApiUsage'&&<AdminApiUsage onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&!isCaptain&&view==='adminAlimtalkHub'&&<AdminAlimtalkHub onUnregistered={()=>setView('adminUnregistered')} onEncourage={()=>setView('adminAlimtalkEncourage')} onBack={()=>setView('home')} onLogout={logout}/>}
+      {isAdmin&&view==='adminSubjectEnrollment'&&<AdminSubjectEnrollment onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&!isCaptain&&view==='adminAlimtalkEncourage'&&<AdminAlimtalkEncourage user={user} onBack={()=>setView('adminAlimtalkHub')} onLogout={logout}/>}
       {(isTeacher||isCareer)&&view==='students'&&!selStudent&&!teacherWriteStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherWrite');}} onBack={()=>setView('home')}/>}
       {(isTeacher||isCareer)&&view==='ai'&&selStudent&&<AIReport student={selStudent} user={user} refreshKey={aiRefreshKey} onEdit={(r)=>{setTeacherWriteStudent(selStudent);setTeacherWriteEditing(r);setView('teacherWrite');}} onDelete={async(id)=>{if(!confirm('삭제할까요?'))return;try{await callAPI({action:'deleteRecord',recordId:id,studentId:selStudent.id});setAiRefreshKey(k=>k+1);fetchRecords(user);}catch(e){alert('삭제 실패');}}} onBack={()=>{setSelStudent(null);setView('students');}}/>}
