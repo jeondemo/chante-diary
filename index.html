@@ -935,7 +935,7 @@ function KpiCard({label,value,color,bg}){
     </div>
   );
 }
-function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTeachers,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onAlimtalkHub,onSubjectEnrollment,onBack,onLogout}){
+function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTeachers,onClassStats,onAIStats,onTeacherRanking,onApiUsage,onAlimtalkHub,onSubjectEnrollment,onTeacherAccess,onBack,onLogout}){
   const c='#4a148c';
   const phoneBg='#f4f0f9';
   return(<div style={{paddingBottom:20}}>
@@ -1036,6 +1036,16 @@ function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTea
           <p style={{fontSize:11,color:'#999',margin:0}}>선생님별 AI 생성 횟수 순위</p>
         </div>
         <svg width="14" height="14" fill="none" stroke="#c2185b" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      <div onClick={onTeacherAccess} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #00838f',background:'linear-gradient(135deg,#fff 0%,#e0f4f7 100%)'}}>
+        <div style={{width:42,height:42,background:'linear-gradient(135deg,#26c6da,#00838f)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#1a1a2e',margin:'0 0 3px'}}>교사별 접속 현황 <span style={{fontSize:9,background:'#00838f',color:'white',padding:'2px 6px',borderRadius:10,fontWeight:800,marginLeft:4}}>NEW</span></p>
+          <p style={{fontSize:11,color:'#999',margin:0}}>접속 횟수 · 마지막 접속 · 미접속 교사</p>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="#00838f" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
       </div>
       {!isCaptain && (<div onClick={onApiUsage} className="active-btn card" style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom:10,border:'1.5px solid #4a148c',background:'linear-gradient(135deg,#fff 0%,#ede7f6 100%)',position:'relative'}}>
   <div style={{width:42,height:42,background:'linear-gradient(135deg,#4a148c,#6a1b9a)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -2473,6 +2483,72 @@ function RoleScreenBlue({onSelect}){
     </div>
   </div>);
 }
+
+/* ── 관리자: 교사별 접속 현황 ── */
+function AdminTeacherAccess({onBack,onLogout}){
+  const c='#00838f';
+  const phoneBg='#e7f3f5';
+  const [data,setData]=useState(null),[loading,setLoading]=useState(true);
+  useEffect(()=>{
+    callAPI({action:'getTeacherAccessStats'}).then(r=>{
+      if(r.success)setData(r);
+      else alert(r.message||'조회 실패');
+      setLoading(false);
+    }).catch(()=>{alert('서버 오류');setLoading(false);});
+  },[]);
+  if(loading)return(<div style={{background:phoneBg,minHeight:'100%',display:'flex',alignItems:'center',justifyContent:'center',padding:40}}><Spin/></div>);
+  if(!data)return(<div style={{background:phoneBg,minHeight:'100%',padding:40,textAlign:'center',color:'#999'}}>데이터 없음</div>);
+  const never=data.teachers.filter(t=>t.count===0);
+  const active=data.teachers.filter(t=>t.count>0);
+  return(<div style={{background:phoneBg,minHeight:'100%',paddingBottom:30}}>
+    <div style={{background:`linear-gradient(135deg,${c},#0097a7)`,padding:'calc(env(safe-area-inset-top) + 22px) 20px 38px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:12,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>관리자 홈</button>
+        <p style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 2px'}}>교사별 접속 현황</p>
+        <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>가입 교사 {data.teachers.length}명 · 접속 기록 없음 {data.neverCount}명</p>
+      </div>
+    </div>
+    <div style={{padding:'12px 14px'}}>
+      <div style={{background:'#fff3e0',border:'1px solid #ffcc80',borderRadius:10,padding:'9px 12px',marginBottom:12}}>
+        <p style={{fontSize:10,color:'#e65100',margin:0,lineHeight:1.5}}>※ 접속 기록은 이 기능 배포 이후부터 쌓입니다. 이전 접속은 표시되지 않습니다.</p>
+      </div>
+
+      {never.length>0&&(<>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+          <div style={{width:3,height:12,background:'#c0392b',borderRadius:2}}/>
+          <span style={{fontSize:11,fontWeight:700,color:'#c0392b'}}>접속 기록 없음 ({never.length}명)</span>
+        </div>
+        <div style={{background:'white',borderRadius:10,padding:4,border:'1px solid #f0c0c0',marginBottom:16}}>
+          {never.map((t,i)=>(<div key={i} style={{display:'flex',alignItems:'center',gap:9,padding:'10px',borderBottom:i===never.length-1?'none':'0.5px solid #f5f5f5'}}>
+            <div style={{width:30,height:30,background:'#fdeaea',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:'#c0392b',flexShrink:0}}>{t.name[0]}</div>
+            <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>{t.name} 선생님</span>
+            <span style={{fontSize:9,background:'#fdeaea',color:'#c0392b',padding:'3px 8px',borderRadius:8,fontWeight:700,marginLeft:'auto',flexShrink:0}}>미접속</span>
+          </div>))}
+        </div>
+      </>)}
+
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+        <div style={{width:3,height:12,background:c,borderRadius:2}}/>
+        <span style={{fontSize:11,fontWeight:700,color:c}}>접속 이력 ({active.length}명)</span>
+      </div>
+      <div style={{background:'white',borderRadius:10,padding:4,border:'1px solid #b2dfe5'}}>
+        {active.length===0
+          ?<p style={{textAlign:'center',color:'#ccc',padding:20,fontSize:12,margin:0}}>아직 접속 기록이 없습니다</p>
+          :active.map((t,i)=>(<div key={i} style={{display:'flex',alignItems:'center',gap:9,padding:'10px',borderBottom:i===active.length-1?'none':'0.5px solid #f5f5f5'}}>
+            <div style={{width:30,height:30,background:'#e0f4f7',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:c,flexShrink:0}}>{t.name[0]}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:13,fontWeight:800,color:'#1a1a2e',margin:'0 0 2px'}}>{t.name} 선생님</p>
+              <p style={{fontSize:10,color:'#999',margin:0}}>마지막 접속 {t.last}</p>
+            </div>
+            <span style={{fontSize:10,background:'#e0f4f7',color:c,padding:'3px 9px',borderRadius:8,fontWeight:700,flexShrink:0}}>{t.count}회</span>
+          </div>))
+        }
+      </div>
+    </div>
+  </div>);
+}
+
 function LoginScreen({role,onLogin,onBack}){
   const isStudent=role==='student',isTeacher=role==='teacher',isCareer=role==='career',isAdmin=role==='admin';
   const [mode,setMode]=useState('login');  
@@ -5070,7 +5146,7 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 )}
 
       {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
-      {isAdmin&&view==='home'&&<AdminHome user={user} isCaptain={isCaptain} onSwitchRole={(r)=>{setViewAsRole(r);setView('home');}} onUnregistered={()=>setView('adminUnregistered')} onUnregisteredTeachers={()=>setView('adminUnregisteredTeachers')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onAlimtalkHub={()=>setView('adminAlimtalkHub')} onSubjectEnrollment={()=>setView('adminSubjectEnrollment')} onBack={goBackToRole} onLogout={logout}/>}
+      {isAdmin&&view==='home'&&<AdminHome user={user} isCaptain={isCaptain} onSwitchRole={(r)=>{setViewAsRole(r);setView('home');}} onUnregistered={()=>setView('adminUnregistered')} onUnregisteredTeachers={()=>setView('adminUnregisteredTeachers')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onAlimtalkHub={()=>setView('adminAlimtalkHub')} onSubjectEnrollment={()=>setView('adminSubjectEnrollment')} onTeacherAccess={()=>setView('adminTeacherAccess')} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='adminTeacherRanking'&&<AdminTeacherRanking onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
 {isAdmin&&view==='adminUnregisteredTeachers'&&<AdminUnregisteredTeachers user={user} onBack={()=>setView('home')} onLogout={logout}/>}
@@ -5080,6 +5156,7 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
       {isAdmin&&!isCaptain&&view==='adminApiUsage'&&<AdminApiUsage onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&!isCaptain&&view==='adminAlimtalkHub'&&<AdminAlimtalkHub onUnregistered={()=>setView('adminUnregistered')} onEncourage={()=>setView('adminAlimtalkEncourage')} onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminSubjectEnrollment'&&<AdminSubjectEnrollment onBack={()=>setView('home')} onLogout={logout}/>}
+      {isAdmin&&view==='adminTeacherAccess'&&<AdminTeacherAccess onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&!isCaptain&&view==='adminAlimtalkEncourage'&&<AdminAlimtalkEncourage user={user} onBack={()=>setView('adminAlimtalkHub')} onLogout={logout}/>}
       {(isTeacher||isCareer)&&view==='students'&&!selStudent&&!teacherWriteStudent&&<StudentList user={user} records={records} onSelect={s=>{setSelStudent(s);setView('ai');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherWrite');}} onBack={()=>setView('home')}/>}
       {(isTeacher||isCareer)&&view==='ai'&&selStudent&&<AIReport student={selStudent} user={user} refreshKey={aiRefreshKey} onEdit={(r)=>{setTeacherWriteStudent(selStudent);setTeacherWriteEditing(r);setView('teacherWrite');}} onDelete={async(id)=>{if(!confirm('삭제할까요?'))return;try{await callAPI({action:'deleteRecord',recordId:id,studentId:selStudent.id});setAiRefreshKey(k=>k+1);fetchRecords(user);}catch(e){alert('삭제 실패');}}} onBack={()=>{setSelStudent(null);setView('students');}}/>}
