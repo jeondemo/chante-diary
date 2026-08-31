@@ -947,7 +947,7 @@ function AdminHome({user,isCaptain,onSwitchRole,onUnregistered,onUnregisteredTea
         <TopBar onLogout={onLogout}/>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
           <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button>
-          <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>{isCaptain?'CAPTAIN':'ADMIN'}</span>
+          <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>{isCaptain?'CAPTAIN':'ADMIN'}</span><SemPill small value={window.__semester||1} activeColor="#4a148c" onChange={s=>window.__setSemester&&window.__setSemester(s)}/></div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
           <div style={{width:44,height:44,borderRadius:12,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -2314,15 +2314,16 @@ function guessSemester(){
   return (m>8||(m===8&&day>=30)||m<3)?2:1;
 }
 
-/* ── 학기 토글 바 (홈 상단) ── */
-function SemesterToggle({semester,autoSemester,onChange,color}){
-  const c=color||'#4a148c';
-  return(<div style={{background:c,padding:'calc(env(safe-area-inset-top) + 8px) 14px 8px',display:'flex',alignItems:'center',gap:8}}>
-    <div style={{display:'flex',background:'rgba(255,255,255,0.15)',borderRadius:10,padding:3,flex:1}}>
-      {[1,2].map(s=>(<button key={s} onClick={()=>onChange(s)} style={{flex:1,padding:'7px 0',border:'none',borderRadius:8,fontSize:12,fontWeight:800,cursor:'pointer',fontFamily:'inherit',background:semester===s?'white':'transparent',color:semester===s?c:'rgba(255,255,255,0.85)'}}>{s}학기{autoSemester===s&&<span style={{fontSize:9,marginLeft:4,opacity:0.7}}>현재</span>}</button>))}
-    </div>
-    <span style={{fontSize:10,color:'rgba(255,255,255,0.7)',whiteSpace:'nowrap'}}>교과 기준</span>
+/* ── 학기 알약 토글 (헤더 안) ── */
+function SemPill({value,onChange,activeColor,small}){
+  return(<div style={{display:'flex',background:'rgba(255,255,255,0.18)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:small?2:3,flexShrink:0}}>
+    {[1,2].map(s=>(<button key={s} onClick={e=>{e.stopPropagation();onChange(s);}} style={{border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:small?10:11,fontWeight:800,padding:small?'3px 10px':'5px 13px',borderRadius:16,background:value===s?'white':'transparent',color:value===s?activeColor:'rgba(255,255,255,0.75)',transition:'all .15s'}}>{s}학기</button>))}
   </div>);
+}
+/* ── 학기 배지 (홈 헤더) ── */
+function SemBadge(){
+  const s=window.__semester||1,d=new Date(),y=(d.getMonth()+1)<3?d.getFullYear()-1:d.getFullYear();
+  return(<span style={{fontSize:10,fontWeight:700,color:'white',background:'rgba(255,255,255,0.14)',border:'1px solid rgba(255,255,255,0.28)',padding:'3px 10px',borderRadius:20,letterSpacing:'0.02em'}}>{y} · {s}학기</span>);
 }
  
  
@@ -2719,7 +2720,7 @@ function TeacherHome({user,records,onSelectStudent,onViewReports,onSubjectHome,o
         <TopBar onLogout={onLogout}/>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
           <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.08)',border:'0.5px solid rgba(255,255,255,0.16)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button>
-          <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>HOME</span>
+          <div style={{display:'flex',alignItems:'center',gap:8}}><SemBadge/><span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>HOME</span></div>
         </div>
          <p style={{fontSize:9,color:'#5dcaa5',fontWeight:500,letterSpacing:'0.15em',margin:'0 0 10px'}}>★ TEACHER · GWACHEON WOMANS HIGH SCHOOL</p>
         <p style={{fontSize:26,fontWeight:900,color:'white',margin:'0 0 4px',lineHeight:1.1,letterSpacing:'0.02em'}}>{user.name} <span style={{fontSize:15,color:'#9fe1cb',fontWeight:500,letterSpacing:'0.05em',marginLeft:4}}>선생님</span></p>
@@ -2863,7 +2864,7 @@ function StudentHome({user,records,loading,onCat,onBack,onLogout}){
       <div style={{position:'relative',zIndex:3}}>
         <TopBar onLogout={onLogout}/>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
-          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.08)',border:'0.5px solid rgba(255,255,255,0.16)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button><span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>HOME</span>
+          <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.08)',border:'0.5px solid rgba(255,255,255,0.16)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>역할 선택</button><div style={{display:'flex',alignItems:'center',gap:8}}><SemBadge/><span style={{fontSize:10,color:'rgba(255,255,255,0.45)',fontWeight:600}}>HOME</span></div>
         </div>
         <p style={{fontSize:9,color:'#ff829a',fontWeight:500,letterSpacing:'0.15em',margin:'0 0 10px'}}>★ STUDENT · GWACHEON WOMANS HIGH SCHOOL</p>
         <p style={{fontSize:26,fontWeight:900,color:'white',margin:'0 0 4px',lineHeight:1.1,letterSpacing:'0.02em'}}>{user.name} <span style={{fontSize:15,color:'#ffc8d4',fontWeight:500,letterSpacing:'0.05em',marginLeft:4}}>학생</span></p>
@@ -3337,13 +3338,16 @@ function WriteForm({catId,onSave,onCancel,editing}){const[date,setDate]=useState
 
 function SubjectList({user,onSelect,onBack,records}){
   const[subjects,setSubjects]=useState([]),[loading,setLoading]=useState(true);
+  const[sem,setSem]=useState(window.__semester||1);
+  const changeSem=s=>{if(window.__setSemester)window.__setSemester(s);setSem(s);};
   useEffect(()=>{
+    setLoading(true);
     const cls=String(user.studentId||'').slice(0,2);
-    callAPI({action:'getSubjectsByClass',classCode:cls,studentId:user.studentId}).then(r=>{
+    callAPI({action:'getSubjectsByClass',classCode:cls,studentId:user.studentId,semester:sem}).then(r=>{
       setSubjects(r.subjects||[]);
       setLoading(false);
     }).catch(()=>setLoading(false));
-  },[]);
+  },[sem]);
   
   const colors=['#f48fb1','#ce93d8','#90caf9','#80cbc4','#ffcc80','#a5d6a7'];
   const gc=sn=>(records||[]).filter(r=>r.categoryId==='subject'&&String(r.subject||r.title||'')===sn).length;
@@ -3351,7 +3355,13 @@ function SubjectList({user,onSelect,onBack,records}){
   return(<div style={{paddingBottom:20}}>
     <div style={{background:'linear-gradient(135deg,#7986cb,#5c6bc0)',padding:'calc(env(safe-area-inset-top) + 20px) 16px 30px'}}>
       <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 홈</button>
-      <h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>교과활동 <span style={{fontSize:11,fontWeight:700,background:'rgba(255,255,255,0.25)',padding:'3px 9px',borderRadius:10,marginLeft:6,verticalAlign:'middle'}}>{window.__semester||1}학기</span></h2>
+      <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:12}}>
+        <div>
+          <h2 style={{fontSize:20,fontWeight:900,color:'white',margin:'0 0 2px'}}>교과활동</h2>
+          <p style={{fontSize:10,color:'rgba(255,255,255,0.65)',margin:0}}>{sem}학기 · 내 과목 {subjects.length}개</p>
+        </div>
+        <SemPill value={sem} activeColor="#5c6bc0" onChange={changeSem}/>
+      </div>
     </div>
     <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:8}}>
       {loading&&<Spin/>}
@@ -4303,7 +4313,8 @@ function AddSubjectOnly({onDone,onBack}){const[subjects,setSubjects]=useState({}
 
 function SubjectTeacherHome({user,records,onSelectSubject,onAddSubject,onDeleteSubject,onBack}){
     let assigns=[];try{assigns=JSON.parse(user.assignments||'[]');}catch(e){}
-  const curSem=window.__semester||1;
+  const[curSem,setCurSem]=useState(window.__semester||1);
+  const changeSem=s=>{if(window.__setSemester)window.__setSemester(s);setCurSem(s);};
   assigns=assigns.filter(a=>Number(a.semester||1)===curSem);
   const ig=[{grad:'linear-gradient(135deg,#7c3aed,#5c2fa0)',cls:'#ede7f6',ct:'#5c2fa0'},{grad:'linear-gradient(135deg,#ec4899,#be185d)',cls:'#fce4ec',ct:'#c2185b'},{grad:'linear-gradient(135deg,#2563eb,#1d4ed8)',cls:'#e3f2fd',ct:'#1565c0'},{grad:'linear-gradient(135deg,#059669,#047857)',cls:'#e8f5e9',ct:'#2e7d32'}];
 
@@ -4322,8 +4333,13 @@ function SubjectTeacherHome({user,records,onSelectSubject,onAddSubject,onDeleteS
       <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div>
       <div style={{position:'relative',zIndex:3}}>
         <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit',marginBottom:16}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>홈으로</button>
-        <p style={{fontSize:22,fontWeight:900,color:'white',margin:'0 0 3px'}}>교과목별 학생 조회 <span style={{fontSize:11,fontWeight:700,background:'rgba(255,255,255,0.25)',padding:'3px 9px',borderRadius:10,marginLeft:6,verticalAlign:'middle'}}>{curSem}학기</span></p>
-        {assigns.length===0&&<p style={{fontSize:11,color:'rgba(255,255,255,0.75)',margin:'4px 0 0'}}>{curSem}학기 등록 과목이 없습니다 · 홈에서 학기를 바꾸거나 아래에서 추가하세요</p>}
+        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:12}}>
+          <div>
+            <p style={{fontSize:22,fontWeight:900,color:'white',margin:'0 0 2px'}}>교과목별 학생 조회</p>
+            <p style={{fontSize:10,color:'rgba(255,255,255,0.65)',margin:0}}>{curSem}학기 담당 {assigns.length}과목{assigns.length===0?' · 아래에서 추가하세요':''}</p>
+          </div>
+          <SemPill value={curSem} activeColor="#5c2fa0" onChange={changeSem}/>
+        </div>
       </div>
     </div>
     <div style={{padding:'14px 16px 0'}}>
@@ -5065,7 +5081,7 @@ function App() {
   const [semester,setSemesterState]=useState(()=>{try{const s=sessionStorage.getItem('diary_semester');if(s==='1'||s==='2')return Number(s);}catch(e){}return guessSemester();});
   const [autoSemester,setAutoSemester]=useState(guessSemester());
   const setSemester=s=>{setSemesterState(s);window.__semester=s;try{sessionStorage.setItem('diary_semester',String(s));}catch(e){}};
-  window.__semester=semester;
+  window.__semester=semester;window.__setSemester=setSemester;
   useEffect(()=>{callAPI({action:'getAppConfig'}).then(r=>{if(r&&r.success&&r.currentSemester){setAutoSemester(r.currentSemester);try{if(!sessionStorage.getItem('diary_semester'))setSemester(r.currentSemester);}catch(e){setSemester(r.currentSemester);}}}).catch(()=>{});},[]);
   const records=allRecords.filter(r=>r.categoryId!=='subject'||Number(r.semester||1)===semester);
   const [view,setView]=useState('home');
@@ -5148,7 +5164,7 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
     <span style={{fontSize:11,color:'#e65100',fontWeight:700,flex:1}}>관리자가 {viewAsRole==='student'?'학생':'교사'} 화면을 보고 있습니다 (보기 전용)</span>
     <button onClick={()=>{setViewAsRole(null);fetchRecords(user);}} style={{background:'#ff9800',color:'white',border:'none',padding:'4px 10px',borderRadius:12,fontSize:10,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>관리자로 ↩</button>
   </div>}
-      {isStudent&&view==='home'&&!catId&&<><SemesterToggle semester={semester} autoSemester={autoSemester} onChange={setSemester} color={semester===2?'#1565c0':'#8e2b3a'}/><StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}} onBack={goBackToRole} onLogout={logout}/></>}
+      {isStudent&&view==='home'&&!catId&&<StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}} onBack={goBackToRole} onLogout={logout}/>}
       {isStudent&&view==='cat'&&catId!=='subject'&&catId!=='club'&&!writing&&<RecordList catId={catId} records={records} onBack={()=>{setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRec} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
       {isStudent&&view==='cat'&&catId!=='subject'&&catId!=='club'&&writing&&(
   editing && !editing.fields
@@ -5174,10 +5190,8 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
     : <StructuredWriteForm catId="club" fixedSubject={subject.clubName} editing={editing} onSave={editing?updateRec:saveRec} onCancel={()=>{setWriting(false);setEditing(null);}}/>
 )}
 
-      {(isTeacher||isCareer)&&view==='home'&&<SemesterToggle semester={semester} autoSemester={autoSemester} onChange={setSemester} color={semester===2?'#0d3b66':'#0e2620'}/>}
 {(isTeacher||isCareer)&&view==='home'&&<TeacherHome user={user} records={records} onSelectStudent={()=>setView('students')} onViewReports={()=>setView('reports')} onSubjectHome={()=>{setView('subjectHome');let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onAddSubject={()=>setView('addSubject')} onMyReports={()=>setView('myReports')} onClubReports={()=>setView('clubReports')} onBehavior={()=>setView('behavior')} onClubHome={()=>{setView('clubHome');callAPI({action:'getAllRecords',role:'club',grade:'',classNum:'',homeroomClass:'',subjectClasses:[],studentId:user.studentId,club:user.club||''}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});}} onBack={goBackToRole} onLogout={logout}/>}
-      {isAdmin&&view==='home'&&<SemesterToggle semester={semester} autoSemester={autoSemester} onChange={setSemester} color={semester===2?'#1a237e':'#4a148c'}/>}
-{isAdmin&&view==='home'&&<AdminHome user={user} isCaptain={isCaptain} onSwitchRole={(r)=>{setViewAsRole(r);setView('home');}} onUnregistered={()=>setView('adminUnregistered')} onUnregisteredTeachers={()=>setView('adminUnregisteredTeachers')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onAlimtalkHub={()=>setView('adminAlimtalkHub')} onSubjectEnrollment={()=>setView('adminSubjectEnrollment')} onTeacherAccess={()=>setView('adminTeacherAccess')} onBack={goBackToRole} onLogout={logout}/>}
+    {isAdmin&&view==='home'&&<AdminHome user={user} isCaptain={isCaptain} onSwitchRole={(r)=>{setViewAsRole(r);setView('home');}} onUnregistered={()=>setView('adminUnregistered')} onUnregisteredTeachers={()=>setView('adminUnregisteredTeachers')} onClassStats={()=>setView('adminClassStats')} onAIStats={()=>setView('adminAIStats')} onTeacherRanking={()=>setView('adminTeacherRanking')} onApiUsage={()=>setView('adminApiUsage')} onAlimtalkHub={()=>setView('adminAlimtalkHub')} onSubjectEnrollment={()=>setView('adminSubjectEnrollment')} onTeacherAccess={()=>setView('adminTeacherAccess')} onBack={goBackToRole} onLogout={logout}/>}
       {isAdmin&&view==='adminTeacherRanking'&&<AdminTeacherRanking onBack={()=>setView('home')} onLogout={logout}/>}
       {isAdmin&&view==='adminUnregistered'&&<AdminUnregistered user={user} onBack={()=>setView('home')} onLogout={logout}/>}
 {isAdmin&&view==='adminUnregisteredTeachers'&&<AdminUnregisteredTeachers user={user} onBack={()=>setView('home')} onLogout={logout}/>}
