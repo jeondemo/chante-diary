@@ -451,7 +451,8 @@ function emitAIProgress(state){
   window.__aiProgressListeners.forEach(fn=>{try{fn(state);}catch(e){}});
 }
 function callAPI(payload){
-  const publicActions=['login','register','registerTeacher','lookupTeacher','lookupStudent','checkTeacherCode','getSubjectList','getClubList','getSubjectsByClass','getStudentsByClass'];
+  const publicActions=['login','register','registerTeacher','lookupTeacher','lookupStudent','checkTeacherCode','getSubjectList','getClubList','getSubjectsByClass','getStudentsByClass','getAppConfig'];
+  if(payload.semester===undefined&&window.__semester)payload.semester=window.__semester;
   if(currentUser&&currentUser.authToken&&publicActions.indexOf(payload.action)===-1){
     payload.authToken=currentUser.authToken;
     payload.requesterId=currentUser.studentId;
@@ -2303,9 +2304,25 @@ function RoleScreenOriginal({onSelect}){
 }
 /* ── 로그인 (간략화) ── */
 function RoleScreen({onSelect}){
-  if(LOGIN_THEME==='crimson')return <RoleScreenCrimson onSelect={onSelect}/>;
-  if(LOGIN_THEME==='blue')return <RoleScreenBlue onSelect={onSelect}/>;
-  return <RoleScreenOriginal onSelect={onSelect}/>;
+  const theme=(window.__semester||guessSemester())===2?'blue':'crimson';
+  if(theme==='crimson')return <RoleScreenCrimson onSelect={onSelect}/>;
+  return <RoleScreenBlue onSelect={onSelect}/>;
+}
+
+function guessSemester(){
+  const d=new Date(),m=d.getMonth()+1,day=d.getDate();
+  return (m>8||(m===8&&day>=30)||m<3)?2:1;
+}
+
+/* ── 학기 토글 바 (홈 상단) ── */
+function SemesterToggle({semester,autoSemester,onChange,color}){
+  const c=color||'#4a148c';
+  return(<div style={{background:c,padding:'calc(env(safe-area-inset-top) + 8px) 14px 8px',display:'flex',alignItems:'center',gap:8}}>
+    <div style={{display:'flex',background:'rgba(255,255,255,0.15)',borderRadius:10,padding:3,flex:1}}>
+      {[1,2].map(s=>(<button key={s} onClick={()=>onChange(s)} style={{flex:1,padding:'7px 0',border:'none',borderRadius:8,fontSize:12,fontWeight:800,cursor:'pointer',fontFamily:'inherit',background:semester===s?'white':'transparent',color:semester===s?c:'rgba(255,255,255,0.85)'}}>{s}학기{autoSemester===s&&<span style={{fontSize:9,marginLeft:4,opacity:0.7}}>현재</span>}</button>))}
+    </div>
+    <span style={{fontSize:10,color:'rgba(255,255,255,0.7)',whiteSpace:'nowrap'}}>교과 기준</span>
+  </div>);
 }
  
  
@@ -3320,7 +3337,7 @@ function SubjectList({user,onSelect,onBack,records}){
   const[subjects,setSubjects]=useState([]),[loading,setLoading]=useState(true);
   useEffect(()=>{
     const cls=String(user.studentId||'').slice(0,2);
-    callAPI({action:'getSubjectsByClass',classCode:cls}).then(r=>{
+    callAPI({action:'getSubjectsByClass',classCode:cls,studentId:user.studentId}).then(r=>{
       setSubjects(r.subjects||[]);
       setLoading(false);
     }).catch(()=>setLoading(false));
@@ -3332,7 +3349,7 @@ function SubjectList({user,onSelect,onBack,records}){
   return(<div style={{paddingBottom:20}}>
     <div style={{background:'linear-gradient(135deg,#7986cb,#5c6bc0)',padding:'calc(env(safe-area-inset-top) + 20px) 16px 30px'}}>
       <button onClick={onBack} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'white',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><Back/> 홈</button>
-      <h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>교과활동</h2>
+      <h2 style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>교과활동 <span style={{fontSize:11,fontWeight:700,background:'rgba(255,255,255,0.25)',padding:'3px 9px',borderRadius:10,marginLeft:6,verticalAlign:'middle'}}>{window.__semester||1}학기</span></h2>
     </div>
     <div style={{padding:'14px 14px 0',display:'flex',flexDirection:'column',gap:8}}>
       {loading&&<Spin/>}
@@ -5038,8 +5055,14 @@ function App() {
   const [role,setRole]=useState(session?.role||null);
   const [user,setUser]=useState(session?.user||null);
   useEffect(()=>{if(session?.user)setCurrentUser(session.user);},[]);
-  const [records,setRecords]=useState([]);
+  const [allRecords,setRecords]=useState([]);
   const [loading,setLoading]=useState(false);
+  const [semester,setSemesterState]=useState(()=>{try{const s=sessionStorage.getItem('diary_semester');if(s==='1'||s==='2')return Number(s);}catch(e){}return guessSemester();});
+  const [autoSemester,setAutoSemester]=useState(guessSemester());
+  const setSemester=s=>{setSemesterState(s);window.__semester=s;try{sessionStorage.setItem('diary_semester',String(s));}catch(e){}};
+  window.__semester=semester;
+  useEffect(()=>{callAPI({action:'getAppConfig'}).then(r=>{if(r&&r.success&&r.currentSemester){setAutoSemester(r.currentSemester);try{if(!sessionStorage.getItem('diary_semester'))setSemester(r.currentSemester);}catch(e){setSemester(r.currentSemester);}}}).catch(()=>{});},[]);
+  const records=allRecords.filter(r=>r.categoryId!=='subject'||Number(r.semester||1)===semester);
   const [view,setView]=useState('home');
   const [catId,setCatId]=useState(null),[subject,setSubject]=useState(null),[writing,setWriting]=useState(false),[editing,setEditing]=useState(null);
   const [selStudent,setSelStudent]=useState(null),[selAssignment,setSelAssignment]=useState(null),[selClass,setSelClass]=useState(null);
@@ -5082,7 +5105,7 @@ const [selectedTeacher,setSelectedTeacher]=useState(null); // 🆕 학생이 선
   const goBackToRole=()=>{try{if(user)localStorage.removeItem(`autologin_${user.role}`);}catch(e){}setCurrentUser(null);setUser(null);setRole(null);setRecords([]);setView('home');setCatId(null);setSubject(null);setWriting(false);setEditing(null);setSelStudent(null);setSelAssignment(null);setSelClass(null);clearSession();};
   const logout=()=>goBackToRole();
 
-  const saveRec=async(data)=>{try{const r=await callAPI({action:'saveRecord',record:{...data,studentId:user.studentId,name:user.name}});if(r.success){await fetchRecords(user);setWriting(false);setEditing(null);}else alert(r.message);}catch(e){alert('저장 실패');}};
+  const saveRec=async(data)=>{try{const r=await callAPI({action:'saveRecord',record:{...data,studentId:user.studentId,name:user.name,semester:data.categoryId==='subject'?semester:0}});if(r.success){await fetchRecords(user);setWriting(false);setEditing(null);}else alert(r.message);}catch(e){alert('저장 실패');}};
   const updateRec=async(data)=>{try{const r=await callAPI({action:'updateRecord',record:{...data,studentId:user.studentId,name:user.name}});if(r.success){await fetchRecords(user);setWriting(false);setEditing(null);}else alert(r.message);}catch(e){alert('수정 실패');}};
   const deleteRec=async(id)=>{if(!confirm('삭제할까요?'))return;try{await callAPI({action:'deleteRecord',recordId:id,studentId:user.studentId});fetchRecords(user);}catch(e){alert('삭제 실패');}};
 
@@ -5119,7 +5142,7 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
     <span style={{fontSize:11,color:'#e65100',fontWeight:700,flex:1}}>관리자가 {viewAsRole==='student'?'학생':'교사'} 화면을 보고 있습니다 (보기 전용)</span>
     <button onClick={()=>{setViewAsRole(null);fetchRecords(user);}} style={{background:'#ff9800',color:'white',border:'none',padding:'4px 10px',borderRadius:12,fontSize:10,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>관리자로 ↩</button>
   </div>}
-      {isStudent&&view==='home'&&!catId&&<StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}} onBack={goBackToRole} onLogout={logout}/>}
+      {isStudent&&view==='home'&&!catId&&<><SemesterToggle semester={semester} autoSemester={autoSemester} onChange={setSemester} color={semester===2?'#1565c0':'#8e2b3a'}/><StudentHome user={user} records={records} loading={loading} onCat={id=>{setCatId(id);setView('cat');}} onBack={goBackToRole} onLogout={logout}/></>}
       {isStudent&&view==='cat'&&catId!=='subject'&&catId!=='club'&&!writing&&<RecordList catId={catId} records={records} onBack={()=>{setCatId(null);setView('home');}} onWrite={()=>setWriting(true)} onDelete={deleteRec} onEdit={r=>{setEditing(r);setWriting(true);}}/>}
       {isStudent&&view==='cat'&&catId!=='subject'&&catId!=='club'&&writing&&(
   editing && !editing.fields
