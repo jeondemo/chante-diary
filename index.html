@@ -4661,29 +4661,11 @@ function SubjectStudentPicker({assignment,classCode,onBack,onDone}){
   </div>);
 }
 
-  function AIReport({student,user,onBack,onEdit,onDelete,refreshKey}){
+function AIReport({student,user,onBack,onEdit,onDelete,refreshKey}){
   const[recs,setRecs]=useState([]),[loading,setLoading]=useState(true);
   const[tab,setTab]=useState('career');
   const[sel,setSel]=useState(new Set()),[result,setResult]=useState(''),[generating,setGenerating]=useState(false),[saving,setSaving]=useState(false),[errMsg,setErrMsg]=useState('');
   const[progress,setProgress]=useState('');
-  const[usedModel,setUsedModel]=useState('');
-  const[simInfo,setSimInfo]=useState(null);
-
-  useEffect(()=>{setLoading(true);callAPI({action:'getRecords',studentId:student.id}).then(r=>{setRecs((r.records||[]).filter(rec=>rec.categoryId==='career'||rec.categoryId==='creative'));setLoading(false);}).catch(()=>setLoading(false));},[student.id,refreshKey]);
-  const tabRecs=recs.filter(r=>r.categoryId===tab).sort((a,b)=>new Date(b.date)-new Date(a.date));
-  const careerCount=recs.filter(r=>r.categoryId==='career').length;
-  const creativeCount=recs.filter(r=>r.categoryId==='creative').length;
-
-  const switchTab=(t)=>{setTab(t);setSel(new Set());setResult('');setErrMsg('');setProgress('');setUsedModel('');};
-
-  const generate=async()=>{if(!sel.size)return;setGenerating(true);setResult('');setErrMsg('');setUsedModel('');setProgress('Gemini 2.5 Flash 시도 중...');
-    const text = recs.filter(r => sel.has(r.id))
-  .map(r => {
-    if (r.categoryId === 'career') return `[진로]${r.title}: ${r.content}`;
-    if (r.categoryId === 'creative') return `[자율]${r.title}: ${r.content}`;
-    return `[자율]${r.title}: ${r.content}`;
-  })
-  .join('\n');
   const[usedModel,setUsedModel]=useState('');
   const[simInfo,setSimInfo]=useState(null);
 
@@ -4769,7 +4751,6 @@ function SubjectStudentPicker({assignment,classCode,onBack,onDone}){
             </div>
             <p style={{fontSize:13,fontWeight:700,color:'#1a1a2e',margin:'0 0 4px'}}>{r.fields?.title||r.title||r.subject||'(제목없음)'}</p>
 {(()=>{
-  // 구조화 기록이면 f1~f5를 합쳐서 표시
   if(r.fields){
     const parts=[];
     for(let i=1;i<=5;i++){
@@ -4778,7 +4759,6 @@ function SubjectStudentPicker({assignment,classCode,onBack,onDone}){
     }
     if(parts.length>0)return <p style={{fontSize:11,color:'#666',margin:0,lineHeight:1.6}}>{parts.join(' ')}</p>;
   }
-  // 일반 기록이면 content 또는 learned
   const text=r.content||r.learned||'';
   if(text)return <p style={{fontSize:11,color:'#666',margin:0,lineHeight:1.6}}>{text}</p>;
   return null;
@@ -4792,7 +4772,7 @@ function SubjectStudentPicker({assignment,classCode,onBack,onDone}){
       })}
     </div>
   </div>);
-}
+}  
 function SubjectStudentDetail({student,user,records,onBack}){
   const recs=records.filter(r=>r.categoryId==='subject'&&String(r.subject||'')===student.subject&&String(r.studentId)===String(student.id)).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const [sel,setSel]=useState(new Set());
