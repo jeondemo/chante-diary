@@ -4389,6 +4389,37 @@ function SubjectTeacherHome({user,records,onSelectSubject,onAddSubject,onDeleteS
               <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
                 <span style={{fontSize:16,fontWeight:800,color:'#1a1a2e'}}>{a.subject}</span>
                 {sm&&(isSel
+                  ?<span style={{fontSize:9,background:'#e0f2f1',color:'#00695c',padding:'2px 7px',borderRadius:6,fontWeight:700}}>이동수업</span>
+                  :<span style={{fontSize:9,background:'#f3f0f9',color:'#7e57c2',padding:'2px 7px',borderRadius:6,fontWeight:700}}>반 수업</span>)}
+              </div>
+              {sm&&isSel?(
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <div style={{flex:1,height:5,background:'#ede7f6',borderRadius:3,maxWidth:120,overflow:'hidden'}}><div style={{width:`${pct}%`,height:'100%',background:pct>0?`linear-gradient(90deg,${t1},${t2})`:'#bbb',borderRadius:3}}/></div>
+                  <span style={{fontSize:10,color:writers>0?'#7e57c2':'#bbb',fontWeight:700}}>{writers>0?`기록 작성 ${writers}/${total}명`:'아직 기록 없음'}</span>
+                </div>
+              ):(
+                <p style={{fontSize:10,color:'#999',margin:0}}>{(a.classes||[]).map(cls).join(' · ')}{cnt>0?` · 기록 ${cnt}건`:''}</p>
+              )}
+            </div>
+            <div style={{textAlign:'right',flexShrink:0,paddingLeft:6}}>
+              {sm&&<div style={{lineHeight:1}}><span style={{fontSize:24,fontWeight:900,color:c}}>{total}</span><span style={{fontSize:11,color:'#9575cd',marginLeft:2}}>명</span></div>}
+              <p style={{fontSize:9,color:'#aaa',margin:'2px 0 0',letterSpacing:'0.02em'}}>수강생</p>
+            </div>
+            <svg width="13" height="13" fill="none" stroke="#c5b8e0" strokeWidth="2.5" viewBox="0 0 24 24" style={{flexShrink:0}}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </div>
+          {sm&&isSel&&<div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:10,paddingTop:10,borderTop:'1px dashed #ede7f6'}}>
+            {sm.byClass.map(b=>(<span key={b.classCode} style={{fontSize:10,background:b.count>0?'#f7f4fc':'#fdeaea',color:b.count>0?c:'#c0392b',padding:'3px 8px',borderRadius:7}}>{cls(b.classCode)} <b>{b.count}명</b></span>))}
+          </div>}
+        </div>);
+      })}
+
+      {!editMode&&<div onClick={onAddSubject} className="active-btn" style={{border:'1.5px dashed #b39ddb',borderRadius:16,padding:13,display:'flex',alignItems:'center',justifyContent:'center',gap:7,cursor:'pointer',marginTop:4}}>
+        <svg width="15" height="15" fill="none" stroke="#5c2fa0" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14"/></svg>
+        <span style={{fontSize:13,fontWeight:800,color:'#5c2fa0'}}>과목 추가</span>
+      </div>}
+    </div>
+  </div>);
+}
 
 function SubjectClassList({assignment,records,onSelect,onBack}){
   const hasNew=(cls)=>{
