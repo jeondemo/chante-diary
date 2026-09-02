@@ -4319,28 +4319,27 @@ function ReportList({user,onBack}){
 }
 function AddSubjectOnly({onDone,onBack}){const[subjects,setSubjects]=useState({});const[assigns,setAssigns]=useState([{grade:'1',subject:'',classes:new Set()}]);const[loading,setLoading]=useState(false);useEffect(()=>{callAPI({action:'getSubjectList'}).then(r=>{if(r.success)setSubjects(r.subjects||{});}).catch(()=>{});},[]);const toggle=(idx,cls)=>setAssigns(prev=>prev.map((a,i)=>{if(i!==idx)return a;const s=new Set(a.classes);s.has(cls)?s.delete(cls):s.add(cls);return{...a,classes:s};}));const submit=async(e)=>{e.preventDefault();if(!assigns.some(a=>a.subject&&a.classes.size>0))return alert('과목과 학급을 선택하세요!');setLoading(true);const va=assigns.filter(a=>a.subject&&a.classes.size>0);await onDone(JSON.stringify(va.map(a=>({subject:a.subject,classes:[...a.classes].sort()}))));setLoading(false);};return(<div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:30}}><div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'calc(env(safe-area-inset-top) + 22px) 20px 36px',position:'relative',overflow:'hidden'}}><div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div><div style={{position:'relative',zIndex:3}}><button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>홈으로</button><p style={{fontSize:20,fontWeight:900,color:'white',margin:0}}>교과목 추가 등록</p></div></div><div style={{padding:'14px 16px'}}><form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:12}}>{assigns.map((a,idx)=>(<div key={idx} style={{background:'white',borderRadius:14,padding:14,border:'1px solid #ede7f6'}}>{assigns.length>1&&<button type="button" onClick={()=>setAssigns(p=>p.filter((_,i)=>i!==idx))} style={{float:'right',background:'none',border:'none',color:'#ccc',cursor:'pointer',fontSize:14}}>✕</button>}<p style={{fontSize:11,color:'#999',margin:'0 0 6px',fontWeight:700}}>학년</p><div style={{display:'flex',gap:5,marginBottom:10}}>{['1','2','3'].map(g=>(<button type="button" key={g} onClick={()=>setAssigns(p=>p.map((x,i)=>i===idx?{...x,grade:g,subject:'',classes:new Set()}:x))} style={{flex:1,padding:'7px 0',borderRadius:9,border:'none',fontWeight:700,fontSize:13,cursor:'pointer',background:a.grade===g?'#5c2fa0':'#eee',color:a.grade===g?'white':'#666'}}>{g}학년</button>))}</div><p style={{fontSize:11,color:'#999',margin:'0 0 6px',fontWeight:700}}>과목</p><select value={a.subject} onChange={e=>setAssigns(p=>p.map((x,i)=>i===idx?{...x,subject:e.target.value}:x))} style={{width:'100%',padding:'8px 12px',borderRadius:9,border:'1px solid #ede7f6',background:'white',fontSize:13,fontWeight:600,marginBottom:10,outline:'none'}}><option value="">과목 선택</option>{(subjects[a.grade]||[]).map(s=><option key={s} value={s}>{s}</option>)}</select><p style={{fontSize:11,color:'#999',margin:'0 0 6px',fontWeight:700}}>담당 학급</p><div style={{display:'flex',flexWrap:'wrap',gap:6}}>{Array.from({length:CLASS_COUNT[a.grade]||5},(_,i)=>{const cls=a.grade+String(i+1);const sel=a.classes.has(cls);return<button type="button" key={cls} onClick={()=>toggle(idx,cls)} style={{padding:'5px 12px',borderRadius:20,border:'none',fontSize:12,fontWeight:700,cursor:'pointer',background:sel?'#5c2fa0':'#eee',color:sel?'white':'#666'}}>{i+1}반</button>;})}</div></div>))}<button type="button" onClick={()=>setAssigns(p=>[...p,{grade:'1',subject:'',classes:new Set()}])} style={{background:'#ede7f6',color:'#5c2fa0',border:'none',borderRadius:10,padding:'10px',fontSize:13,fontWeight:700,cursor:'pointer'}}>+ 과목 추가</button><button type="submit" disabled={loading} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',color:'white',fontSize:15,fontWeight:800,cursor:'pointer',fontFamily:'inherit'}}>{loading?<Spin/>:'추가 등록 완료'}</button></form></div></div>);}
 
-function SubjectTeacherHome({user,records,onSelectSubject,onAddSubject,onDeleteSubject,onBack}){
-    let assigns=[];try{assigns=JSON.parse(user.assignments||'[]');}catch(e){}
+function SubjectTeacherHome({user,records,onSelectSubject,onAddSubject,onDeleteSubject,onBack,onLogout}){
+  let assigns=[];try{assigns=JSON.parse(user.assignments||'[]');}catch(e){}
   const[curSem,setCurSem]=useState(window.__semester||1);
   const changeSem=s=>{if(window.__setSemester)window.__setSemester(s);setCurSem(s);};
   assigns=assigns.filter(a=>Number(a.semester||1)===curSem);
-  const ig=[{grad:'linear-gradient(135deg,#7c3aed,#5c2fa0)',cls:'#ede7f6',ct:'#5c2fa0'},{grad:'linear-gradient(135deg,#ec4899,#be185d)',cls:'#fce4ec',ct:'#c2185b'},{grad:'linear-gradient(135deg,#2563eb,#1d4ed8)',cls:'#e3f2fd',ct:'#1565c0'},{grad:'linear-gradient(135deg,#059669,#047857)',cls:'#e8f5e9',ct:'#2e7d32'}];
+  const[summary,setSummary]=useState({});
+  useEffect(()=>{
+    if(!assigns.length){setSummary({});return;}
+    callAPI({action:'getTeacherSubjectSummary',semester:curSem,items:assigns.map(a=>({subject:a.subject,classes:a.classes||[]}))})
+      .then(r=>{const m={};(r.items||[]).forEach(it=>{m[it.subject]=it;});setSummary(m);}).catch(()=>{});
+  },[curSem,user.assignments]);
+  const ig=['📘','📗','📙','📕','📓','📒'];
+  const c='#5c2fa0';
+  const phoneBg='#f3f0f9';
+  const getCount=(subj)=>(records||[]).filter(r=>r.categoryId==='subject'&&String(r.subject||'')===subj).length;
 
-  const hasNew=(a)=>{
-    const now=new Date();
-    return (records||[]).some(r=>{
-      if(String(r.subject||'')!==String(a.subject||''))return false;
-      if(!a.classes.some(c=>String(r.studentId).startsWith(c)))return false;
-      const d=new Date(r.date);
-      return(now-d)<7*24*60*60*1000;
-    });
-  };
-
-  return(<div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:24}}>
-    <div style={{background:'linear-gradient(135deg,#5c2fa0,#7c3aed)',padding:'calc(env(safe-area-inset-top) + 28px) 20px 42px',position:'relative',overflow:'hidden'}}>
-      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div>
+  return(<div style={{background:phoneBg,minHeight:'100%',paddingBottom:30}}>
+    <div style={{background:`linear-gradient(135deg,${c},#7c3aed)`,padding:'calc(env(safe-area-inset-top) + 22px) 20px 38px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill={phoneBg}/></svg></div>
       <div style={{position:'relative',zIndex:3}}>
-        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',fontFamily:'inherit',marginBottom:16}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>홈으로</button>
+        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:14,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>홈으로</button>
         <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:12}}>
           <div>
             <p style={{fontSize:22,fontWeight:900,color:'white',margin:'0 0 2px'}}>교과목별 학생 조회</p>
@@ -4350,27 +4349,36 @@ function SubjectTeacherHome({user,records,onSelectSubject,onAddSubject,onDeleteS
         </div>
       </div>
     </div>
-    <div style={{padding:'14px 16px 0'}}>
-      <div onClick={onAddSubject} className="active-btn" style={{background:'#ede7f6',border:'1.5px dashed #5c2fa0',borderRadius:12,padding:'10px',display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginBottom:12,cursor:'pointer'}}><svg width="14" height="14" fill="none" stroke="#5c2fa0" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14"/></svg><span style={{fontSize:13,fontWeight:700,color:'#5c2fa0'}}>교과목 추가</span></div>
+    <div style={{padding:'16px 14px'}}>
       {assigns.map((a,i)=>{
-        const g=ig[i%ig.length];
-        const isNew=hasNew(a);
-        return(<div key={i} onClick={()=>onSelectSubject(a)} className="active-btn" style={{background:'white',borderRadius:16,padding:'12px 14px',marginBottom:10,boxShadow:'0 2px 10px rgba(92,47,160,0.07)',border:'1.5px solid #ede8f7',cursor:'pointer'}}>
-          <div style={{display:'flex',alignItems:'center',gap:11,marginBottom:9}}>
-            <div style={{width:38,height:38,background:g.grad,borderRadius:11,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:'white',flexShrink:0}}>{(a.subject||'').slice(0,2)}</div>
-            <div style={{flex:1}}>
-              <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:1}}>
-                <p style={{fontSize:14,fontWeight:900,color:'#1a1a2e',margin:0}}>{a.subject}</p>
-                {isNew&&<span style={{fontSize:9,fontWeight:900,color:'white',background:'#e53935',padding:'2px 7px',borderRadius:20,letterSpacing:'0.05em',animation:'blinkNew 1.2s ease-in-out infinite'}}>NEW</span>}
-                <span onClick={e=>{e.stopPropagation();onDeleteSubject(a);}} style={{fontSize:9,fontWeight:900,color:'white',background:'#e53935',padding:'2px 7px',borderRadius:20,cursor:'pointer'}}>과목삭제</span>
+        const cnt=getCount(a.subject);
+        const sm=summary[a.subject];
+        const isSel=sm&&sm.type==='선택';
+        return(<div key={i} className="card active-btn" style={{padding:'13px 14px',marginBottom:10,border:'1.5px solid #ddd8f0',position:'relative'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <div onClick={()=>onSelectSubject({...a,type:(sm&&sm.type)||'전체'})} style={{display:'flex',alignItems:'center',gap:10,flex:1,minWidth:0,cursor:'pointer'}}>
+              <div style={{width:40,height:40,background:'linear-gradient(135deg,#ede7f6,#d1c4e9)',borderRadius:11,display:'flex',alignItems:'center',justifyContent:'center',fontSize:17,flexShrink:0}}>{ig[i%ig.length]}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <p style={{fontSize:15,fontWeight:800,color:'#1a1a2e',margin:0,lineHeight:1.3}}>{a.subject}{isSel&&<span style={{fontSize:9,background:'#e0f2f1',color:'#00695c',padding:'2px 7px',borderRadius:6,fontWeight:700,marginLeft:5,verticalAlign:'middle'}}>이동수업</span>}</p>
+                {!isSel&&<p style={{fontSize:10,color:'#999',margin:'3px 0 0'}}>{(a.classes||[]).map(x=>`${x[0]}-${x.slice(1)}`).join(' · ')}{sm?' 반 수업':''}</p>}
               </div>
-              <p style={{fontSize:10,color:'#999',margin:0,fontWeight:600}}>{a.classes.length}개 학급</p>
+              <div style={{textAlign:'right',flexShrink:0}}>
+                {sm&&<div style={{lineHeight:1}}><span style={{fontSize:22,fontWeight:900,color:c}}>{sm.total}</span><span style={{fontSize:11,color:c,marginLeft:2}}>명</span></div>}
+                <p style={{fontSize:10,color:cnt>0?c:'#bbb',margin:'2px 0 0',fontWeight:700}}>{cnt>0?`기록 ${cnt}건`:'기록 없음'}</p>
+              </div>
+              <svg width="12" height="12" fill="none" stroke="#ccc" strokeWidth="2.5" viewBox="0 0 24 24" style={{flexShrink:0}}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
             </div>
-            <svg width="12" height="12" fill="none" stroke="#ce93d8" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
+            <button onClick={(e)=>{e.stopPropagation();onDeleteSubject(a);}} style={{width:22,height:22,borderRadius:6,border:'1px solid #f0c0c0',background:'#fdeaea',color:'#c0392b',fontSize:12,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',padding:0,flexShrink:0}} title="과목 삭제">✕</button>
           </div>
-          <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>{a.classes.map(c=>(<span key={c} style={{background:g.cls,color:g.ct,fontSize:10,fontWeight:800,padding:'3px 9px',borderRadius:20}}>{c[0]}학년 {c.slice(1)}반</span>))}</div>
+          {isSel&&<div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:9,paddingLeft:50}}>
+            {sm.byClass.map(b=>(<span key={b.classCode} style={{fontSize:10,background:b.count>0?'#f3f0f9':'#fdeaea',color:b.count>0?c:'#c0392b',padding:'2px 7px',borderRadius:6}}>{b.classCode[0]}-{b.classCode.slice(1)} <b>{b.count}명</b></span>))}
+          </div>}
         </div>);
       })}
+      <div onClick={onAddSubject} className="active-btn" style={{background:'#ede7f6',border:'1.5px dashed #5c2fa0',borderRadius:12,padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'center',gap:8,cursor:'pointer',marginTop:4}}>
+        <svg width="16" height="16" fill="none" stroke="#5c2fa0" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14"/></svg>
+        <span style={{fontSize:13,fontWeight:800,color:'#5c2fa0'}}>과목 추가</span>
+      </div>
     </div>
   </div>);
 }
@@ -4409,6 +4417,88 @@ function SubjectClassList({assignment,records,onSelect,onBack}){
         </div>);
       })}
     </div>
+  </div>);
+}
+/* ── 이동수업 과목: 반 무관 수강생 전체 명단 ── */
+function SubjectFlatStudentList({assignment,records,onSelect,onTeacherWrite,onImportStudents,onBack,refreshKey}){
+  const c='#5c2fa0';
+  const[students,setStudents]=useState(null),[loading,setLoading]=useState(true);
+  const[cls,setCls]=useState('ALL');
+  const[deleteMode,setDeleteMode]=useState(false),[delSel,setDelSel]=useState(new Set()),[deleting,setDeleting]=useState(false);
+  useEffect(()=>{setLoading(true);callAPI({action:'getSubjectRoster',subject:assignment.subject}).then(r=>{setStudents(r.students||[]);setLoading(false);}).catch(()=>{setStudents([]);setLoading(false);});},[assignment.subject,refreshKey]);
+  const getCount=(sid)=>(records||[]).filter(r=>r.categoryId==='subject'&&String(r.subject||'')===assignment.subject&&String(r.studentId)===String(sid)).length;
+  const all=students||[];
+  const byClass={};all.forEach(s=>{byClass[s.classCode]=(byClass[s.classCode]||0)+1;});
+  const classCodes=Object.keys(byClass).sort((a,b)=>parseInt(a)-parseInt(b));
+  const shown=cls==='ALL'?all:all.filter(s=>s.classCode===cls);
+  const totalRec=all.reduce((n,s)=>n+getCount(s.studentId),0);
+  const toggleDel=(sid)=>{const s=new Set(delSel);s.has(sid)?s.delete(sid):s.add(sid);setDelSel(s);};
+  const exitDeleteMode=()=>{setDeleteMode(false);setDelSel(new Set());};
+  const doDelete=async()=>{
+    if(!delSel.size)return alert('삭제할 학생을 선택하세요.');
+    const ids=[...delSel];const withRec=ids.filter(id=>getCount(id)>0);
+    let msg=`선택한 ${ids.length}명을 ${assignment.subject} 배정 명단에서 제거할까요?`;
+    if(withRec.length>0)msg+=`\n\n※ 이 중 ${withRec.length}명은 작성된 기록이 있습니다.\n기록은 그대로 보존되며, 배정 명단에서만 제외됩니다.`;
+    if(!confirm(msg))return;
+    setDeleting(true);let ok=0,fail=0;
+    for(const id of ids){const st=all.find(x=>x.studentId===id);try{const r=await callAPI({action:'removeStudentFromSubject',subject:assignment.subject,classCode:st?st.classCode:String(id).slice(0,2),studentId:id});if(r.success){ok++;setStudents(prev=>(prev||[]).filter(x=>x.studentId!==id));}else fail++;}catch(e){fail++;}}
+    setDeleting(false);exitDeleteMode();alert(`제거 완료: ${ok}명${fail>0?` / 실패: ${fail}명`:''}`);
+  };
+  return(<div style={{background:'#f3f0f9',minHeight:'100%',paddingBottom:30}}>
+    <div style={{background:`linear-gradient(135deg,${c},#7c3aed)`,padding:'calc(env(safe-area-inset-top) + 22px) 20px 34px',position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',bottom:-1,left:0,right:0,lineHeight:0,zIndex:2}}><svg viewBox="0 0 390 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{display:'block',width:'100%'}}><path d="M0,0 C80,38 180,42 280,28 C340,20 370,14 390,12 L390,40 L0,40 Z" fill="#f3f0f9"/></svg></div>
+      <div style={{position:'relative',zIndex:3}}>
+        <button onClick={onBack} style={{display:'inline-flex',alignItems:'center',gap:5,background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',borderRadius:20,padding:'5px 12px',height:26,fontSize:11,color:'rgba(255,255,255,0.9)',fontWeight:500,cursor:'pointer',marginBottom:12,fontFamily:'inherit'}}><svg width="11" height="11" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>과목 목록</button>
+        <p style={{fontSize:22,fontWeight:900,color:'white',margin:'0 0 3px'}}>{assignment.subject}</p>
+        <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:0}}>이동수업 · 수강생 {all.length}명 · 기록 {totalRec}건</p>
+      </div>
+    </div>
+    <div style={{padding:'12px 14px'}}>
+      {!deleteMode&&(<div style={{display:'flex',gap:8,marginBottom:10}}>
+        <div onClick={onImportStudents} className="active-btn" style={{flex:1,background:'#ede7f6',border:'1.5px dashed #5c2fa0',borderRadius:12,padding:'11px 8px',display:'flex',alignItems:'center',justifyContent:'center',gap:7,cursor:'pointer'}}><svg width="15" height="15" fill="none" stroke="#5c2fa0" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14"/></svg><span style={{fontSize:12,fontWeight:700,color:'#5c2fa0'}}>학생 가지고 오기</span></div>
+        <div onClick={()=>{if(all.length===0){alert('등록된 학생이 없습니다.');return;}setDeleteMode(true);}} className="active-btn" style={{flex:1,background:'#fdeaea',border:'1.5px dashed #c0392b',borderRadius:12,padding:'11px 8px',display:'flex',alignItems:'center',justifyContent:'center',gap:7,cursor:'pointer'}}><svg width="15" height="15" fill="none" stroke="#c0392b" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14"/></svg><span style={{fontSize:12,fontWeight:700,color:'#c0392b'}}>학생 삭제하기</span></div>
+      </div>)}
+      {deleteMode&&(<div style={{background:'#fdeaea',border:'1px solid #f0c0c0',borderRadius:10,padding:'9px 12px',marginBottom:10,fontSize:11,color:'#a5281f',lineHeight:1.5}}>삭제할 학생을 선택하세요. 기록은 보존되고 배정 명단에서만 제외됩니다.</div>)}
+      {classCodes.length>1&&(<div style={{display:'flex',gap:5,overflowX:'auto',marginBottom:10,paddingBottom:2}} className="no-scrollbar">
+        {[{k:'ALL',l:`전체 ${all.length}`},...classCodes.map(k=>({k,l:`${k[0]}-${k.slice(1)} · ${byClass[k]}`}))].map(o=>(<button key={o.k} onClick={()=>setCls(o.k)} style={{flex:'0 0 auto',fontSize:11,fontWeight:700,padding:'5px 11px',borderRadius:14,border:cls===o.k?'none':'1px solid #ddd',background:cls===o.k?c:'white',color:cls===o.k?'white':'#888',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>{o.l}</button>))}
+      </div>)}
+      {loading&&<LoadingSpin/>}
+      {!loading&&all.length===0&&<div className="card" style={{padding:30,textAlign:'center',color:'#ccc',fontSize:12}}>등록된 학생이 없습니다. 학생 가지고 오기로 추가하세요.</div>}
+      {!loading&&shown.map(s=>{
+        const sid=s.studentId,cnt=getCount(sid),checked=delSel.has(sid);
+        return(<div key={sid} onClick={()=>deleteMode?toggleDel(sid):onSelect({id:sid,name:s.name,subject:assignment.subject})} className="card active-btn" style={{padding:'10px 12px',display:'flex',alignItems:'center',gap:8,marginBottom:6,border:deleteMode&&checked?'1.5px solid #c0392b':'1.5px solid #ede8f7',background:deleteMode&&checked?'#fff8f8':'white',cursor:'pointer'}}>
+          {deleteMode&&<div style={{width:22,height:22,borderRadius:6,background:checked?'#c0392b':'white',border:checked?'none':'1.5px solid #ddd',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>{checked&&<svg width="13" height="13" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}</div>}
+          <div style={{width:30,height:30,background:'linear-gradient(135deg,#ede7f6,#d1c4e9)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:c,flexShrink:0}}>{s.name[0]}</div>
+          <span style={{fontSize:10,background:'#f3f0f9',color:c,padding:'2px 6px',borderRadius:5,fontWeight:700,flexShrink:0}}>{s.classCode[0]}-{s.classCode.slice(1)}</span>
+          <span style={{fontSize:10,color:'#bbb',fontWeight:700,flexShrink:0}}>{String(parseInt(sid.slice(2)))}번</span>
+          <span style={{fontSize:13,fontWeight:800,color:'#1a1a2e'}}>{s.name}</span>
+          {!deleteMode&&<button onClick={(e)=>{e.stopPropagation();onTeacherWrite({id:sid,name:s.name,subject:assignment.subject});}} style={{background:c,color:'white',border:'none',borderRadius:14,padding:'4px 9px',fontSize:10,fontWeight:700,cursor:'pointer',flexShrink:0,fontFamily:'inherit'}}>+교사입력</button>}
+          <span style={{flex:1}}></span>
+          {cnt>0?<span style={{fontSize:10,background:'#ede7f6',color:c,padding:'2px 7px',borderRadius:8,fontWeight:700,flexShrink:0}}>{cnt}건</span>:<span style={{fontSize:10,background:'#f5f5f5',color:'#ccc',padding:'2px 7px',borderRadius:8,fontWeight:700,flexShrink:0}}>0건</span>}
+          {!deleteMode&&<svg width="11" height="11" fill="none" stroke="#ccc" viewBox="0 0 24 24" style={{flexShrink:0}}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>}
+        </div>);
+      })}
+    </div>
+    {deleteMode&&(<div style={{position:'sticky',bottom:0,background:'#f3f0f9',borderTop:'1px solid #e0d8f0',padding:'10px 16px calc(env(safe-area-inset-bottom) + 10px)',display:'flex',gap:8}}>
+      <button onClick={exitDeleteMode} disabled={deleting} style={{flex:1,padding:12,background:'white',border:'1px solid #ddd',borderRadius:10,fontSize:13,fontWeight:700,color:'#888',cursor:'pointer',fontFamily:'inherit'}}>취소</button>
+      <button onClick={doDelete} disabled={deleting||!delSel.size} style={{flex:1.6,padding:12,background:delSel.size>0?'#c0392b':'#ddd',border:'none',borderRadius:10,fontSize:13,fontWeight:800,color:'white',cursor:delSel.size>0?'pointer':'default',fontFamily:'inherit'}}>{deleting?'삭제 중...':`선택한 ${delSel.size}명 삭제`}</button>
+    </div>)}
+  </div>);
+}
+
+/* ── 이동수업 과목: 반 드롭다운 + 기존 학생 가져오기 화면 재사용 ── */
+function ElectiveStudentPicker({assignment,onDone,onBack,onClassAdded}){
+  const grade=String((assignment.classes||[])[0]||'').charAt(0)||'3';
+  const[classes,setClasses]=useState([]),[cls,setCls]=useState('');
+  useEffect(()=>{callAPI({action:'getClassList'}).then(r=>{const list=(r.classes&&r.classes[grade])||[];setClasses(list);if(list.length)setCls(list[0]);}).catch(()=>{});},[]);
+  return(<div style={{background:'#f3f0f9',minHeight:'100%'}}>
+    <div style={{background:'white',borderBottom:'1px solid #e0d8f0',padding:'calc(env(safe-area-inset-top) + 12px) 14px 12px'}}>
+      <p style={{fontSize:11,fontWeight:700,color:'#5c2fa0',margin:'0 0 6px'}}>{assignment.subject} · 가져올 반 선택 <span style={{fontSize:9,color:'#999',fontWeight:500}}>(배정에 없던 반이면 자동 등록됨)</span></p>
+      <select value={cls} onChange={e=>setCls(e.target.value)} style={{width:'100%',padding:'10px 12px',border:'1.5px solid #5c2fa0',borderRadius:10,background:'#f7f4fc',fontSize:14,fontWeight:800,color:'#5c2fa0',fontFamily:'inherit'}}>
+        {classes.map(k=>(<option key={k} value={k}>{k[0]}학년 {k.slice(1)}반{(assignment.classes||[]).map(String).includes(k)?'':' (미배정)'}</option>))}
+      </select>
+    </div>
+    {cls&&<SubjectStudentPicker key={cls} assignment={assignment} classCode={cls} onDone={()=>{if(onClassAdded)onClassAdded(cls);onDone();}} onBack={onBack}/>}
   </div>);
 }
 function SubjectStudentList({assignment,classCode,records,onSelect,onTeacherWrite,onImportStudents,onBack,refreshKey}){
@@ -5223,10 +5313,12 @@ const phoneBg=ROLE_PHONE_BG[user.role]||'#f7f0f2';
 
       {isTeacher&&view==='myReports'&&<MyReportList user={user} onBack={()=>setView('home')}/>}
       {isTeacher&&view==='addSubject'&&<AddSubjectOnly onDone={async(nd)=>{let ex=[];try{ex=user.assignments?JSON.parse(user.assignments):[];}catch(e){}const ni=JSON.parse(nd);const mg=[...ex];ni.forEach(n=>{n.semester=semester;const idx=mg.findIndex(e=>e.subject===n.subject&&Number(e.semester||1)===semester);if(idx>=0)mg[idx]={...mg[idx],classes:[...new Set([...mg[idx].classes,...n.classes])].sort()};else mg.push(n);});const ms=JSON.stringify(mg);const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,assignments:ms});if(res.success){const u2={...user,assignments:ms};setUser(u2);saveSession({role:u2.role,user:u2});fetchRecords(u2);}setView('home');}} onBack={()=>setView('home')}/>}
-      {isTeacher&&view==='subjectHome'&&!selAssignment&&<SubjectTeacherHome user={user} records={subjectRecords||[]} onSelectSubject={a=>{setSelAssignment(a);setView('classes');}} onAddSubject={()=>setView('addSubject')} onDeleteSubject={async(a)=>{if(!confirm(`"${a.subject}" 과목을 삭제할까요?`))return;let ex=[];try{ex=user.assignments?JSON.parse(user.assignments):[];}catch(e){}const mg=ex.filter(e=>!(e.subject===a.subject&&Number(e.semester||1)===Number(a.semester||1)));const ms=JSON.stringify(mg);const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,assignments:ms});if(res.success){const u2={...user,assignments:ms};setUser(u2);saveSession({role:u2.role,user:u2});fetchRecords(u2);}}} onBack={()=>setView('home')}/>}
+      {isTeacher&&view==='subjectHome'&&!selAssignment&&<SubjectTeacherHome user={user} records={subjectRecords||[]} onSelectSubject={a=>{setSelAssignment(a);if(a.type==='선택'){setSelClass('ALL');setView('students2');}else setView('classes');}} onAddSubject={()=>setView('addSubject')} onDeleteSubject={async(a)=>{if(!confirm(`"${a.subject}" 과목을 삭제할까요?`))return;let ex=[];try{ex=user.assignments?JSON.parse(user.assignments):[];}catch(e){}const mg=ex.filter(e=>!(e.subject===a.subject&&Number(e.semester||1)===Number(a.semester||1)));const ms=JSON.stringify(mg);const res=await callAPI({action:'updateTeacherAssignments',teacherId:user.studentId,assignments:ms});if(res.success){const u2={...user,assignments:ms};setUser(u2);saveSession({role:u2.role,user:u2});fetchRecords(u2);}}} onBack={()=>setView('home')}/>}
       {isTeacher&&view==='classes'&&selAssignment&&!selClass&&<SubjectClassList assignment={selAssignment} records={subjectRecords||records} onSelect={cls=>{setSelClass(cls);setView('students2');}} onBack={()=>{setSelAssignment(null);setView('subjectHome');}}/>}
-      {isTeacher&&view==='students2'&&selClass&&!selStudent&&!teacherWriteStudent&&<SubjectStudentList assignment={selAssignment} classCode={selClass} records={subjectRecords||records} refreshKey={aiRefreshKey} onSelect={s=>{setSelStudent(s);setView('detail');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherSubjectWrite');}} onImportStudents={()=>setView('subjectPicker')} onBack={()=>{setSelClass(null);setView('classes');}}/>}
-        {isTeacher&&view==='subjectPicker'&&selAssignment&&selClass&&<SubjectStudentPicker assignment={selAssignment} classCode={selClass} onBack={()=>setView('students2')} onDone={()=>{setAiRefreshKey(k=>k+1);setView('students2');}}/>}
+      {isTeacher&&view==='students2'&&selClass==='ALL'&&!selStudent&&!teacherWriteStudent&&<SubjectFlatStudentList assignment={selAssignment} records={subjectRecords||records} refreshKey={aiRefreshKey} onSelect={s=>{setSelStudent(s);setView('detail');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherSubjectWrite');}} onImportStudents={()=>setView('subjectPicker')} onBack={()=>{setSelClass(null);setSelAssignment(null);setView('subjectHome');}}/>}
+      {isTeacher&&view==='students2'&&selClass&&selClass!=='ALL'&&!selStudent&&!teacherWriteStudent&&<SubjectStudentList assignment={selAssignment} classCode={selClass} records={subjectRecords||records} refreshKey={aiRefreshKey} onSelect={s=>{setSelStudent(s);setView('detail');}} onTeacherWrite={s=>{setTeacherWriteStudent(s);setTeacherWriteEditing(null);setView('teacherSubjectWrite');}} onImportStudents={()=>setView('subjectPicker')} onBack={()=>{setSelClass(null);setView('classes');}}/>}
+        {isTeacher&&view==='subjectPicker'&&selAssignment&&selClass==='ALL'&&<ElectiveStudentPicker assignment={selAssignment} onBack={()=>setView('students2')} onDone={()=>{setAiRefreshKey(k=>k+1);setView('students2');}} onClassAdded={(cls)=>{try{let arr=[];try{arr=user.assignments?JSON.parse(user.assignments):[];}catch(e){}const sem=window.__semester||1;let hit=false;arr.forEach(x=>{if(x.subject===selAssignment.subject&&Number(x.semester||1)===sem){hit=true;x.classes=x.classes||[];if(!x.classes.map(String).includes(cls)){x.classes.push(cls);x.classes.sort();}}});if(!hit)arr.push({subject:selAssignment.subject,classes:[cls],semester:sem});const ms=JSON.stringify(arr);const u2={...user,assignments:ms};setUser(u2);saveSession({role:u2.role,user:u2});const cur=arr.find(x=>x.subject===selAssignment.subject&&Number(x.semester||1)===sem);setSelAssignment({...selAssignment,classes:cur?cur.classes:selAssignment.classes});fetchRecords(u2);}catch(e){}}}/>}
+      {isTeacher&&view==='subjectPicker'&&selAssignment&&selClass&&selClass!=='ALL'&&<SubjectStudentPicker assignment={selAssignment} classCode={selClass} onBack={()=>setView('students2')} onDone={()=>{setAiRefreshKey(k=>k+1);setView('students2');}}/>}
 {isTeacher&&view==='teacherSubjectWrite'&&teacherWriteStudent&&<TeacherSubjectWriteForm student={teacherWriteStudent} editing={teacherWriteEditing} onSave={async(data)=>{try{const payload={...data,studentId:teacherWriteStudent.id,name:teacherWriteStudent.name,semester:semester};const action=teacherWriteEditing?'updateRecord':'saveRecord';const r=await callAPI({action,record:payload});if(r.success){let sc=[];if(user.assignments){try{sc=JSON.parse(user.assignments).flatMap(a=>a.classes);}catch(e){}}callAPI({action:'getAllRecords',role:'subject',grade:'',classNum:'',homeroomClass:'',subjectClasses:sc,studentId:user.studentId}).then(res=>{if(res.success)setSubjectRecords(res.records||[]);});setAiRefreshKey(k=>k+1);setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'detail':'students2');}else alert(r.message);}catch(e){alert('저장 실패');}}} onCancel={()=>{setTeacherWriteStudent(null);setTeacherWriteEditing(null);setView(selStudent?'detail':'students2');}}/>}
       {isTeacher&&view==='detail'&&selStudent&&<SubjectStudentDetail student={selStudent} user={user} records={subjectRecords||records} onBack={()=>{setSelStudent(null);setView('students2');}}/>}
       {isTeacher&&view==='clubHome'&&!selStudent&&!teacherWriteStudent&&<ClubStudentList user={user} records={subjectRecords||[]} refreshKey={aiRefreshKey} onSelect={s=>{setSelStudent(s);setView('clubDetail');}} onTeacherWrite={s=>{setTeacherWriteStudent({id:s.id,name:s.name,club:s.club,forClub:true});setTeacherWriteEditing(null);setView('teacherClubWrite');}} onImportStudents={()=>setView('clubPicker')} onBack={()=>setView('home')}/>}
