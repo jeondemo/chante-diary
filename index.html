@@ -4325,15 +4325,17 @@ function SubjectTeacherHome({user,records,onSelectSubject,onAddSubject,onDeleteS
   const changeSem=s=>{if(window.__setSemester)window.__setSemester(s);setCurSem(s);};
   assigns=assigns.filter(a=>Number(a.semester||1)===curSem);
   const[summary,setSummary]=useState({});
+  const[editMode,setEditMode]=useState(false);
   useEffect(()=>{
     if(!assigns.length){setSummary({});return;}
     callAPI({action:'getTeacherSubjectSummary',semester:curSem,items:assigns.map(a=>({subject:a.subject,classes:a.classes||[]}))})
       .then(r=>{const m={};(r.items||[]).forEach(it=>{m[it.subject]=it;});setSummary(m);}).catch(()=>{});
   },[curSem,user.assignments]);
-  const ig=['📘','📗','📙','📕','📓','📒'];
   const c='#5c2fa0';
   const phoneBg='#f3f0f9';
-  const getCount=(subj)=>(records||[]).filter(r=>r.categoryId==='subject'&&String(r.subject||'')===subj).length;
+  const TILES=[['#7c4dff','#5c2fa0'],['#26a69a','#00796b'],['#ff8a65','#e64a19'],['#ec407a','#c2185b'],['#42a5f5','#1565c0'],['#ffb300','#ef6c00']];
+  const subjRecs=(subj)=>(records||[]).filter(r=>r.categoryId==='subject'&&String(r.subject||'')===subj);
+  const cls=(x)=>`${x[0]}-${x.slice(1)}`;
 
   return(<div style={{background:phoneBg,minHeight:'100%',paddingBottom:30}}>
     <div style={{background:`linear-gradient(135deg,${c},#7c3aed)`,padding:'calc(env(safe-area-inset-top) + 22px) 20px 38px',position:'relative',overflow:'hidden'}}>
@@ -4349,39 +4351,44 @@ function SubjectTeacherHome({user,records,onSelectSubject,onAddSubject,onDeleteS
         </div>
       </div>
     </div>
-    <div style={{padding:'16px 14px'}}>
+
+    <div style={{padding:'14px 14px 0'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,padding:'0 2px'}}>
+        {editMode
+          ?<span style={{fontSize:11,color:'#c0392b',fontWeight:600}}>삭제할 과목을 고르세요 · 학생 기록은 지워지지 않습니다</span>
+          :<span style={{fontSize:11,fontWeight:700,color:c}}>담당 과목 {assigns.length}</span>}
+        {assigns.length>0&&<button onClick={()=>setEditMode(!editMode)} style={{fontSize:11,fontWeight:700,padding:'5px 12px',borderRadius:14,cursor:'pointer',fontFamily:'inherit',border:editMode?'none':'1px solid #d1c4e9',background:editMode?c:'white',color:editMode?'white':'#7e57c2'}}>{editMode?'완료':'편집'}</button>}
+      </div>
+
       {assigns.map((a,i)=>{
-        const cnt=getCount(a.subject);
         const sm=summary[a.subject];
         const isSel=sm&&sm.type==='선택';
-        return(<div key={i} className="card active-btn" style={{padding:'13px 14px',marginBottom:10,border:'1.5px solid #ddd8f0',position:'relative'}}>
-          <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <div onClick={()=>onSelectSubject({...a,type:(sm&&sm.type)||'전체'})} style={{display:'flex',alignItems:'center',gap:10,flex:1,minWidth:0,cursor:'pointer'}}>
-              <div style={{width:40,height:40,background:'linear-gradient(135deg,#ede7f6,#d1c4e9)',borderRadius:11,display:'flex',alignItems:'center',justifyContent:'center',fontSize:17,flexShrink:0}}>{ig[i%ig.length]}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <p style={{fontSize:15,fontWeight:800,color:'#1a1a2e',margin:0,lineHeight:1.3}}>{a.subject}{isSel&&<span style={{fontSize:9,background:'#e0f2f1',color:'#00695c',padding:'2px 7px',borderRadius:6,fontWeight:700,marginLeft:5,verticalAlign:'middle'}}>이동수업</span>}</p>
-                {!isSel&&<p style={{fontSize:10,color:'#999',margin:'3px 0 0'}}>{(a.classes||[]).map(x=>`${x[0]}-${x.slice(1)}`).join(' · ')}{sm?' 반 수업':''}</p>}
-              </div>
-              <div style={{textAlign:'right',flexShrink:0}}>
-                {sm&&<div style={{lineHeight:1}}><span style={{fontSize:22,fontWeight:900,color:c}}>{sm.total}</span><span style={{fontSize:11,color:c,marginLeft:2}}>명</span></div>}
-                <p style={{fontSize:10,color:cnt>0?c:'#bbb',margin:'2px 0 0',fontWeight:700}}>{cnt>0?`기록 ${cnt}건`:'기록 없음'}</p>
-              </div>
-              <svg width="12" height="12" fill="none" stroke="#ccc" strokeWidth="2.5" viewBox="0 0 24 24" style={{flexShrink:0}}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-            </div>
-            <button onClick={(e)=>{e.stopPropagation();onDeleteSubject(a);}} style={{width:22,height:22,borderRadius:6,border:'1px solid #f0c0c0',background:'#fdeaea',color:'#c0392b',fontSize:12,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',padding:0,flexShrink:0}} title="과목 삭제">✕</button>
+        const rs=subjRecs(a.subject);
+        const cnt=rs.length;
+        const writers=new Set(rs.map(r=>String(r.studentId))).size;
+        const total=sm?sm.total:0;
+        const pct=total>0?Math.min(100,Math.round(writers/total*100)):0;
+        const [t1,t2]=TILES[i%TILES.length];
+        const tile=(<div style={{width:46,height:46,borderRadius:14,background:`linear-gradient(135deg,${t1},${t2})`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 3px 8px ${t2}40`,flexShrink:0,opacity:editMode?0.85:1}}><span style={{fontSize:19,fontWeight:900,color:'white'}}>{a.subject.charAt(0)}</span></div>);
+
+        if(editMode)return(<div key={i} className="card" style={{padding:14,marginBottom:10,border:'1px solid #ebe6f5',borderRadius:16,display:'flex',alignItems:'center',gap:12}}>
+          {tile}
+          <div style={{flex:1,minWidth:0}}>
+            <span style={{fontSize:16,fontWeight:800,color:'#1a1a2e'}}>{a.subject}</span>
+            <p style={{fontSize:10,color:'#999',margin:'2px 0 0'}}>수강생 {total}명 · 기록 {cnt}건</p>
           </div>
-          {isSel&&<div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:9,paddingLeft:50}}>
-            {sm.byClass.map(b=>(<span key={b.classCode} style={{fontSize:10,background:b.count>0?'#f3f0f9':'#fdeaea',color:b.count>0?c:'#c0392b',padding:'2px 7px',borderRadius:6}}>{b.classCode[0]}-{b.classCode.slice(1)} <b>{b.count}명</b></span>))}
-          </div>}
+          <button onClick={()=>onDeleteSubject(a)} style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:11,fontWeight:700,color:'#c0392b',background:'#fdeaea',border:'1px solid #f5c6c6',padding:'7px 12px',borderRadius:10,cursor:'pointer',fontFamily:'inherit',flexShrink:0}}>
+            <svg width="13" height="13" fill="none" stroke="#c0392b" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>과목 삭제
+          </button>
         </div>);
-      })}
-      <div onClick={onAddSubject} className="active-btn" style={{background:'#ede7f6',border:'1.5px dashed #5c2fa0',borderRadius:12,padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'center',gap:8,cursor:'pointer',marginTop:4}}>
-        <svg width="16" height="16" fill="none" stroke="#5c2fa0" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m-7-7h14"/></svg>
-        <span style={{fontSize:13,fontWeight:800,color:'#5c2fa0'}}>과목 추가</span>
-      </div>
-    </div>
-  </div>);
-}
+
+        return(<div key={i} onClick={()=>onSelectSubject({...a,type:(sm&&sm.type)||'전체'})} className="card active-btn" style={{padding:'14px 14px 12px',marginBottom:10,border:'1px solid #ebe6f5',borderRadius:16,cursor:'pointer',boxShadow:'0 1px 3px rgba(92,47,160,0.08)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            {tile}
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
+                <span style={{fontSize:16,fontWeight:800,color:'#1a1a2e'}}>{a.subject}</span>
+                {sm&&(isSel
 
 function SubjectClassList({assignment,records,onSelect,onBack}){
   const hasNew=(cls)=>{
